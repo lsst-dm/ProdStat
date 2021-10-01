@@ -44,8 +44,8 @@ with urlopen("http://panda-doma.cern.ch/idds/wfprogress/?json") as workflow:
         print(user)
         print(workflows[user])
 
-" Now select one finished workflow from user hchiang2  and get info
- about tasks"
+""" Now select one finished workflow from user hchiang2  and get info
+ about tasks """
 wf = workflows['hchiang2']
 for work in wf:
     if work['r_status'] == 'finished':
