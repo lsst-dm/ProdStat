@@ -5,8 +5,9 @@ import netrc
 from jira import JIRA
 from jira.client import ResultList
 from jira.resources import Issue
-from yaml import load,dump
+from yaml import load,dump,FullLoader
 import re
+from ParseDRP import parseDRP
 
 # script to read a BPS yaml submit file (after the submit to PanDA has been done, so it is
 # in the submit/ subdir of the submitting user)
@@ -25,7 +26,7 @@ kwlist=['bps_defined','campaign','computeSite','payload','requestCpus','requestM
 kw={'payload': ['butlerConfig','dataQuery','inCollection','sw_image'], 'bps_defined':['operator','timestamp','uniqProcName'] }
 
 f=open(bpsyamlfile)
-d=load(f)
+d=load(f,Loader=FullLoader)
 
 bpsstr="BPS SUBMIT YAML:\n"
 for k,v in d.items():
@@ -47,18 +48,27 @@ if m:
 else:
  stepcut=""
 
+print("steplist "+stepcut)
 bpsstr += "pipelineYamlSteps: "+stepcut
 
 print(upn+"#"+stepcut)
+sl=parseDRP(stepcut)
+tasktable="\n"+"|| Step || Task || Status || nQuanta || Time ||"+"\n"
+for s in sl:
+ tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+ "|" +" " +"|"+ "\n"
+ 
+tasktable += "\n"
+print(tasktable)
+
 secrets = netrc.netrc()
 username,account,password = secrets.authenticators('lsstjira')  
 authenticated_jira = JIRA(options={'server': account}, basic_auth=(username, password))
 if(sys.argv[2]=="0"):
- issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=bpsstr,components=[{"name" : "Test"}])
+ issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=tasktable+bpsstr,components=[{"name" : "Test"}])
 else:
  issue=authenticated_jira.issue(sys.argv[2])
 
-issue.update(fields={'summary': stepcut+"#"+upn, 'description': bpsstr})
+issue.update(fields={'summary': stepcut+"#"+upn, 'description': tasktable+bpsstr})
 
 print("end")
 
