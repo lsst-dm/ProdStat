@@ -1,0 +1,112 @@
+bpsUseShared: false
+bps_cmdline: {}
+bps_defined:
+  operator: huanlin
+  submitPath: /home/huanlin/submit/2.2i/runs/test-med-1/w_2021_40/PREOPS-707/20211012T194814Z
+  timestamp: 20211012T194814Z
+  uniqProcName: 2.2i_runs_test-med-1_w_2021_40_PREOPS-707_20211012T194814Z
+campaign: w_2021_40/PREOPS-707
+cluster: {}
+clusterAlgorithm: lsst.ctrl.bps.quantum_clustering_funcs.single_quantum_clustering
+computeSite: LSST
+createQuantumGraph: ${CTRL_MPEXEC_DIR}/bin/pipetask {qgraphPreCmdOpts} qgraph -b {butlerConfig}
+  -i {inCollection} -o {output} --output-run {outCollection} -p {pipelineYaml} -q
+  {qgraphFile} -d "{dataQuery}" {extraQgraphOptions}
+defaultPreCmdOpts: --long-log --log-level=VERBOSE --log-file payload-log.json
+executionButler:
+  command1: ${DAF_BUTLER_DIR}/bin/butler {mergePreCmdOpts} transfer-datasets {executionButlerDir}
+    {butlerConfig} --collections {outCollection}
+  command2: ${DAF_BUTLER_DIR}/bin/butler {mergePreCmdOpts} collection-chain {butlerConfig}
+    {output} --flatten --mode=extend {inCollection}
+  command3: ${DAF_BUTLER_DIR}/bin/butler {mergePreCmdOpts} collection-chain {butlerConfig}
+    {output} --flatten --mode=prepend {outCollection}
+  concurrencyLimit: db_limit
+  createCommand: ${CTRL_MPEXEC_DIR}/bin/pipetask qgraph -b {butlerConfig} -i {inCollection}
+    -o {output} --output-run {outCollection} --save-execution-butler {executionButlerDir}
+    -g {qgraphFile}
+  implementation: JOB
+  mergePreCmdOpts: '{defaultPreCmdOpts}'
+  queue: DOMA_LSST_GOOGLE_MERGE
+  whenCreate: SUBMIT
+  whenMerge: ALWAYS
+executionButlerTemplate: '{submitPath}/EXEC_REPO-{uniqProcName}'
+idds_server: https://aipanda015.cern.ch:443/idds
+initPreCmdOpts: '{defaultPreCmdOpts}'
+payload:
+  butlerConfig: s3://butler-us-central1-panda-dev/dc2/butler.yaml
+  dataQuery: instrument='LSSTCam-imSim' and skymap='DC2' and tract=3829
+  fileDistributionEndPoint: s3://butler-us-central1-panda-dev/dc2/{payload_folder}/{uniqProcName}/
+  inCollection: 2.2i/defaults/test-med-1
+  outCollection: '{output}/{timestamp}'
+  output: '{payloadName}/{campaign}'
+  payloadName: 2.2i/runs/test-med-1
+  payload_folder: payload
+  runInit: true
+  s3_endpoint_url: https://storage.googleapis.com
+  sw_image: lsstsqre/centos:7-stack-lsst_distrib-w_2021_40
+pipelineYaml: $OBS_LSST_DIR/pipelines/imsim/DRP.yaml#writeForcedSourceTable
+pipetask:
+  TE1:
+    requestMemory: 16384
+  TE2:
+    requestMemory: 16384
+  assembleCoadd:
+    requestMemory: 4096
+  deblend:
+    requestMemory: 16384
+  forcedPhotCoadd:
+    queue: DOMA_LSST_GOOGLE_TEST_HIMEM_NON_PREEMPT
+    requestMemory: 4096
+  imageDifference:
+    requestMemory: 4096
+  makeWarp:
+    requestMemory: 4096
+  matchCatalogsPatchMultiBand:
+    requestMemory: 8196
+  matchCatalogsTract:
+    requestMemory: 32000
+  measure:
+    requestMemory: 16384
+  mergeMeasurements:
+    requestMemory: 16384
+  pipetaskInit:
+    runQuantumCommand: ${CTRL_MPEXEC_DIR}/bin/pipetask {initPreCmdOpts} run -b {butlerConfig}
+      -i {inCollection} -o {output} --output-run {outCollection} --qgraph {fileDistributionEndPoint}/{qgraphFile}
+      --qgraph-id {qgraphId} --qgraph-node-id {qgraphNodeId} --clobber-outputs --init-only
+      --extend-run {extraInitOptions}
+  wPerp:
+    requestMemory: 32000
+  writeObjectTable:
+    requestMemory: 16384
+placeholderParams:
+- qgraphNodeId
+- qgraphId
+preemptible: true
+project: dp02
+qgraphFileTemplate: '{uniqProcName}.qgraph'
+qgraphPreCmdOpts: '{defaultPreCmdOpts}'
+requestCpus: 1
+requestMemory: 2048
+runPreCmdOpts: '{defaultPreCmdOpts}'
+runQuantumCommand: ${CTRL_MPEXEC_DIR}/bin/pipetask {runPreCmdOpts} run -b {butlerConfig}
+  -i {inCollection} -o {output} --output-run {outCollection} --qgraph {fileDistributionEndPoint}/{qgraphFile}
+  --qgraph-id {qgraphId} --qgraph-node-id {qgraphNodeId} --clobber-outputs --skip-init-writes
+  --extend-run {extraRunQuantumOptions}
+runner_command: logDir=/tmp/panda/${PANDAID}; mkdir ${logDir}; logFile=${logDir}/${REALTIME_LOGFILES};
+  touch ${logFile}; chmod ugo+w ${logFile}; ln -s ${logFile} ${PWD}/; ls -l ${PWD}/;
+  docker run -v ${logFile}:/tmp/${REALTIME_LOGFILES} --network host --privileged --env
+  AWS_ACCESS_KEY_ID=$(</credentials/AWS_ACCESS_KEY_ID) --env AWS_SECRET_ACCESS_KEY=$(</credentials/AWS_SECRET_ACCESS_KEY)
+  --env PGPASSWORD=$(</credentials/PGPASSWORD) --env S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+  {sw_image} /bin/bash -c "source /opt/lsst/software/stack/loadLSST.bash;cd /tmp;ls
+  -al;setup lsst_distrib;pwd;python3 \${CTRL_BPS_DIR}/python/lsst/ctrl/bps/wms/panda/edgenode/cmd_line_decoder.py
+  _cmd_line_ " >&2;
+saveClusteredQgraph: false
+saveDot: false
+saveGenericWorkflow: false
+site: {}
+subDirTemplate: '{label}/{tract}/{patch}/{visit.day_obs}/{exposure.day_obs}/{band}/{subfilter}/{physical_filter}/{visit}/{exposure}'
+submitPath: ${PWD}/submit/{outCollection}
+templateDataId: '{tract}_{patch}_{band}_{visit}_{exposure}_{detector}'
+useLazyCommands: true
+whenSaveJobQgraph: NEVER
+wmsServiceClass: lsst.ctrl.bps.wms.panda.panda_service.PanDAService
