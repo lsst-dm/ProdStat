@@ -17,7 +17,7 @@ workflows:
 - 20211015T003406Z
 maxtask: 30
 ```
-Here workflows represent a list of time stamps that are part of workflow name
+Here workflows represent a list of time stamps that are part of workflow name,
 maxtask is a maximum number of task files used to calculate average cpu/wall time.
 
 ####Operation:
