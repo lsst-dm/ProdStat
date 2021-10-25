@@ -8,7 +8,6 @@ import yaml
 import getopt
 from tabulate import tabulate
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from pandas.plotting import table
 from lsst.daf.butler import Butler
@@ -93,8 +92,8 @@ class GetButlerStat:
         verbose = True
         columns = ('detector', 'tract', 'patch', 'band', 'visit')
         " create temporary file for parsing metadata yaml "
-        if not os.path.exists('/tmp/MyFile.yaml'):
-            myfile = open('/tmp/MyFile.yaml', 'w')
+        if not os.path.exists('/tmp/tempTask.yaml'):
+            myfile = open('/tmp/tempTask.yaml', 'w')
             testdict = {'test': ''}
             yaml.dump(testdict, myfile)
         for collection in collections:
@@ -112,9 +111,9 @@ class GetButlerStat:
                     try:
                         refyaml = self.butler.getURI(dataref, collections=collection)
                     except:
-                        print('Yaml file not found skiping')
+                        print('Yaml file not found skipping')
                         continue
-                    dest = ButlerURI('/tmp/MyFile.yaml')
+                    dest = ButlerURI('/tmp/tempTask.yaml')
                     buri = ButlerURI(refyaml)
                     if not buri.exists():
                         print('The file do not exists')
@@ -127,23 +126,20 @@ class GetButlerStat:
                     " Copy metadata.yaml to local temp yaml "
                     dest.transfer_from(buri, 'copy', True)
                     " parse results "
-                    results = self.parse_metadata_yaml('/tmp/MyFile.yaml')
-#                    cpu_time = 0.
+                    results = self.parse_metadata_yaml('/tmp/tempTask.yaml')
                     if results.get('EndCpuTime', None) is None and results.get('endCpuTime', None) is not None:
                         cpu_time = float(results.get('endCpuTime', None))
                     else:
                         cpu_time = float(results.get('EndCpuTime', None))
                     data['cpu_time'].append(cpu_time)
-#                    data['cpu_time'].append(results.get('EndCpuTime', None))
                     data['maxRSS'].append(results.get('MaxResidentSetSize', None))
 
                 taskRes[task] = data
-
             for task in taskRes:
                 self.workflowRes[task] = self.makeSum(taskSize[task],taskRes[task])
 
-            " Now create pandas frame to"
-#        print(self.workflowRes)
+            " Now create pandas frame to display results"
+#
         dt = []
         allTasks = []
         campCpu = 0.
@@ -155,30 +151,35 @@ class GetButlerStat:
             dt.append(self.workflowRes[task])
             campCpu += float(self.workflowRes[task]['totalCPU'])
             campJobs += self.workflowRes[task]['N tasks']
-            campRss += float(self.workflowRes[task]['MaxRSS'])
+            if float(self.workflowRes[task]['MaxRSS']) >= campRss:
+                campRss = float(self.workflowRes[task]['MaxRSS'])
         allTasks.append('Campaign')
         campData = {'N tasks':int(campJobs),'cpuPerTask':float(campCpuPerTask),'totalCPU':float(campCpu),'MaxRSS':float(campRss)}
         dt.append(campData)
+    #    with open('index.txt','w') as fout:
+    #        for taskind in allTasks:
+    #            fout.write(taskind+'\n')
+    #        fout.flush()
+    #        fout.close()
         print('')
+        pd.set_option('max_colwidth', 500)
+        pd.set_option('precision', 1)
         dataFrame = pd.DataFrame(dt,index=allTasks)
-        fig, ax = plt.subplots(figsize=(15, 20))  # set size frame
+        fig, ax = plt.subplots(figsize=(20, 30))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
         ax.set_frame_on(False)  # no visible frame, uncomment if size is ok
-        tabla = table(ax, dataFrame, loc='upper right', colWidths=[0.18] * len(dataFrame.columns))  # where df is your data frame
+        tabla = table(ax, dataFrame, loc='upper right')
         tabla.auto_set_font_size(False)  # Activate set fontsize manually
+        tabla.auto_set_column_width(col=list(range(len(dataFrame.columns))))
         tabla.set_fontsize(12)  # if ++fontsize is necessary ++colWidths
         tabla.scale(1.2, 1.2)  # change size table
-        plt.savefig("/tmp/mytable.png", transparent=True)
-
-#        ax = plt.subplot(111, frame_on=False)  # no visible frame
-#        ax.xaxis.set_visible(False)  # hide the x axis
-#        ax.yaxis.set_visible(False)  # hide the y axis
-
-#        table(ax, dataFrame)#
+        plt.savefig("/tmp/butlerStat.png", transparent=True)
+#        plt.show()
 
         print(tabulate(dataFrame,  headers='keys', tablefmt='psql'))
-
+#        compression_opts = dict(method='zip',archive_name='results.csv')
+#        dataFrame.to_csv('./results.zip', index=True, compression=compression_opts)
 
     " Calculate mean and total cpu usage and MaxRSS "
     def makeSum(self,taskSize,taskRes):
@@ -206,27 +207,26 @@ class GetButlerStat:
         """ We can collect datasets and data IDs
         for each collection and create subset of ID's for each
              process type"""
-        datatype_pattern='.*_metadata'
+        datatype_pattern = '.*_metadata'
         pattern = re.compile(datatype_pattern)
         self.collSize = dict()
         self.collData = dict()
-
         for collection in collections:
-            datasetRefs = []
-            datasetRefs = self.registry.queryDatasets(pattern, collections=collection)
-
-            taskData = {}
-            oldTask = ''
+            try:
+                datasetRefs = self.registry.queryDatasets(pattern, collections=collection)
+            except:
+                print("No datasets found for: ",collection)
+                continue
 #
             print('collection=',collection)
-            k=0
-            l=0
+            k = 0
+            l = 0  # task counter
             taskSize = {}
             taskRefs = {}
             _refs = []
             first = True
             for i, dataref in enumerate(datasetRefs):
-                k+=1
+                k += 1
                 taskname = str(dataref).split('_')[0]
 
                 if taskname not in taskSize:
@@ -236,40 +236,24 @@ class GetButlerStat:
                     else:
                         taskRefs[curr_task] = _refs
                         curr_task = taskname
-                    l=0
+                    l = 0
                     taskSize[taskname] = 1
                     _refs = []
                     _refs.append(dataref)
 #            print(dataref)
                 else:
-                    taskSize[taskname] +=1
-                    l+=1
+                    taskSize[taskname] += 1
+                    l += 1
                     if l < self.maxtask:
                         _refs.append(dataref)
 #                    else:
-            taskRefs[taskname] = _refs
+                taskRefs[taskname] = _refs
             self.collData[collection] = taskRefs
             self.collSize[collection] = taskSize
 
 
 
-# 
-"""
-    dest = ButlerURI('/home/kuropat/WORK/')
-    dataset_type='calexp'
-    find_first=True
-    preserve_path=False
-    clobber=True
-    refs = list(butler.registry.queryDatasets(datasetType=dataset_type,
-                                              collections=collections,
-                                              where='',
-                                              findFirst=find_first))
-    print('refs=',refs)
-#    log.info("Number of datasets matching query: %d", len(refs))
 
-    transferred = butler.retrieveArtifacts(refs, destination=dest, transfer='copy',
-                                           preserve_path=preserve_path, overwrite=clobber)
-"""
 if __name__ == "__main__":
     print(sys.argv)
     nbpar = len(sys.argv)
@@ -294,7 +278,14 @@ if __name__ == "__main__":
             print("Usage: GetButlerStat.py <required inputs>")
             print("  Required inputs:")
             print("  -f <yamlFile> - yaml file containing input parameters ")
-            print("  -u <username> - user to get data for")
+            print(" The yaml file format as following:")
+            print("Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
+            "Jira: PREOPS-707\n",
+            "workflows:\n",
+            "- 20211001T200704Z\n",
+            "- 20211003T045430Z\n",
+            "- 20211003T164354Z\n",
+            "maxtask: 100")
             sys.exit(2)
         elif opt in ("-f","--yamlFile"):
             yaml_flag = 1
@@ -306,7 +297,7 @@ if __name__ == "__main__":
         print("  Required inputs:")
         print("  -f <yamlFile> - yaml file containing input parameters ")
         sys.exit(-2)
-    # Create new threads
+    #
     GBS = GetButlerStat(inpFile)
 
     GBS.run()
