@@ -3,6 +3,7 @@
 import sys
 import re
 import os
+import datetime
 from collections import defaultdict
 import yaml
 import getopt
@@ -14,24 +15,25 @@ from lsst.daf.butler import Butler
 from lsst.daf.butler import ButlerURI
 from lsst.daf.base import PropertySet
 
+
 class GetButlerStat:
-    def __init__(self, parFile):
-        inpars = {}
-        with open(parFile) as pf:
+    def __init__(self, parfile):
+        with open(parfile) as pf:
             inpars = yaml.safe_load(pf)
         self.Butler = inpars['Butler']
         self.workflows = inpars['workflows']
         self.Jira = inpars['Jira']
         self.maxtask = int(inpars['maxtask'])
-        print(" Collecting information for Jira ticket ",self.Jira)
-        print("with workflows:",self.workflows)
+        print(" Collecting information for Jira ticket ", self.Jira)
+        print("with workflows:", self.workflows)
         self.REPO_ROOT = self.Butler
         # REPO_ROOT = 's3://butler-us-central1-panda-dev/hsc/butler.yaml'
         self.butler = Butler(self.REPO_ROOT)
         self.registry = self.butler.registry
         self.workflowRes = {}
 
-    def parse_metadata_yaml(self,yaml_file):
+    @staticmethod
+    def parse_metadata_yaml(yaml_file):
         """
         Parse the runtime and RSS data in the metadata yaml file created
         by the lsst.pipe.base.timeMethod decorator as applied to pipetask
@@ -62,25 +64,24 @@ class GetButlerStat:
                         continue
         return results
 
-
     def searchCollections(self):
-        " Select collections "
-        collections=[]
+        """ Select collections """
+        collections = []
         prepos = self.Jira
-        searchcolls= self.workflows
+        searchcolls = self.workflows
 
         for searchcoll in searchcolls:
             for c in sorted(self.registry.queryCollections()):
                 if prepos in str(c) and searchcoll in str(c):
                     collections.append(c)
         " Now we have all collections with PREPOS in the name"
-        print (collections)
-        print(' ')
+#        print(collections)
+#        print(' ')
         return collections
 
     def run(self):
         collections = self.searchCollections()
-        print("collections:",collections)
+#        print("collections:",collections)
         " Recreate Butler and registry "
         self.butler = Butler(self.REPO_ROOT, collections=collections)
         self.registry = self.butler.registry
@@ -91,7 +92,7 @@ class GetButlerStat:
         """
         verbose = True
         columns = ('detector', 'tract', 'patch', 'band', 'visit')
-        " create temporary file for parsing metadata yaml "
+        """ create temporary file for parsing metadata yaml """
         if not os.path.exists('/tmp/tempTask.yaml'):
             myfile = open('/tmp/tempTask.yaml', 'w')
             testdict = {'test': ''}
@@ -126,7 +127,7 @@ class GetButlerStat:
                     " Copy metadata.yaml to local temp yaml "
                     dest.transfer_from(buri, 'copy', True)
                     " parse results "
-                    results = self.parse_metadata_yaml('/tmp/tempTask.yaml')
+                    results = self.parse_metadata_yaml(yaml_file='/tmp/tempTask.yaml')
                     if results.get('EndCpuTime', None) is None and results.get('endCpuTime', None) is not None:
                         cpu_time = float(results.get('endCpuTime', None))
                     else:
@@ -136,7 +137,7 @@ class GetButlerStat:
 
                 taskRes[task] = data
             for task in taskRes:
-                self.workflowRes[task] = self.makeSum(taskSize[task],taskRes[task])
+                self.workflowRes[task] = self.makeSum(taskSize[task], taskRes[task])
 
             " Now create pandas frame to display results"
 #
@@ -149,22 +150,24 @@ class GetButlerStat:
         for task in self.workflowRes:
             allTasks.append(task)
             dt.append(self.workflowRes[task])
-            campCpu += float(self.workflowRes[task]['totalCPU'])
-            campJobs += self.workflowRes[task]['N tasks']
-            if float(self.workflowRes[task]['MaxRSS']) >= campRss:
-                campRss = float(self.workflowRes[task]['MaxRSS'])
+            campCpu += float(self.workflowRes[task]['cpu-hours'])
+            campJobs += self.workflowRes[task]['nQuanta']
+            if float(self.workflowRes[task]['MaxRSS MB']) >= campRss:
+                campRss = float(self.workflowRes[task]['MaxRSS MB'])
         allTasks.append('Campaign')
-        campData = {'N tasks':int(campJobs),'cpuPerTask':float(campCpuPerTask),'totalCPU':float(campCpu),'MaxRSS':float(campRss)}
+        campData = {'nQuanta': int(campJobs), 'cpu sec/job': campCpuPerTask,
+                    'cpu-hours':float(campCpu), 'MaxRSS MB': float(campRss)}
+        #str(datetime.timedelta(seconds=campCpu))
         dt.append(campData)
-    #    with open('index.txt','w') as fout:
-    #        for taskind in allTasks:
-    #            fout.write(taskind+'\n')
-    #        fout.flush()
-    #        fout.close()
+        for task in dt:
+            task['cpu-hours'] = str(datetime.timedelta(seconds=task['cpu-hours']))
+            if isinstance(task['cpu sec/job'],float):
+                task['cpu sec/job'] = round(task['cpu sec/job'], 2)
+            task['MaxRSS MB'] = round(task['MaxRSS MB'], 2)
         print('')
         pd.set_option('max_colwidth', 500)
         pd.set_option('precision', 1)
-        dataFrame = pd.DataFrame(dt,index=allTasks)
+        dataFrame = pd.DataFrame(dt, index=allTasks)
         fig, ax = plt.subplots(figsize=(20, 30))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
@@ -176,22 +179,29 @@ class GetButlerStat:
         tabla.scale(1.2, 1.2)  # change size table
         plt.savefig("/tmp/butlerStat.png", transparent=True)
 #        plt.show()
-
-        print(tabulate(dataFrame,  headers='keys', tablefmt='psql'))
+        """ print the table """
+        print(tabulate(dataFrame,  headers='keys', tablefmt='fancy_grid'))
+        """ create index file for offline DataFrame creation """
+#        f = open('./index.txt', 'w')
+#        for task in allTasks:
+#            print(task,file=f)
+#        f.close()
+        """ Write DataFrame as csv file for later use """
 #        compression_opts = dict(method='zip',archive_name='results.csv')
 #        dataFrame.to_csv('./results.zip', index=True, compression=compression_opts)
 
     " Calculate mean and total cpu usage and MaxRSS "
-    def makeSum(self,taskSize,taskRes):
+    def makeSum(self, taskSize, taskRes):
         cputime = taskRes['cpu_time']
         MaxRSS = taskRes['maxRSS']
-        ts = min(int(taskSize),self.maxtask)
+        ts = min(int(taskSize), self.maxtask)
 #        print(taskRes)
         if cputime[0] is not None:
             cpuSum = 0.0
-            for t in cputime: cpuSum+=float(t)
-            cpuPerTask = float(cpuSum/ts)
-            totalCpu = float(cpuPerTask*int(taskSize))
+            for t in cputime:
+                cpuSum += float(t)
+            cpuPerTask = float(cpuSum / ts)
+            totalCpu = float(cpuPerTask * int(taskSize))
         else:
             cpuPerTask =0.
             totalCpu = 0.
@@ -200,10 +210,10 @@ class GetButlerStat:
             if float(s) >= maxS:
                 maxS = float(s)
 
-        return {'N tasks':int(taskSize),'cpuPerTask':float(cpuPerTask),'totalCPU':float(totalCpu),'MaxRSS':float(maxS)}
+        return {'nQuanta': int(taskSize), 'cpu sec/job': float(cpuPerTask),
+                'cpu-hours':float(totalCpu), 'MaxRSS MB': float(maxS / 1048576.)}
 
-
-    def gettaskdata(self,collections):
+    def gettaskdata(self, collections):
         """ We can collect datasets and data IDs
         for each collection and create subset of ID's for each
              process type"""
@@ -215,12 +225,12 @@ class GetButlerStat:
             try:
                 datasetRefs = self.registry.queryDatasets(pattern, collections=collection)
             except:
-                print("No datasets found for: ",collection)
+                print("No datasets found for: ", collection)
                 continue
 #
-            print('collection=',collection)
+            print('collection=', collection)
             k = 0
-            l = 0  # task counter
+            lc = 0  # task counter
             taskSize = {}
             taskRefs = {}
             _refs = []
@@ -236,15 +246,15 @@ class GetButlerStat:
                     else:
                         taskRefs[curr_task] = _refs
                         curr_task = taskname
-                    l = 0
+                    lc = 0
                     taskSize[taskname] = 1
                     _refs = []
                     _refs.append(dataref)
 #            print(dataref)
                 else:
                     taskSize[taskname] += 1
-                    l += 1
-                    if l < self.maxtask:
+                    lc += 1
+                    if lc < self.maxtask:
                         _refs.append(dataref)
 #                    else:
                 taskRefs[taskname] = _refs
@@ -264,7 +274,7 @@ if __name__ == "__main__":
         sys.exit(-2)
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hf:",["yamlFile="])
+        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["yamlFile="])
     except getopt.GetoptError:
         print("Usage: GetButlerStat.py <required inputs>")
         print("  Required inputs:")
@@ -273,7 +283,7 @@ if __name__ == "__main__":
     yaml_flag = 0
 
     for opt,arg in opts:
-        print ("%s %s"%(opt,arg))
+        print("%s %s" %(opt, arg))
         if opt == "-h":
             print("Usage: GetButlerStat.py <required inputs>")
             print("  Required inputs:")
@@ -287,10 +297,9 @@ if __name__ == "__main__":
             "- 20211003T164354Z\n",
             "maxtask: 100")
             sys.exit(2)
-        elif opt in ("-f","--yamlFile"):
+        elif opt in ("-f", "--yamlFile"):
             yaml_flag = 1
             inpFile = arg
-
     inpsum = yaml_flag
     if inpsum != 1:
         print("Usage: GetButlerStat.py <required inputs>")
@@ -299,8 +308,5 @@ if __name__ == "__main__":
         sys.exit(-2)
     #
     GBS = GetButlerStat(inpFile)
-
     GBS.run()
-
-
     print( "End with GetButler Stat.py")
