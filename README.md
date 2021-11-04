@@ -1,6 +1,6 @@
 #ProdStat
 ###### This repository contains some example scripts to collect info from Butler and from PanDa
-### GetButlerStat.py
+###GetButlerStat.py
 ####Call: GetButlerStat.p -f inpfile.yaml
  The inpfile.yaml has following format:
 ```
@@ -17,7 +17,7 @@ workflows:
 - 20211015T003406Z
 maxtask: 30
 ```
-Here workflows represent a list of time stamps that are part of workflow name,
+Here workflows represent a list of time stamps that are part of workflow name
 maxtask is a maximum number of task files used to calculate average cpu/wall time.
 
 ####Operation:
@@ -29,3 +29,15 @@ The program collects these data for each task type and calculates total CPU usag
 all tasks of the type. At the end total CPU tame used by all dataflows and
 maxRss wil be calculadet and resulting table will be created as
 /tmp/butlerStat.png file.
+
+###GetPanDaStat.py
+####Call: GetPanDaStat.p -f inpfile.yaml
+The input file format is exactly same as for GetBatlerStat.py program
+
+####Operation:
+The program will query PanDa web logs to select information about dataflows,
+tasks and jobs. It will produce 2 tables. The first one gives the status of the campaign
+production showing each workflow status.
+The second table list completed tasks, number of quanta in each, time spent for each job,
+total time for all quanta and wall time estimate for each task. This information permit us to estimate rough number of
+parallel jobs used for each task, and campaign in whole.
