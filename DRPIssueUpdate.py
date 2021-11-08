@@ -7,6 +7,8 @@ from jira.client import ResultList
 from jira.resources import Issue
 from yaml import load,dump,FullLoader
 from ParseDRP import parseDRP
+from datetime import datetime
+from pytz import timezone
 
 from ParseButlerTable import parsebutlertable
 from ParsePanDATable import parsepandatable
@@ -25,22 +27,32 @@ bpsyamlfile=sys.argv[1]
 dobut=0
 if(len(sys.argv) >3):
  butstepfile=sys.argv[3]
- (totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem,upn)=parsebutlertable(butstepfile)
+ (totmaxmem,totsumsec,nquanta,startdate,secperstep,sumtime,maxmem,upn)=parsebutlertable(butstepfile)
  dobut=1
 
 
 dopan=0
 if(len(sys.argv) >4):
  panstepfile=sys.argv[4]
- (ptotmaxmem,ptotsumsec,pnquanta,psecperstep,pwallhr,psumtime,pmaxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
+ (ptotmaxmem,ptotsumsec,pnquanta,pstartdate,psecperstep,pwallhr,psumtime,pmaxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
  dopan=1
 
+print('pupn:',pupn)
+year=str(pupn[0:4])
+month=str(pupn[4:6])
+day=str(pupn[6:8])
+print("year:",year)
+print("year:",month)
+print("year:",day)
+link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&sortby=time-ascending"
+print("link:",link)
 print(dobut,dopan)
 print(totmaxmem,nquanta,pnquanta)
+nowut=datetime.now(timezone('GMT')).strftime("%Y-%m-%d %H:%M:%S")+"Z"
 
 kwlist=['campaign','project','payload']
 
-kw={'payload': ['butlerConfig','dataQuery','inCollection','sw_image','output'] }
+kw={'payload': ['payloadName','butlerConfig','dataQuery','inCollection','sw_image','output'] }
 
 f=open(bpsyamlfile)
 d=load(f,Loader=FullLoader)
@@ -72,31 +84,32 @@ bpsstr += "pipelineYamlSteps: "+stepcut+"\n{code}\n"
 
 print(upn+"#"+stepcut)
 sl=parseDRP(stepcut)
-tasktable="Butler Statistics\n"+"|| Step || Task || nQ || sec/Q || sum(hr) || maxGB ||"+"\n"
+tasktable="Butler Statistics\n"+"|| Step || Task || Start || nQ || sec/Q || sum(hr) || maxGB ||"+"\n"
 for s in sl:
  if(dobut==0 or s[1] not in nquanta.keys()):
   print("skipping:",s[0])
   #tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|" + " " + "|" + " " + "|" + "\n"
  else:
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(nquanta[s[1]]) + "|" + str('{:.1f}'.format(secperstep[s[1]]))+ "|" +str('{:.1f}'.format(sumtime[s[1]]))+"|"+str('{:.2f}'.format(maxmem[s[1]])) + "| \n"
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(startdate[s[1]])+"|"+str(nquanta[s[1]]) + "|" + str('{:.1f}'.format(secperstep[s[1]]))+ "|" +str('{:.1f}'.format(sumtime[s[1]]))+"|"+str('{:.2f}'.format(maxmem[s[1]])) + "| \n"
 
 if(dobut==1):
   tasktable += "Total core-hours: "+str('{:.1f}'.format(totsumsec))+" Peak Memory (GB): " +str('{:.1f}'.format(totmaxmem)) + "\n"
 tasktable += "\n"
 print(tasktable)
 
-tasktable +="Panda Statistics\n"+"|| Step || Task || PanQ || PanWallsec/Q || wallclk(hr) || tothrs || est parall cpu ||"+"\n"
+tasktable += "PanDA link:"+link+"\n"
+tasktable +="Panda Statistics as of: "+nowut+"\n"+"|| Step || Task || Start || PanQ || PanWallsec/Q || wallclk(hr) || tothrs || est parall cpu ||"+"\n"
 for s in sl:
  if(dopan==0 or s[1] not in pnquanta.keys()):
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
  else:
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pstartdate[s[1]])+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
 
 
  #(ptotmaxmem,ptotsumsec,pnquanta,psecperstep,wallhr,sumtime,maxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
 
 if(dopan==1):
-  tasktable += "Total wall-hours: "+str('{:.1f}'.format(ptotmaxmem))+" Total cpu-hours: " +str('{:.1f}'.format(ptotsumsec)) + "\n"
+  tasktable += "Total wall-hours: "+str('{:.1f}'.format(ptotmaxmem))+" Total core-hours: " +str('{:.1f}'.format(ptotsumsec)) + "\n"
   tasktable += "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
 tasktable += "\n"
 print(tasktable)

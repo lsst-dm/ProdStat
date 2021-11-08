@@ -3,6 +3,7 @@ def parsepandatable(intab):
   f=open(intab,'r')
   done=0
   nquanta={}
+  startdate={}
   secperstep={}
   sumtime={}
   wallhr={}
@@ -42,13 +43,14 @@ def parsepandatable(intab):
      print("taskname:"+str(taskname))
      if(taskname != "" and taskname != "Campaign"):
       nquanta[taskname]=int(b[2])
-      secperstep[taskname]=float(b[4])
-      wallclock=b[3]
+      startdate[taskname]=b[3]
+      secperstep[taskname]=float(b[5])
+      wallclock=b[4]
       hms=wallclock.split(":")
       wallhr[taskname]=int(hms[0])+float(hms[1])/60.0+float(hms[2])/3600.0
       sumtime[taskname]=nquanta[taskname]*secperstep[taskname]/3600.0
-      maxmem[taskname]=float(b[6])
+      maxmem[taskname]=float(b[7])
       totsumsec = totsumsec + sumtime[taskname]
       totmaxmem = totmaxmem + wallhr[taskname]
       #print(taskname+":",nquanta[taskname],secperstep[taskname],sumtime[taskname],maxmem[taskname],totsumsec,totmaxmem,upn)
-  return(totmaxmem,totsumsec,nquanta,secperstep,wallhr,sumtime,maxmem,upn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)
+  return(totmaxmem,totsumsec,nquanta,startdate,secperstep,wallhr,sumtime,maxmem,upn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)

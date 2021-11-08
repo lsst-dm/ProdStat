@@ -3,6 +3,7 @@ def parsebutlertable(intab):
   f=open(intab,'r')
   done=0
   nquanta={}
+  startdate={}
   secperstep={}
   sumtime={}
   maxmem={}
@@ -31,12 +32,13 @@ def parsebutlertable(intab):
      print("taskname:"+str(taskname))
      if(taskname != ""):
       nquanta[taskname]=int(b[2])
-      secperstep[taskname]=float(b[3])
+      startdate[taskname]=b[3]
+      secperstep[taskname]=float(b[4])
       sumtime[taskname]=nquanta[taskname]*secperstep[taskname]/3600.0
-      maxmem[taskname]=float(b[5])
+      maxmem[taskname]=float(b[6])
       totsumsec = totsumsec + sumtime[taskname]
       if (maxmem[taskname] > totmaxmem and taskname!= "Campaign"):
        totmaxmem = maxmem[taskname]
        print("bumping maxmem to "+str(totmaxmem))
       #print(taskname+":",nquanta[taskname],secperstep[taskname],sumtime[taskname],maxmem[taskname],totsumsec,totmaxmem,upn)
-  return(totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem,upn)
+  return(totmaxmem,totsumsec,nquanta,startdate,secperstep,sumtime,maxmem,upn)
