@@ -6,7 +6,6 @@ from jira import JIRA
 from jira.client import ResultList
 from jira.resources import Issue
 from yaml import load,dump,FullLoader
-import re
 from ParseDRP import parseDRP
 
 from ParseButlerTable import parsebutlertable
@@ -76,7 +75,8 @@ sl=parseDRP(stepcut)
 tasktable="Butler Statistics\n"+"|| Step || Task || nQ || sec/Q || sum(hr) || maxGB ||"+"\n"
 for s in sl:
  if(dobut==0 or s[1] not in nquanta.keys()):
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|" + " " + "|" + " " + "|" + "\n"
+  print("skipping:",s[0])
+  #tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|" + " " + "|" + " " + "|" + "\n"
  else:
   tasktable += "|"+s[0]+"|"+s[1]+"|"+str(nquanta[s[1]]) + "|" + str('{:.1f}'.format(secperstep[s[1]]))+ "|" +str('{:.1f}'.format(sumtime[s[1]]))+"|"+str('{:.2f}'.format(maxmem[s[1]])) + "| \n"
 
@@ -87,7 +87,7 @@ print(tasktable)
 
 tasktable +="Panda Statistics\n"+"|| Step || Task || PanQ || PanWallsec/Q || wallclk(hr) || tothrs || est parall cpu ||"+"\n"
 for s in sl:
- if(dopan==0 or s[1] not in nquanta.keys()):
+ if(dopan==0 or s[1] not in pnquanta.keys()):
   tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
  else:
   tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
