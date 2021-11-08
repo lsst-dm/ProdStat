@@ -9,6 +9,9 @@ from yaml import load,dump,FullLoader
 import re
 from ParseDRP import parseDRP
 
+from ParseButlerTable import parsebutlertable
+from ParsePanDATable import parsepandatable
+
 # script to read a BPS yaml submit file (after the submit to PanDA has been done, so it is
 # in the submit/ subdir of the submitting user)
 # and parses and reads key keyword/values and adds them to a JIRA issue in the DRP-XXXX
@@ -19,16 +22,31 @@ from ParseDRP import parseDRP
 
 bpsyamlfile=sys.argv[1]
 
+ 
+dobut=0
+if(len(sys.argv) >3):
+ butstepfile=sys.argv[3]
+ (totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem,upn)=parsebutlertable(butstepfile)
+ dobut=1
 
 
-kwlist=['bps_defined','campaign','computeSite','payload','requestCpus','requestMemory']
+dopan=0
+if(len(sys.argv) >4):
+ panstepfile=sys.argv[4]
+ (ptotmaxmem,ptotsumsec,pnquanta,psecperstep,pwallhr,psumtime,pmaxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
+ dopan=1
 
-kw={'payload': ['butlerConfig','dataQuery','inCollection','sw_image'], 'bps_defined':['operator','timestamp','uniqProcName'] }
+print(dobut,dopan)
+print(totmaxmem,nquanta,pnquanta)
+
+kwlist=['campaign','project','payload']
+
+kw={'payload': ['butlerConfig','dataQuery','inCollection','sw_image','output'] }
 
 f=open(bpsyamlfile)
 d=load(f,Loader=FullLoader)
 
-bpsstr="BPS SUBMIT YAML:\n"
+bpsstr="BPS Submit Keywords:\n{code}\n"
 for k,v in d.items():
  if k in kwlist:
   if (k in kw):
@@ -38,7 +56,9 @@ for k,v in d.items():
      bpsstr += str(k)+": "+str(v)+"\n"
 
 
-upn=d['bps_defined']['uniqProcName']
+upn=d['campaign']+"/"+upn
+#upn.replace("/","_")
+#upn=d['bps_defined']['uniqProcName']
 stepname=d['pipelineYaml']
 p=re.compile(".*#(.*)")
 m=p.match(stepname)
@@ -49,26 +69,51 @@ else:
  stepcut=""
 
 print("steplist "+stepcut)
-bpsstr += "pipelineYamlSteps: "+stepcut
+bpsstr += "pipelineYamlSteps: "+stepcut+"\n{code}\n"
 
 print(upn+"#"+stepcut)
 sl=parseDRP(stepcut)
-tasktable="\n"+"|| Step || Task || Status || nQuanta || Time ||"+"\n"
+tasktable="Butler Statistics\n"+"|| Step || Task || nQ || sec/Q || sum(hr) || maxGB ||"+"\n"
 for s in sl:
- tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+ "|" +" " +"|"+ "\n"
- 
+ if(dobut==0 or s[1] not in nquanta.keys()):
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|" + " " + "|" + " " + "|" + "\n"
+ else:
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(nquanta[s[1]]) + "|" + str('{:.1f}'.format(secperstep[s[1]]))+ "|" +str('{:.1f}'.format(sumtime[s[1]]))+"|"+str('{:.2f}'.format(maxmem[s[1]])) + "| \n"
+
+if(dobut==1):
+  tasktable += "Total core-hours: "+str('{:.1f}'.format(totsumsec))+" Peak Memory (GB): " +str('{:.1f}'.format(totmaxmem)) + "\n"
 tasktable += "\n"
 print(tasktable)
+
+tasktable +="Panda Statistics\n"+"|| Step || Task || PanQ || PanWallsec/Q || wallclk(hr) || tothrs || est parall cpu ||"+"\n"
+for s in sl:
+ if(dopan==0 or s[1] not in nquanta.keys()):
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
+ else:
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
+
+
+ #(ptotmaxmem,ptotsumsec,pnquanta,psecperstep,wallhr,sumtime,maxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
+
+if(dopan==1):
+  tasktable += "Total wall-hours: "+str('{:.1f}'.format(ptotmaxmem))+" Total cpu-hours: " +str('{:.1f}'.format(ptotsumsec)) + "\n"
+  tasktable += "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
+tasktable += "\n"
+print(tasktable)
+
+
+ #(totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem)=parsebutlertable(butstepfile)
+
 
 secrets = netrc.netrc()
 username,account,password = secrets.authenticators('lsstjira')  
 authenticated_jira = JIRA(options={'server': account}, basic_auth=(username, password))
 if(sys.argv[2]=="0"):
- issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=tasktable+bpsstr,components=[{"name" : "Test"}])
+ issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=bpsstr+tasktable,components=[{"name" : "Test"}])
 else:
  issue=authenticated_jira.issue(sys.argv[2])
 
-issue.update(fields={'summary': stepcut+"#"+upn, 'description': tasktable+bpsstr})
+issue.update(fields={'summary': stepcut+"#"+upn, 'description': bpsstr+tasktable})
 
 print("end")
 
