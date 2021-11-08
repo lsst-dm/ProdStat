@@ -5,7 +5,7 @@ import sys
 import json
 from urllib.request import urlopen
 import time
-from time import sleep
+from time import sleep, gmtime, strftime
 import datetime
 import getopt
 import math
@@ -130,6 +130,9 @@ class GetPanDaStat:
         data['starttime'] = task['starttime']
         tokens = task['endtime'].split('T')
         data['endtime'] = tokens[0] + ' ' + tokens[1] # get rid of T in the date string
+        if task['starttime'] == None:
+            task['starttime'] = tokens[0] + ' ' + tokens[1]
+        data['starttime'] = task['starttime']
         data['maxattempt'] = jb['maxattempt']
         data['basewalltime'] = task['basewalltime']
         data['cpuefficiency'] = task['cpuefficiency']
@@ -237,6 +240,8 @@ class GetPanDaStat:
                     """get data for each task """
                     taskTypes = self.getTaskData(key, tasks)
                     self.wfTasks[key].append(taskTypes)
+#            _tasknames = taskTypes.keys()
+#            print('\n',key, ' ', _tasknames,'\n')
     @staticmethod
     def queryPanda(urlst):
         success = False
@@ -253,8 +258,6 @@ class GetPanDaStat:
                 success = False
                 ntryes += 1
                 sleep(2)
-        #if verbose:
- #           if i % (nrefs//20) == 0:
         sys.stdout.write('.')
         sys.stdout.flush()
         return result
@@ -269,9 +272,9 @@ class GetPanDaStat:
         wfParallel = 0
         campStart = ''
         campEnd = ''
-        self.allStat = {}
+        self.allStat = dict()
         for ttype in self.allTasks:
-            self.allStat[ttype] = {}
+            self.allStat[ttype] = dict()
             tasks = self.allTasks[ttype]
             ntasks = len(tasks)
             itasks = self.taskCounts[ttype]
@@ -302,8 +305,6 @@ class GetPanDaStat:
                 rss = tasks[i]['Rss']
                 if maxRss <= rss:
                     maxRss = rss
-#                maxdiskunit = tasks[i]['maxdiskunit']
-#            attemptnr = attempts / ntasks
             taskduration = taskduration/ntasks
             walltimePJ = cpuconsumption/ntasks
             walltime = walltimePJ * nfiles
@@ -322,7 +323,7 @@ class GetPanDaStat:
             wfNfiles += nfiles
             if wfRss <= maxRss:
                 wfRss = maxRss
-            self.allStat[ttype] = {'nQuanta': float(nfiles),
+            self.allStat[ttype] = {'nQuanta': float(nfiles), 'starttime':starttime,
                                    'wallclock': str(datetime.timedelta(seconds=taskduration)),
                                    'cpu sec/job': float(walltimePJ),
                                    'cpu-hours': str(datetime.timedelta(seconds=walltime)),
@@ -332,6 +333,7 @@ class GetPanDaStat:
 #                                   'requested memory MB': float(maxRss)}
         wfParallel = int(math.ceil(wfWall / wfDuration))
         self.allStat['Campaign'] = {'nQuanta': float(wfNfiles),
+                                    'starttime': strftime("%Y-%m-%d %H:%M:%S", gmtime()),
                                     'wallclock': str(datetime.timedelta(seconds=wfDuration)),
                                     'cpu sec/job': '-',
                                     'cpu-hours':  str(datetime.timedelta(seconds=wfWall)),
@@ -367,23 +369,30 @@ class GetPanDaStat:
         tabula.auto_set_column_width(col=list(range(len(dataFrame.columns))))
         tabula.set_fontsize(12)  # if ++fontsize is necessary ++colWidths
         tabula.scale(1.2, 1.2)  # change size table
-        plt.savefig("/tmp/pandaWfStat.png", transparent=True)
+        plt.savefig("/tmp/pandaWfStat-"+self.Jira+".png", transparent=True)
         plt.show()
         print(tabulate(dataFrame, headers='keys', tablefmt='fancy_grid'))
-#        """ write csv file with the data """
-#        compression_opts = dict(method='zip',archive_name='pandaWfTab.csv')
-#        dataFrame.to_csv('./pandaWfTab.zip', index=True, compression=compression_opts)
- #       """ print the table in a file"""
+        """ write csv file with the data """
+        compression_opts = dict(method='zip',archive_name='pandaWfTab-'+self.Jira+'.csv')
+        dataFrame.to_csv('./pandaWfTab-'+self.Jira+'.zip', index=True, compression=compression_opts)
+#       """ print the table in a file"""
 #        fWf = open('./pandaWfTab.txt','w')
 #        print(tabulate(dataFrame, headers='keys', tablefmt='fancy_grid'), file=fWf)
 #        fWf.close()
 #        print()
 #        print(" allStat")
+        _taskids = dict()
         ttypes = list()
-#
         statList = list()
 #        fPdTaskF = open('./pandaTaskInd.txt', 'w')
+        """Let's sort entries by start time"""
         for ttype in self.allStat:
+            utime = self.allStat[ttype]['starttime']
+            print('ttype=',ttype,' starttime=',utime)
+            utime = datetime.datetime.strptime(utime, "%Y-%m-%d %H:%M:%S").timestamp()
+            _taskids[ttype] = utime
+#
+        for ttype in dict(sorted(_taskids.items(), key=lambda item: item[1])):
             ttypes.append(ttype)
             statList.append(self.allStat[ttype])
 #            print(ttype, file=fPdTaskF)
@@ -398,15 +407,16 @@ class GetPanDaStat:
         tabula.auto_set_column_width(col=list(range(len(dataFrame.columns))))
         tabula.set_fontsize(12)  # if ++fontsize is necessary ++colWidths
         tabula.scale(1.2, 1.2)  # change size table
-        plt.savefig("/tmp/pandaStat.png", transparent=True)
+        plt.savefig("/tmp/pandaStat-"+self.Jira+".png", transparent=True)
         plt.show()
         print(tabulate(dfs, headers='keys', tablefmt='fancy_grid'))
 #        """ print the table to text file """
 #        pandaDataF = open('./pandaStat.txt', 'w')
 #        print(tabulate(dfs, headers='keys', tablefmt='fancy_grid'), file=pandaDataF)
 #        pandaDataF.close()
-#        compression_opts = dict(method='zip',archive_name='pandaTab.csv')
-#        dfs.to_csv('./pandaTab.zip', index=True, compression=compression_opts)
+#        """Save data frame for later use"""
+#        compression_opts = dict(method='zip',archive_name='pandaTab-'+self.Jira+'.csv')
+#        dfs.to_csv('./pandaTab-'+self.Jira+'.zip', index=True, compression=compression_opts)
 
 if __name__ == "__main__":
     print(sys.argv)
