@@ -47,7 +47,17 @@ def parsepandatable(intab):
       secperstep[taskname]=float(b[5])
       wallclock=b[4]
       hms=wallclock.split(":")
-      wallhr[taskname]=int(hms[0])+float(hms[1])/60.0+float(hms[2])/3600.0
+      daysplit=hms[0].split("day")
+      print("day:",daysplit,len(daysplit))
+      if(len(daysplit)>1):
+       daysplit2=hms[0].split("days,")
+       if(len(daysplit2)>1):
+        wallhr[taskname]=int(daysplit2[0])*24+int(daysplit2[1])+float(hms[1])/60.0+float(hms[2])/3600.0
+       else:
+        daysplit=hms[0].split("day,")
+        wallhr[taskname]=int(daysplit[0])*24+int(daysplit[1])+float(hms[1])/60.0+float(hms[2])/3600.0
+      else:
+       wallhr[taskname]=int(hms[0])+float(hms[1])/60.0+float(hms[2])/3600.0
       sumtime[taskname]=nquanta[taskname]*secperstep[taskname]/3600.0
       maxmem[taskname]=float(b[7])
       totsumsec = totsumsec + sumtime[taskname]
