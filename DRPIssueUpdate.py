@@ -40,11 +40,12 @@ if(len(sys.argv) >4):
 print('pupn:',pupn)
 year=str(pupn[0:4])
 month=str(pupn[4:6])
-day=str(pupn[6:8])
+#day=str(pupn[6:8])
+day=str("01")
 print("year:",year)
 print("year:",month)
 print("year:",day)
-link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&sortby=time-ascending"
+link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
 print("link:",link)
 print(dobut,dopan)
 print(totmaxmem,nquanta,pnquanta)
@@ -98,7 +99,7 @@ tasktable += "\n"
 print(tasktable)
 
 tasktable += "PanDA link:"+link+"\n"
-tasktable +="Panda Statistics as of: "+nowut+"\n"+"|| Step || Task || Start || PanQ || PanWallsec/Q || wallclk(hr) || tothrs || est parall cpu ||"+"\n"
+tasktable +="Panda Statistics as of: "+nowut+"\n"+"|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||"+"\n"
 for s in sl:
  if(dopan==0 or s[1] not in pnquanta.keys()):
   tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
