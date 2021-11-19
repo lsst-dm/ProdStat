@@ -10,6 +10,7 @@ def parsepandatable(intab):
   maxmem={}
   totsumsec=0
   totmaxmem=0
+  preqid=0
   while(done==0):
     lin=f.readline()
     if(len(lin)==0):
@@ -38,9 +39,17 @@ def parsepandatable(intab):
      print("statline:",upn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)
      continue
     if(l > 5):
-     taskname=b[1].lstrip(" ").rstrip(" ")
-     print("len tn:"+str(len(taskname)))
+     staskname=b[1].lstrip(" ").rstrip(" ")
+     print("len tn:"+str(len(staskname)))
+     print("staskname:"+str(staskname))
+     splittask=staskname.split("_")
+     if(len(splittask) > 1):
+       taskname=splittask[0]
+       preqid=splittask[1]
+     else:
+       taskname=""
      print("taskname:"+str(taskname))
+     print("preqid:"+str(preqid))
      if(taskname != "" and taskname != "Campaign"):
       nquanta[taskname]=int(b[2])
       startdate[taskname]=b[3]
@@ -63,4 +72,4 @@ def parsepandatable(intab):
       totsumsec = totsumsec + sumtime[taskname]
       totmaxmem = totmaxmem + wallhr[taskname]
       #print(taskname+":",nquanta[taskname],secperstep[taskname],sumtime[taskname],maxmem[taskname],totsumsec,totmaxmem,upn)
-  return(totmaxmem,totsumsec,nquanta,startdate,secperstep,wallhr,sumtime,maxmem,upn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)
+  return(totmaxmem,totsumsec,nquanta,startdate,secperstep,wallhr,sumtime,maxmem,upn,preqid,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)

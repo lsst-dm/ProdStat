@@ -12,6 +12,7 @@ from pytz import timezone
 
 from ParseButlerTable import parsebutlertable
 from ParsePanDATable import parsepandatable
+from Parseyaml import parseyaml
 
 # script to read a BPS yaml submit file (after the submit to PanDA has been done, so it is
 # in the submit/ subdir of the submitting user)
@@ -25,16 +26,19 @@ bpsyamlfile=sys.argv[1]
 
  
 dobut=0
-if(len(sys.argv) >3):
+if(len(sys.argv) >3 and str(sys.argv[3][0:4]) != "2021"):
  butstepfile=sys.argv[3]
  (totmaxmem,totsumsec,nquanta,startdate,secperstep,sumtime,maxmem,upn)=parsebutlertable(butstepfile)
  dobut=1
+else:
+ pupn=sys.argv[3]
 
 
 dopan=0
+preqid=0
 if(len(sys.argv) >4):
  panstepfile=sys.argv[4]
- (ptotmaxmem,ptotsumsec,pnquanta,pstartdate,psecperstep,pwallhr,psumtime,pmaxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
+ (ptotmaxmem,ptotsumsec,pnquanta,pstartdate,psecperstep,pwallhr,psumtime,pmaxmem,pupn,preqid,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
  dopan=1
 
 print('pupn:',pupn)
@@ -48,48 +52,53 @@ print("year:",day)
 link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
 print("link:",link)
 print(dobut,dopan)
-print(totmaxmem,nquanta,pnquanta)
+#print(totmaxmem,nquanta,pnquanta)
 nowut=datetime.now(timezone('GMT')).strftime("%Y-%m-%d %H:%M:%S")+"Z"
 
-kwlist=['campaign','project','payload']
+#kwlist=['campaign','project','payload']
 
-kw={'payload': ['payloadName','butlerConfig','dataQuery','inCollection','sw_image','output'] }
+#kw={'payload': ['payloadName','butlerConfig','dataQuery','inCollection','sw_image','output'] }
 
-f=open(bpsyamlfile)
-d=load(f,Loader=FullLoader)
+#f=open(bpsyamlfile)
+#d=load(f,Loader=FullLoader)
 
-bpsstr="BPS Submit Keywords:\n{code}\n"
-for k,v in d.items():
- if k in kwlist:
-  if (k in kw):
-     for k1 in kw[k]:
-       bpsstr += str(k1)+":"+str(v[k1])+"\n"
-  else:
-     bpsstr += str(k)+": "+str(v)+"\n"
+#bpsstr="BPS Submit Keywords:\n{code}\n"
+#for k,v in d.items():
+ #if k in kwlist:
+  #if (k in kw):
+     #for k1 in kw[k]:
+       #bpsstr += str(k1)+":"+str(v[k1])+"\n"
+  #else:
+     #bpsstr += str(k)+": "+str(v)+"\n"
+#
+(bpsstr,kwd,akwd)=parseyaml(bpsyamlfile,pupn)
 
+print(bpsstr,kwd,akwd)
 
-upn=d['campaign']+"/"+upn
+upn=kwd['campaign']+"/"+pupn
 #upn.replace("/","_")
 #upn=d['bps_defined']['uniqProcName']
-stepname=d['pipelineYaml']
-p=re.compile(".*#(.*)")
+stepname=kwd['pipelineYaml']
+p=re.compile("(.*)#(.*)")
 m=p.match(stepname)
 print("stepname "+stepname)
 if m:
- stepcut=m.group(1)
+ steppath=m.group(1)
+ stepcut=m.group(2)
 else:
  stepcut=""
 
 print("steplist "+stepcut)
+print("steppath "+steppath)
 bpsstr += "pipelineYamlSteps: "+stepcut+"\n{code}\n"
 
 print(upn+"#"+stepcut)
-sl=parseDRP(stepcut)
+sl=parseDRP(steppath,stepcut)
 tasktable="Butler Statistics\n"+"|| Step || Task || Start || nQ || sec/Q || sum(hr) || maxGB ||"+"\n"
 for s in sl:
  if(dobut==0 or s[1] not in nquanta.keys()):
   print("skipping:",s[0])
-  #tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|" + " " + "|" + " " + "|" + "\n"
+  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+ "|" + " "+ "|"+" "+"|" + " " + "|" + " " + "|" + "\n"
  else:
   tasktable += "|"+s[0]+"|"+s[1]+"|"+str(startdate[s[1]])+"|"+str(nquanta[s[1]]) + "|" + str('{:.1f}'.format(secperstep[s[1]]))+ "|" +str('{:.1f}'.format(sumtime[s[1]]))+"|"+str('{:.2f}'.format(maxmem[s[1]])) + "| \n"
 
@@ -98,13 +107,15 @@ if(dobut==1):
 tasktable += "\n"
 print(tasktable)
 
-tasktable += "PanDA link:"+link+"\n"
-tasktable +="Panda Statistics as of: "+nowut+"\n"+"|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||"+"\n"
-for s in sl:
- if(dopan==0 or s[1] not in pnquanta.keys()):
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
- else:
-  tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pstartdate[s[1]])+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
+tasktable += "PanDA reqid: "+str(preqid)+" link:"+link+"\n"
+if(dopan==1):
+ tasktable +="Panda Statistics as of: "+nowut+"\n"+"|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||"+"\n"
+ for s in sl:
+  if(dopan==0 or s[1] not in pnquanta.keys()):
+   tasktable += "|"+s[0]+"|"+s[1]+"|"+" "+"|"+" "+"|"+" "+ "|" + " "+ "|" + " " + "|"  + " "+"|"+"\n"
+  else:
+   tasktable += "|"+s[0]+"|"+s[1]+"|"+str(pstartdate[s[1]])+"|"+str(pnquanta[s[1]]) + "|" + str('{:.1f}'.format(psecperstep[s[1]]))+ "|" +str('{:.1f}'.format(pwallhr[s[1]]))+"|"+str('{:.2f}'.format(psumtime[s[1]]))+"|"+str('{:.0f}'.format(pmaxmem[s[1]])) + "| \n"
+
 
 
  #(ptotmaxmem,ptotsumsec,pnquanta,psecperstep,wallhr,sumtime,maxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
@@ -129,6 +140,6 @@ else:
 
 issue.update(fields={'summary': stepcut+"#"+upn, 'description': bpsstr+tasktable})
 
-print("end")
+print("issue:"+str(issue))
 
 

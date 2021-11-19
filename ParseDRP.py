@@ -1,4 +1,4 @@
-def parseDRP(tocheck):
+def parseDRP(steppath,tocheck):
 
   from yaml import load,dump,FullLoader
   import os
@@ -7,7 +7,16 @@ def parseDRP(tocheck):
   #file should be updated.  It is in  $OBS_LSST_DIR/pipelines/imsim/DRP.yaml
 
   #drpfile=open('DRPtest.yaml')
-  drpfile=open(os.environ.get('OBS_LSST_DIR')+"/pipelines/imsim/DRP.yaml")
+  #${OBS_LSST_DIR}/pipelines/imsim/DRP.yaml
+  stepenvironsplit=steppath.split("}")
+  if (len(stepenvironsplit) > 1):
+   envvar=stepenvironsplit[0][2:]
+   restofpath=stepenvironsplit[1]
+  else:
+   envvar=""
+   restofpath=steppath
+  print(envvar,restofpath)
+  drpfile=open(os.environ.get(envvar)+restofpath)
   drpyaml=load(drpfile,Loader=FullLoader)
   
   #eventually need to load the includes for more details
