@@ -23,13 +23,12 @@ class GetButlerStat:
         with open(parfile) as pf:
             inpars = yaml.safe_load(pf)
         self.Butler = inpars['Butler']
-        self.workflows = inpars['workflows']
+        self.collType = inpars['collType']
+        self.workNames = inpars['workNames']
         self.Jira = inpars['Jira']
         self.maxtask = int(inpars['maxtask'])
         print(" Collecting information for Jira ticket ", self.Jira)
-        print("with workflows:", self.workflows)
         self.REPO_ROOT = self.Butler
-        # REPO_ROOT = 's3://butler-us-central1-panda-dev/hsc/butler.yaml'
         self.butler = Butler(self.REPO_ROOT)
         self.registry = self.butler.registry
         self.workflowRes = {}
@@ -75,14 +74,19 @@ class GetButlerStat:
     def searchCollections(self):
         """ Select collections """
         collections = []
-        prepos = self.Jira
-        searchcolls = self.workflows
-
-        for searchcoll in searchcolls:
-            for c in sorted(self.registry.queryCollections()):
-                if prepos in str(c) and searchcoll in str(c):
+        preops = self.Jira
+        self.CollKeys = dict()
+        for c in sorted(self.registry.queryCollections()):
+            if preops in str(c) and self.collType in str(c):
+                key = str(c).split(preops)[1]
+                if len(key) > 1:
+                    key = key.strip('/')
                     collections.append(c)
-        " Now we have all collections with PREPOS in the name"
+                    self.CollKeys[c] = key
+        """ Now we have all collections with PREOPS in the name and collectionType
+           like PREOPS-707 and 2.2i/runs/  in the collection name """
+        print("selected collections ")
+        print(collections)
         return collections
 
         " Calculate mean and total cpu usage and MaxRSS "
@@ -122,7 +126,6 @@ class GetButlerStat:
                 print("No datasets found for: ", collection)
                 continue
                 #
-            print('collection=', collection)
             k = 0
             lc = 0  # task counter
             taskSize = dict()
@@ -154,9 +157,37 @@ class GetButlerStat:
             self.collData[collection] = taskRefs
             self.collSize[collection] = taskSize
 
+    def make_table_from_csv(self, buffer, outFile, indexName, comment):
+        newbody = comment + '\n'
+        newbody += outFile + '\n'
+        lines = buffer.split('\n')
+        COMMA_MATCHER = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
+        i = 0
+        for line in lines:
+            if i == 0:
+                tokens = line.split(',')
+                #                print(tokens)  #line.split(',')
+                line = '|' + indexName
+                for l in range(1, len(tokens)):
+                    line += '||' + tokens[l]
+                line += '||\r\n'
+            elif i >= 1:
+                tokens = COMMA_MATCHER.split(line)
+                #                print(tokens)
+                line = "|"
+                for token in tokens:
+                    line += token + '|'
+                line = line[:-1]
+                line += '|\r\n'
+            newbody += line
+            i += 1
+        newbody = newbody[:-2]
+        tbfile = open("/tmp/" + outFile + "-" + self.Jira + ".txt", 'w')
+        print(newbody, file=tbfile)
+        return newbody
+
     def run(self):
         collections = self.searchCollections()
-#        print("collections:",collections)
         """Recreate Butler and registry """
         self.butler = Butler(self.REPO_ROOT, collections=collections)
         self.registry = self.butler.registry
@@ -214,8 +245,9 @@ class GetButlerStat:
                     else:
                         data['startTime'].append(results.get('timestamp',None))
                 taskRes[task] = data
+            key = self.CollKeys[collection]
             for task in taskRes:
-                self.workflowRes[task] = self.makeSum(taskSize[task], taskRes[task])
+                self.workflowRes[key+'_'+task] = self.makeSum(taskSize[task], taskRes[task])
             """Now create pandas frame to display results"""
         dt = dict()
         allTasks = list()
@@ -234,7 +266,6 @@ class GetButlerStat:
         utime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         campData = {'nQuanta': int(campJobs), 'startTime':utime, 'cpu sec/job': campCpuPerTask,
                     'cpu-hours':float(campCpu), 'MaxRSS MB': float(campRss)}
-        #str(datetime.timedelta(seconds=campCpu))
         dt['campaign'] = campData
         for ttype in dt:
             task = dt[ttype]
@@ -248,7 +279,6 @@ class GetButlerStat:
         _taskids = dict()
         ttypes = list()
         statList = list()
-        #        fPdTaskF = open('./pandaTaskInd.txt', 'w')
         """Let's sort entries by start time"""
         for ttype in dt:
             task = dt[ttype]
@@ -257,7 +287,6 @@ class GetButlerStat:
             tokens = utime.split('.')
             utime = tokens[0]
             task['startTime'] = utime
-#            print('utime=', utime)
             utime = datetime.datetime.strptime(utime, "%Y-%m-%d %H:%M:%S").timestamp()
             _taskids[ttype] = utime
         #
@@ -266,7 +295,7 @@ class GetButlerStat:
             statList.append(dt[ttype])
 
         dataFrame = pd.DataFrame(statList, index=ttypes)
-        fig, ax = plt.subplots(figsize=(20, 30))  # set size frame
+        fig, ax = plt.subplots(figsize=(25, 35))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
         ax.set_frame_on(False)  # no visible frame, uncomment if size is ok
@@ -279,14 +308,11 @@ class GetButlerStat:
         plt.show()
         """ print the table """
         print(tabulate(dataFrame,  headers='keys', tablefmt='fancy_grid'))
-#        """ create index file for offline DataFrame creation """
-#        f = open('./index.txt', 'w')
-#        for task in allTasks:
-#            print(task,file=f)
-#        f.close()
-#        """ Write DataFrame as csv file for later use """
-#        compression_opts = dict(method='zip',archive_name='butlerStat-'+self.Jira+'.csv')
-#        dataFrame.to_csv('./butlerStat-'+self.Jira+'.zip', index=True, compression=compression_opts)
+        csbuf = dataFrame.to_csv(index=True)
+        tableName = 'butlerStat'
+        indexName = " Workflow Task "
+        comment = """ Campaign Butler statistics """
+        self.make_table_from_csv(csbuf, tableName, indexName, comment)
 
 
 if __name__ == "__main__":
@@ -316,10 +342,8 @@ if __name__ == "__main__":
             print(" The yaml file format as following:")
             print("Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
             "Jira: PREOPS-707\n",
-            "workflows:\n",
-            "- 20211001T200704Z\n",
-            "- 20211003T045430Z\n",
-            "- 20211003T164354Z\n",
+            "collType: 2.2i\n",
+            "workNames: not used now\n",
             "maxtask: 100")
             sys.exit(2)
         elif opt in ("-f", "--yamlFile"):
