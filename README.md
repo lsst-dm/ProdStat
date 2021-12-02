@@ -6,42 +6,45 @@
 ```
 Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
 Jira: PREOPS-707
-workflows:
-- 20211001T200704Z
-- 20211003T045430Z
-- 20211003T164354Z
-- 20211011T150425Z
-- 20211012T170111Z
-- 20211012T194814Z
-- 20211014T145653Z
-- 20211015T003406Z
+collType:2.2i
+workflows: 
 maxtask: 30
 ```
-Here workflows represent a list of time stamps that are part of workflow name
-maxtask is a maximum number of task files used to calculate average cpu/wall time.
+Here  Jira: represent Jira ticket that is used to identify workflows (data collections ) ,
+collType: is a second token used to uniquely identify workflow, it can be part of workflow time stamp
+or user name, e.t.c.
+workflows: is not used now,
+maxtask: maximum number of tasks (yaml) files to process for average cpu/wall time estimation.
 
 ####Operation:
 The program will scan butler registry to select _metadata files for tasks in 
-given dataflow. Those metadata files will be copied one by one into 
+given workflow. Those metadata files will be copied one by one into 
 /tmp/tempTask.yaml file from which maxRss and CPU time usage will be 
 extracted.
 The program collects these data for each task type and calculates total CPU usage for
-all tasks of the type. At the end total CPU tame used by all dataflows and
-maxRss wil be calculadet and resulting table will be created as
-/tmp/butlerStat.png file.
-Note the timestamp ID is case sensitive, no lowercase t or z, use YYYYMMDDTHHMMSSZ
+all tasks of the type. At the end total CPU time used by all workflows and
+maxRss wil be calculated and resulting table will be created as
+/tmp/butlerStat-PREOPS-707.png file. The text version of the table used to put in Jira comment is also created
+as /tmp/butlerStat-PREOPS-707.txt
 
 ###GetPanDaStat.py
 ####Call: GetPanDaStat.p -f inpfile.yaml
-The input file format is exactly same as for GetBatlerStat.py program
+The input file format is exactly same as for GetButlerStat.py program
 
 ####Operation:
-The program will query PanDa web logs to select information about dataflows,
-tasks and jobs. It will produce 2 tables. The first one gives the status of the campaign
-production showing each workflow status.
-The second table list completed tasks, number of quanta in each, time spent for each job,
+The program will query PanDa web logs to select information about workflows,
+tasks and jobs. It will produce 2 sorts of tables.
+
+The first one gives the status of the campaign
+production showing each workflow status as /tmp/pandaWfStat-PREOPS-707.txt.
+A styled html table also is created as /tmp/pandaWfStat-PREOPS-707.html
+
+The second table type lists completed tasks, number of quanta in each, time spent for each job,
 total time for all quanta and wall time estimate for each task. This information permit us to estimate rough number of
 parallel jobs used for each task, and campaign in whole.
+The table names created as /tmp/pandaStat-PREOPS-728.png and pandaStat-PREOPS-728.txt.
+
+Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
 
 #### DRPIssueUpdate.py
