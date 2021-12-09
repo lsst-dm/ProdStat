@@ -90,3 +90,48 @@ bps submit clusttest-all-1.yaml
 
 (this is not yet implemented, but will add to the DRP- ticket created in DRPInit.py)
 DRPIssueUpdate.py clusttest-all-1.yaml 
+
+########################## initial setup for JIRA and ProdStat (before its in the production stack)
+
+On your data-int.lsst.cloud note, to enable running scripts, like DRPInit.py, DRPIssueUpdate.py, etc
+one needs to install jira locally in you home area and add a login credential .netrc file.
+To install jira to this:
+
+pip install jira
+
+Then create a small file with an editor (such as vi) that looks like this:
+cat ~/.netrc
+#test jira from python scripts
+machine lsstjira 
+        account https://jira.lsstcorp.org
+	login <yourname>
+	password <yourjirapasswd>
+
+#########
+Note that your login <yourname> may be different from your data-int.lsst.cloud login name.
+Use your LSST/Rubin/Jira login name here (and associated passwd)
+#####
+Be sure to 'chmod og-rwx ~/.netrc' so it can't be read
+
+############
+
+This only needs to be done once.
+
+####### To call the ProdStat routines, such as MakeProdGroups and DRPInit.py you will need to
+####### check out the packages from git:
+cd 
+git clone https://github.com/lsst-dm/ProdStat		(and to update cd ProdStat; git update)
+
+it is also useful to have the dp02-processing package which has the DC0.2 explist and some
+sample template bps submit scripts and auxillary bps includes like memoryRequest.yaml and clustering.yaml:
+
+cd
+git clone https://github.com/lsst-dm/dp02-processing  (and to update: cd dp02-processing;git update)
+
+The explist, templates, and clustering yaml memoryRequest yaml are in: dp02-processing/full/rehearsal/PREOPS-938/
+Please note that these may need small updates before DP0.2 step1 launch.o
+############
+
+###########
+
+
