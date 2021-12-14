@@ -134,7 +134,7 @@ secrets = netrc.netrc()
 username,account,password = secrets.authenticators('lsstjira')  
 authenticated_jira = JIRA(options={'server': account}, basic_auth=(username, password))
 if(sys.argv[2]=="0"):
- issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=bpsstr+tasktable,components=[{"name" : "Test"}])
+  issue=authenticated_jira.create_issue(project='DRP', issuetype='Task',summary="a new issue",description=bpsstr+tasktable,components=[{"name" : "Test"}])
 else:
  issue=authenticated_jira.issue(sys.argv[2])
 
