@@ -68,13 +68,13 @@ def parseyaml(bpsyamlfile,ts):
     (mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime) = os.stat(origyamlfile)
     #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
     
-    skwlist=['bps_defined','executionButler', 'computeSite']
-    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue']}
+    skwlist=['bps_defined','executionButler', 'computeSite','cluster']
+    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue'],'cluster': ['visit_detector_1','visit_consolidate_1','patch_coaddition','patch_detect_deblend','patch_postprocess','diffim','association','forced_phot_detector','property_maps']}
     
     f=open(fullbpsyaml)
     d=load(f,Loader=FullLoader)
     f.close()
-    #print("submityaml keys:",d)
+    print("submityaml keys:",d)
     for k,v in d.items():
      if k in skwlist:
       if (k in skw):
@@ -85,9 +85,11 @@ def parseyaml(bpsyamlfile,ts):
          akwd[k]=v
          bpsstr += str(k)+": "+str(v)+"\n"
     
-    #print("akwd",akwd)
-    #print(bpsstr)
+    print("akwd",akwd)
+    print("kwd",kwd)
+    print(bpsstr)
     
+    sys.exit(1)
     
     qgraphfile=longpath+"/"+submittedyaml+".qgraph"
     (mode, ino, dev, nlink, uid, gid, qgraphfilesize, atime, mtime, ctime) = os.stat(qgraphfile)
