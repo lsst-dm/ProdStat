@@ -1,12 +1,14 @@
 #!/usr/bin/env python
+
+import sys
+
 def parseyaml(bpsyamlfile,ts):
   
   import os,time
-  import sys
   from yaml import load,dump,FullLoader
   import re
+  import glob
   
-  ts=ts.upper()
   
   kwlist=['campaign','project','payload','pipelineYaml']
   kw={'payload': ['payloadName','butlerConfig','dataQuery','inCollection','sw_image','output'] }
@@ -29,40 +31,50 @@ def parseyaml(bpsyamlfile,ts):
        bpsstr += str(k)+": "+str(v)+"\n"
   
   #print(bpsstr)
-  
-  submityaml='submit/'+kwd['output']+'/'+ts
-  
-  for k in kwd:
-    v=kwd[k]
-    submityaml=submityaml.replace('{'+str(k)+'}',v)
-  
-  #print(submityaml)
-  
-  uniqid=kwd['output']+"_"+ts
+  uniqid=os.path.dirname(bpsyamlfile)+"/submit/"+kwd['output']
   for k in kwd:
     v=kwd[k]
     uniqid=uniqid.replace('{'+str(k)+'}',v)
-  uniqid=uniqid.replace("/","_")
+  #uniqid=uniqid.replace("/","_")
+
   #print(uniqid)
   
+  if(ts=="0"):
+    allpath=glob.glob(uniqid+'/*')
+    allpath.sort()
+    longpath=allpath[-1]
+    ts=os.path.basename(longpath)
+  else:
+    ts=ts.upper()
+    longpath=uniqid+"/"+ts
+
+  #print(longpath)
+
+  submittedyaml=kwd['output']+"_"+ts
+  for k in kwd:
+    v=kwd[k]
+    submittedyaml=submittedyaml.replace('{'+str(k)+'}',v)
+  submittedyaml=submittedyaml.replace("/","_")
   
+  fullbpsyaml=longpath+"/"+submittedyaml+"_config.yaml"
+
+  #print(fullbpsyaml)
+
   
-  origyamlfile=submityaml+"/"+bpsyamlfile
+  origyamlfile=longpath+"/"+os.path.basename(bpsyamlfile)
+
   akwd={}
   if(os.path.exists(origyamlfile)):
     (mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime) = os.stat(origyamlfile)
     #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
     
-    submityamlfile=submityaml+"/"+uniqid+"_config.yaml"
+    skwlist=['bps_defined','executionButler', 'computeSite','cluster']
+    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue'],'cluster': ['visit_detector_1','visit_consolidate_1','patch_coaddition','patch_detect_deblend','patch_postprocess','diffim','association','forced_phot_detector','property_maps']}
     
-    skwlist=['bps_defined','executionButler', 'computeSite']
-    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue']}
-    
-    #print("submityamlfile:",submityamlfile)
-    f=open(submityamlfile)
+    f=open(fullbpsyaml)
     d=load(f,Loader=FullLoader)
     f.close()
-    #print("submityaml keys:",d)
+    print("submityaml keys:",d)
     for k,v in d.items():
      if k in skwlist:
       if (k in skw):
@@ -73,16 +85,17 @@ def parseyaml(bpsyamlfile,ts):
          akwd[k]=v
          bpsstr += str(k)+": "+str(v)+"\n"
     
-    #print("akwd",akwd)
-    #print(bpsstr)
+    print("akwd",akwd)
+    print("kwd",kwd)
+    print(bpsstr)
     
+    sys.exit(1)
     
-    #print(submityamlfile)
-    qgraphfile=submityaml+"/"+uniqid+".qgraph"
+    qgraphfile=longpath+"/"+submittedyaml+".qgraph"
     (mode, ino, dev, nlink, uid, gid, qgraphfilesize, atime, mtime, ctime) = os.stat(qgraphfile)
     #print(qgraphfile,qgraphfilesize)
     bpsstr += "qgraphsize:"+str('{:.1f}'.format(qgraphfilesize/1.0e6))+"MB\n"
-    qgraphout=submityaml+"/"+"quantumGraphGeneration.out"
+    qgraphout=longpath+"/"+"quantumGraphGeneration.out"
     (mode, ino, dev, nlink, uid, gid, size, atime, qgraphoutmtime, ctime) = os.stat(qgraphout)
     f=open(qgraphout)
     qgstat=f.read()
@@ -96,7 +109,7 @@ def parseyaml(bpsyamlfile,ts):
     
     #QuantumGraph contains 310365 quanta for 5 tasks
     #print(qgraphout,qgraphoutmtime,time.ctime(qgraphoutmtime))
-    execbutlerdb=submityaml+"/EXEC_REPO-"+uniqid+"/gen3.sqlite3"
+    execbutlerdb=longpath+"/EXEC_REPO-"+submittedyaml+"/gen3.sqlite3"
     (mode, ino, dev, nlink, uid, gid, butlerdbsize, atime, butlerdbmtime, ctime) = os.stat(execbutlerdb)
     #print(execbutlerdb,butlerdbsize,butlerdbmtime,time.ctime(butlerdbmtime))
     bpsstr += "execbutlersize:"+str('{:.1f}'.format(butlerdbsize/1.0e6))+"MB"+"\n"
@@ -106,4 +119,19 @@ def parseyaml(bpsyamlfile,ts):
     bpsstr += "timeConstructQGraph:"+str('{:.1f}'.format(timetomakeqg/60.0))+"min\n"
     bpsstr += "timeToFillExecButlerDB:"+str('{:.1f}'.format(timetomakeexecbutlerdb/60.0))+"min\n"
     
-  return (bpsstr,kwd,akwd)
+    print(bpsstr)
+  return (bpsstr,kwd,akwd,ts)
+
+if __name__ == "__main__":
+  numpar = len(sys.argv)
+  print('numpar is',numpar)
+  if(numpar>1):
+    bpsyamlfile=sys.argv[1]
+
+  if(numpar>2):
+    ts=str(sys.argv[2])
+  else:
+    ts="0"
+
+  print(bpsyamlfile,ts)
+  parseyaml(bpsyamlfile,ts)

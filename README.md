@@ -47,35 +47,91 @@ The table names created as /tmp/pandaStat-PREOPS-728.png and pandaStat-PREOPS-72
 Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
 
-#### DRPIssueUpdate.py
-#### Call: python DRPIssueUpdate.py <step_yaml_file> <DRP-to-update|0-to-create-new-issue> <output-of-GetButlerStat-file> <output-of-GetPanDaStat-file>
+#### DRPInit.py 
+Usage: DRPInit.py <bps_submit_yaml_template> <Production Issue> [DRP-issue]
+  <bps_submit_yaml_template>: Template file with place holders for start/end dataset/visit/tracts (will be attached to Production Issue)
+  <Production Issue>: Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link to ProdStat tracking issue(s) -- should match issue in template keyword 
+  [DRP-issue]: If present in form DRP-XXX, redo by overwriting an existing DRP-issue. If not present, create a new DRP-issue.  All ProdStat plots and links for group of bps submits will be tracked off this DRP-issue.  Production Issue will be updated with a link to this issue, by updating description (or later by using subtask link if all are DRP type). 
 
-#### Operation:
-The program will parse the output of the GetButlerStat file and the GetPandaStat file and create JIRA format
-tables to be inserted into a DRP jira issue as the description.  If the DRP-to-update is included, it will 
-overwrite an existing DRP issue of that number (i.e. DRP-18).  If '0' is given for the 2nd argument, it will
-create a new JIRA DRP issue with a running integer index, one higher than the highest one in use.
-The <step_yaml_file> is the BPS submit yaml file, it must have keywords such as payload, dataQuery, campaign, etc.
-The required keywords (grouped into steps, and unique across steps) may be modified in 
-the DRPIssueUpdate.py script.
-The 'pipetaskInit' and 'mergeExecutionButler' tasks are unique, in that they are added in at the beginning
-and end of each step in a panda Run. 
-The tasks for a step are defined in the $OBS_LSST_DIR/pipelines/imsim/DRP.yaml file -- that can (should) be
-changed to read it from the pipelineYaml string in the <step_yaml_file> (strip off the step info).
+Example: 
+git clone https://github.com/lsst-dm/ProdStat.git
+git clone https://github.com/lsst-dm/dp02-processing.git
+setup lsst_distrib
+export PYTHONPATH=${PYTHONPATH}:<home/yourname/ProdStat>
+export PATH=${PATH}:</home/yourname/ProdStat>
 
-The <output-of-GetButlerStat-file> is created by first running GetButlerStat.py with a -f input.yaml file
-which gives the YYYYMMDDTHHMMSSZ id of the run, along with the JIRA ticket embedded in the run name (could be left
-off if YYMMDD...Z is unique perhaps?
+mkdir mywork
+cd mywork
+DRPInit.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml PREOPS-938
 
-Same for the output-of-GetPanDaStat file.
+This will return a new DRP-XXX issue where the  prodstats for the PREOPS-938 issue step will be stored
+and updated later.
 
-Currently the hard part is to track down the step_yaml_file and associate it with a YYMMDDTHHMMSSZ bps run id.
-None of that is currently automated. 
-There are also cases where multiple YYMMDD...Z bps runs are associated with the same step_yaml file for the run
-(because the first one didn't finish completely). There may be special step_yaml files to cleanup or different
-YYMMDDS..Z runs which all used the same input step yaml but 'extended the run'.
 
-We are not yet properly dealing with these.
+############## MakeProdGroups.py 
+Usage: MakeProdGroups.py <bps_submit_yaml_template> <band|'all'> <groupsize(visits/group)> <skipgroups(skip first skipgroups groups)> <ngroups> <explist>
+  <bps_submit_yaml_template>: Template file with place holders for start/end dataset/visit/tracts (optional .yaml suffix here will be added)
+ <band|'all'> Which band to restrict to (or 'all' for no restriction, matches BAND in template if not 'all')
+ <groupsize> How many visits (later tracts) per group (i.e. 500)
+ <skipgroups> skip <skipgroups> groups (if others generating similar campaigns
+ <ngroups> how many groups (maximum)
+ <explist> text file listing <band1> <exposure1> for all visits to use
+
+Example: (same setup as for DRPInit.py)
+mkdir mywork
+cd mywork
+MakeProdGroups.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml  all 500 0 100 ../dp02-processing/full/rehearsal/PREOPS-938/explist
 
  
+
+##################### submit a job to bps, record it in an issue
+
+bps submit clusttest-all-1.yaml
+
+(this is not yet implemented, but will add to the DRP- ticket created in DRPInit.py)
+DRPIssueUpdate.py clusttest-all-1.yaml 
+
+########################## initial setup for JIRA and ProdStat (before its in the production stack)
+
+On your data-int.lsst.cloud note, to enable running scripts, like DRPInit.py, DRPIssueUpdate.py, etc
+one needs to install jira locally in you home area and add a login credential .netrc file.
+To install jira to this:
+
+pip install jira
+
+Then create a small file with an editor (such as vi) that looks like this:
+cat ~/.netrc
+#test jira from python scripts
+machine lsstjira 
+        account https://jira.lsstcorp.org
+	login <yourname>
+	password <yourjirapasswd>
+
+#########
+Note that your login <yourname> may be different from your data-int.lsst.cloud login name.
+Use your LSST/Rubin/Jira login name here (and associated passwd)
+#####
+Be sure to 'chmod og-rwx ~/.netrc' so it can't be read
+
+############
+
+This only needs to be done once.
+
+####### To call the ProdStat routines, such as MakeProdGroups and DRPInit.py you will need to
+####### check out the packages from git:
+cd 
+git clone https://github.com/lsst-dm/ProdStat		(and to update cd ProdStat; git update)
+
+it is also useful to have the dp02-processing package which has the DC0.2 explist and some
+sample template bps submit scripts and auxillary bps includes like memoryRequest.yaml and clustering.yaml:
+
+cd
+git clone https://github.com/lsst-dm/dp02-processing  (and to update: cd dp02-processing;git update)
+
+The explist, templates, and clustering yaml memoryRequest yaml are in: dp02-processing/full/rehearsal/PREOPS-938/
+Please note that these may need small updates before DP0.2 step1 launch.o
+############
+
+###########
+
 
