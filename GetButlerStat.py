@@ -1,11 +1,30 @@
 #!/usr/bin/env python
+# This file is part of ProdStat package.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # coding: utf-8
 import sys
 import re
 import os
 import datetime
-import time
-from time import sleep, gmtime, strftime
+from time import gmtime, strftime
 from collections import defaultdict
 import yaml
 import getopt
@@ -32,6 +51,9 @@ class GetButlerStat:
         self.butler = Butler(self.REPO_ROOT)
         self.registry = self.butler.registry
         self.workflowRes = {}
+        self.CollKeys = dict()
+        self.collSize = dict()
+        self.collData = dict()
 
     @staticmethod
     def parse_metadata_yaml(yaml_file):
@@ -43,7 +65,7 @@ class GetButlerStat:
         time_types = 'Cpu User System'.split()
         min_fields = [f'Start{_}Time' for _ in time_types] + [f'start{_}Time' for _ in time_types]
         max_fields = [f'End{_}Time' for _ in time_types] + [f'end{_}Time' for _ in time_types] + ['MaxResidentSetSize']
-        time_stamp = ['startUtc','prepUtc']
+        time_stamp = ['startUtc', 'prepUtc']
         results = dict()
         with open(yaml_file) as fd:
             md = yaml.safe_load(fd)
@@ -71,11 +93,10 @@ class GetButlerStat:
                         continue
         return results
 
-    def searchCollections(self):
+    def search_collections(self):
         """ Select collections """
         collections = []
         preops = self.Jira
-        self.CollKeys = dict()
         for c in sorted(self.registry.queryCollections()):
             if preops in str(c) and self.collType in str(c):
                 key = str(c).split(preops)[1]
@@ -89,27 +110,32 @@ class GetButlerStat:
         print(collections)
         return collections
 
-        " Calculate mean and total cpu usage and MaxRSS "
-    def makeSum(self, taskSize, taskRes):
-        cputime = taskRes['cpu_time']
-        MaxRSS = taskRes['maxRSS']
-        time_start = taskRes['startTime']
-        ts = min(int(taskSize), self.maxtask)
+    def make_sum(self, task_size, task_res):
+        """
+        Calculate max RSS
+        :param task_size:
+        :param task_res:
+        :return:
+        """
+        cputime = task_res['cpu_time']
+        max_rss = task_res['maxRSS']
+        time_start = task_res['startTime']
+        ts = min(int(task_size), self.maxtask)
         if cputime[0] is not None:
-            cpuSum = 0.0
+            cpu_sum = 0.0
             for t in cputime:
-                cpuSum += float(t)
-            cpuPerTask = float(cpuSum / ts)
-            totalCpu = float(cpuPerTask * int(taskSize))
+                cpu_sum += float(t)
+            cpu_per_task = float(cpu_sum / ts)
+            total_cpu = float(cpu_per_task * int(task_size))
         else:
-            cpuPerTask = 0.
-            totalCpu = 0.
-        maxS = 0.
-        for s in MaxRSS:
-            if float(s) >= maxS:
-                maxS = float(s)
-        return {'nQuanta': int(taskSize), 'startTime': time_start[0], 'cpu sec/job': float(cpuPerTask),
-                'cpu-hours': float(totalCpu), 'MaxRSS MB': float(maxS / 1048576.)}
+            cpu_per_task = 0.
+            total_cpu = 0.
+        max_s = 0.
+        for s in max_rss:
+            if float(s) >= max_s:
+                max_s = float(s)
+        return {'nQuanta': int(task_size), 'startTime': time_start[0], 'cpu sec/job': float(cpu_per_task),
+                'cpu-hours': float(total_cpu), 'MaxRSS MB': float(max_s / 1048576.)}
 
     def gettaskdata(self, collections):
         """ We can collect datasets and data IDs
@@ -117,62 +143,67 @@ class GetButlerStat:
         process type"""
         datatype_pattern = '.*_metadata'
         pattern = re.compile(datatype_pattern)
-        self.collSize = dict()
-        self.collData = dict()
         for collection in collections:
             try:
-                datasetRefs = self.registry.queryDatasets(pattern, collections=collection)
-            except:
+                dataset_refs = self.registry.queryDatasets(pattern, collections=collection)
+            except OSError():
                 print("No datasets found for: ", collection)
                 continue
                 #
             k = 0
             lc = 0  # task counter
-            taskSize = dict()
-            taskRefs = dict()
+            task_size = dict()
+            task_refs = dict()
             _refs = list()
             first = True
-            for i, dataref in enumerate(datasetRefs):
+            for i, dataref in enumerate(dataset_refs):
                 k += 1
                 taskname = str(dataref).split('_')[0]
-                if taskname not in taskSize:
+                if taskname not in task_size:
                     if first:
                         curr_task = taskname
                         first = False
                     else:
-                        taskRefs[curr_task] = _refs
+                        task_refs[curr_task] = _refs
                         curr_task = taskname
                     lc = 0
-                    taskSize[taskname] = 1
-                    _refs = []
-                    _refs.append(dataref)
+                    task_size[taskname] = 1
+                    _refs = [dataref]
                     #            print(dataref)
                 else:
-                    taskSize[taskname] += 1
+                    task_size[taskname] += 1
                     lc += 1
                     if lc < self.maxtask:
                         _refs.append(dataref)
                     #                    else:
-                taskRefs[taskname] = _refs
-            self.collData[collection] = taskRefs
-            self.collSize[collection] = taskSize
+                task_refs[taskname] = _refs
+            self.collData[collection] = task_refs
+            self.collSize[collection] = task_size
 
-    def make_table_from_csv(self, buffer, outFile, indexName, comment):
+    def make_table_from_csv(self, buffer, out_file, index_name, comment):
+        """
+        Create table from csv file
+        :param buffer:
+        :param out_file:
+        :param index_name:
+        :param comment:
+        :return:
+        """
         newbody = comment + '\n'
-        newbody += outFile + '\n'
+        newbody += out_file + '\n'
         lines = buffer.split('\n')
-        COMMA_MATCHER = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
+        comma_matcher = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
         i = 0
         for line in lines:
             if i == 0:
                 tokens = line.split(',')
                 #                print(tokens)  #line.split(',')
-                line = '|' + indexName
-                for l in range(1, len(tokens)):
-                    line += '||' + tokens[l]
+                line = '|' + index_name
+                for ln in range(1, len(tokens)):
+                    line += '||' + tokens[ln]
                 line += '||\r\n'
             elif i >= 1:
-                tokens = COMMA_MATCHER.split(line)
+                tokens = comma_matcher.split(line)
                 #                print(tokens)
                 line = "|"
                 for token in tokens:
@@ -182,12 +213,12 @@ class GetButlerStat:
             newbody += line
             i += 1
         newbody = newbody[:-2]
-        tbfile = open("/tmp/" + outFile + "-" + self.Jira + ".txt", 'w')
-        print(newbody, file=tbfile)
+        tb_file = open("/tmp/" + out_file + "-" + self.Jira + ".txt", 'w')
+        print(newbody, file=tb_file)
         return newbody
 
     def run(self):
-        collections = self.searchCollections()
+        collections = self.search_collections()
         """Recreate Butler and registry """
         self.butler = Butler(self.REPO_ROOT, collections=collections)
         self.registry = self.butler.registry
@@ -204,32 +235,32 @@ class GetButlerStat:
             testdict = {'test': ''}
             yaml.dump(testdict, myfile)
         for collection in collections:
-            taskData = self.collData[collection]
-            taskSize = self.collSize[collection]
-            taskRes = dict()
-            for task in taskData:
+            task_data = self.collData[collection]
+            task_size = self.collSize[collection]
+            task_res = dict()
+            for task in task_data:
                 data = defaultdict(list)
-                dataRefs = taskData[task]
-                for i, dataref in enumerate(dataRefs):
+                data_refs = task_data[task]
+                for i, dataref in enumerate(data_refs):
                     if verbose:
                         if i % 100 == 0:
                             sys.stdout.write('.')
                             sys.stdout.flush()
                     try:
                         refyaml = self.butler.getURI(dataref, collections=collection)
-                    except:
+                    except OSError():
                         print('Yaml file not found skipping')
                         continue
                     dest = ButlerURI('/tmp/tempTask.yaml')
                     buri = ButlerURI(refyaml)
                     if not buri.exists():
                         print('The file do not exists')
-                    dataId = dict(dataref.dataId)
+                    data_id = dict(dataref.dataId)
                     #            print("dataId ",dataId)
-                    if 'visit' not in dataId and 'exposure' in dataId:
-                        dataId['visit'] = dataId['exposure']
+                    if 'visit' not in data_id and 'exposure' in data_id:
+                        data_id['visit'] = data_id['exposure']
                     for column in columns:
-                        data[column].append(dataId.get(column, None))
+                        data[column].append(data_id.get(column, None))
                     """Copy metadata.yaml to local temp yaml """
                     dest.transfer_from(buri, 'copy', True)
                     """parse results """
@@ -240,33 +271,33 @@ class GetButlerStat:
                         cpu_time = float(results.get('EndCpuTime', None))
                     data['cpu_time'].append(cpu_time)
                     data['maxRSS'].append(results.get('MaxResidentSetSize', None))
-                    if results.get('timestamp',None) is None:
+                    if results.get('timestamp', None) is None:
                         data['startTime'].append(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
                     else:
-                        data['startTime'].append(results.get('timestamp',None))
-                taskRes[task] = data
+                        data['startTime'].append(results.get('timestamp', None))
+                task_res[task] = data
             key = self.CollKeys[collection]
-            for task in taskRes:
-                self.workflowRes[key+'_'+task] = self.makeSum(taskSize[task], taskRes[task])
+            for task in task_res:
+                self.workflowRes[key + '_' + task] = self.makeSum(task_size[task], task_res[task])
             """Now create pandas frame to display results"""
         dt = dict()
-        allTasks = list()
-        campCpu = 0.
-        campRss = 0.
-        campJobs = 0
-        campCpuPerTask = 0.
+        all_tasks = list()
+        camp_cpu = 0.
+        camp_rss = 0.
+        camp_jobs = 0
+        camp_cpu_per_task = 0.
         for task in self.workflowRes:
-            allTasks.append(task)
+            all_tasks.append(task)
             dt[task] = self.workflowRes[task]
-            campCpu += float(self.workflowRes[task]['cpu-hours'])
-            campJobs += self.workflowRes[task]['nQuanta']
-            if float(self.workflowRes[task]['MaxRSS MB']) >= campRss:
-                campRss = float(self.workflowRes[task]['MaxRSS MB'])
-        allTasks.append('Campaign')
+            camp_cpu += float(self.workflowRes[task]['cpu-hours'])
+            camp_jobs += self.workflowRes[task]['nQuanta']
+            if float(self.workflowRes[task]['MaxRSS MB']) >= camp_rss:
+                camp_rss = float(self.workflowRes[task]['MaxRSS MB'])
+        all_tasks.append('Campaign')
         utime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
-        campData = {'nQuanta': int(campJobs), 'startTime':utime, 'cpu sec/job': campCpuPerTask,
-                    'cpu-hours':float(campCpu), 'MaxRSS MB': float(campRss)}
-        dt['campaign'] = campData
+        camp_data = {'nQuanta': int(camp_jobs), 'startTime': utime, 'cpu sec/job': camp_cpu_per_task,
+                     'cpu-hours': float(camp_cpu), 'MaxRSS MB': float(camp_rss)}
+        dt['campaign'] = camp_data
         for ttype in dt:
             task = dt[ttype]
             task['cpu-hours'] = str(datetime.timedelta(seconds=task['cpu-hours']))
@@ -278,7 +309,7 @@ class GetButlerStat:
         pd.set_option('precision', 1)
         _taskids = dict()
         ttypes = list()
-        statList = list()
+        stat_list = list()
         """Let's sort entries by start time"""
         for ttype in dt:
             task = dt[ttype]
@@ -290,29 +321,29 @@ class GetButlerStat:
             utime = datetime.datetime.strptime(utime, "%Y-%m-%d %H:%M:%S").timestamp()
             _taskids[ttype] = utime
         #
-        for ttype in dict(sorted(_taskids.items(), key=lambda item: item[1])):
-            ttypes.append(ttype)
-            statList.append(dt[ttype])
+        for tt in dict(sorted(_taskids.items(), key=lambda item: item[1])):
+            ttypes.append(tt)
+            stat_list.append(dt[tt])
 
-        dataFrame = pd.DataFrame(statList, index=ttypes)
+        data_frame = pd.DataFrame(stat_list, index=ttypes)
         fig, ax = plt.subplots(figsize=(25, 35))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
         ax.set_frame_on(False)  # no visible frame, uncomment if size is ok
-        tabla = table(ax, dataFrame, loc='upper right')
+        tabla = table(ax, data_frame, loc='upper right')
         tabla.auto_set_font_size(False)  # Activate set fontsize manually
-        tabla.auto_set_column_width(col=list(range(len(dataFrame.columns))))
+        tabla.auto_set_column_width(col=list(range(len(data_frame.columns))))
         tabla.set_fontsize(12)  # if ++fontsize is necessary ++colWidths
         tabla.scale(1.2, 1.2)  # change size table
-        plt.savefig("/tmp/butlerStat-"+self.Jira + ".png", transparent=True)
+        plt.savefig("/tmp/butlerStat-" + self.Jira + ".png", transparent=True)
         plt.show()
         """ print the table """
-        print(tabulate(dataFrame,  headers='keys', tablefmt='fancy_grid'))
-        csbuf = dataFrame.to_csv(index=True)
-        tableName = 'butlerStat'
-        indexName = " Workflow Task "
+        print(tabulate(data_frame, headers='keys', tablefmt='fancy_grid'))
+        cs_buf = data_frame.to_csv(index=True)
+        table_name = 'butlerStat'
+        index_name = " Workflow Task "
         comment = """ Campaign Butler statistics """
-        self.make_table_from_csv(csbuf, tableName, indexName, comment)
+        self.make_table_from_csv(cs_buf, table_name, index_name, comment)
 
 
 if __name__ == "__main__":
@@ -333,18 +364,18 @@ if __name__ == "__main__":
         sys.exit(2)
     yaml_flag = 0
 
-    for opt,arg in opts:
-        print("%s %s" %(opt, arg))
+    for opt, arg in opts:
+        print("%s %s" % (opt, arg))
         if opt == "-h":
             print("Usage: GetButlerStat.py <required inputs>")
             print("  Required inputs:")
             print("  -f <yamlFile> - yaml file containing input parameters ")
             print(" The yaml file format as following:")
             print("Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
-            "Jira: PREOPS-707\n",
-            "collType: 2.2i\n",
-            "workNames: not used now\n",
-            "maxtask: 100")
+                  "Jira: PREOPS-707\n",
+                  "collType: 2.2i\n",
+                  "workNames: not used now\n",
+                  "maxtask: 100")
             sys.exit(2)
         elif opt in ("-f", "--yamlFile"):
             yaml_flag = 1
@@ -358,4 +389,4 @@ if __name__ == "__main__":
     #
     GBS = GetButlerStat(inpFile)
     GBS.run()
-    print( "End with GetButler Stat.py")
+    print("End with GetButler Stat.py")

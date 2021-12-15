@@ -1,9 +1,28 @@
 #!/usr/bin/env python
-""" This is an example program how to read production statistics
- from PanDa database"""
+# This file is part of ProdStat package.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 import json
 import re
+import urllib.error as url_error
 from urllib.request import urlopen
 import time
 from time import sleep, gmtime, strftime
@@ -11,10 +30,11 @@ import datetime
 import getopt
 import math
 import yaml
-from tabulate import tabulate
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import table
+
+
 class GetPanDaStat:
     def __init__(self, inpf):
         """Get parameters - workflow keys from yaml file """
@@ -26,14 +46,8 @@ class GetPanDaStat:
         self.Jira = inpars['Jira']
         self.maxtask = int(inpars['maxtask'])  # not used
         self.workKeys = list()
-        """convert keys to lowercase as it is in PanDa"""
-#        for i in range(len(self.workKeys)):
-#            self.workKeys[i] = str(self.workKeys[i]).lower()
         print(" Collecting information for Jira ticket ", self.Jira)
-#        print("with steps:", self.workNames)
-        self.workflows = {}
-#        for key in self.workKeys:
-#            self.workflows[key] = []
+        self.workflows = dict()
         self.wfInfo = dict()  # workflow status
         self.taskCounts = dict()  # number of tasks of given type
         self.allTasks = dict()  # info about tasks
@@ -41,24 +55,21 @@ class GetPanDaStat:
         self.wfTasks = dict()  # tasks per workflow
         self.taskStat = dict()
         self.allStat = dict()  # general statistics
+        self.wfNames = dict()
 
-    def getWorkflows(self):
+    def get_workflows(self):
         """First lets get all workflows with given keys """
-        wfdata = self.queryPanda(urlst="http://panda-doma.cern.ch/idds/wfprogress/?json")
+        wfdata = self.querypanda(urlst="http://panda-doma.cern.ch/idds/wfprogress/?json")
         comp = str(self.Jira).lower()
         comp1 = str(self.collType)
-        self.wfNames = dict()
         nwf = 0
         for wf in wfdata:
             r_name = wf['r_name']
             if comp in r_name and comp1 in r_name:
                 key = str(r_name).split('_')[-1]
                 self.workKeys.append(str(key))
-                """ possible mapping to steps """
-#               self.wfNames[str(key)] = self.workNames[nwf]
-#                print(key,': ',self.wfNames[key])
                 nwf += 1
-        print("number of workflows =",nwf)
+        print("number of workflows =", nwf)
         if nwf == 0:
             print("No workflows to work with -- exiting")
             sys.exit(-256)
@@ -69,9 +80,9 @@ class GetPanDaStat:
                 r_name = wf['r_name']
                 if wfk in r_name:
                     self.workflows[wfk].append(wf)
-#
-        print("Selected workflows:",self.workflows)
-#        print(self.wfNames)
+        #
+        print("Selected workflows:", self.workflows)
+        #        print(self.wfNames)
         for key in self.workKeys:
             workflow = self.workflows[key]
             for wf in workflow:
@@ -83,14 +94,14 @@ class GetPanDaStat:
                 processed_files = wf['processed_files']
                 task_statuses = wf['tasks_statuses']
                 finished = task_statuses['Finished']
-                try:
-                    subfinished = task_statuses['SubFinished']
-                except:
+                if task_statuses['SubFinished'] is None:
                     subfinished = 0
-                try:
-                    failed = task_statuses['Failed']
-                except:
+                else:
+                    subfinished = task_statuses['SubFinished']
+                if task_statuses['Failed'] is None:
                     failed = 0
+                else:
+                    failed = task_statuses['Failed']
                 if key not in self.wfInfo:
                     self.wfInfo[key] = {'status': r_status, 'ntasks': float(total_tasks),
                                         'nfiles': float(total_files),
@@ -102,24 +113,26 @@ class GetPanDaStat:
                                         'created': created}
 
     """Select tasks for given workflow (jobs)"""
-    def getWfTasks(self, workflow):
+
+    def getwftasks(self, workflow):
         urls = workflow['r_name']
-        tasks = self.queryPanda(urlst="http://panda-doma.cern.ch/tasks/?taskname=" + urls + "*&days=120&json")
+        tasks = self.querypanda(urlst="http://panda-doma.cern.ch/tasks/?taskname=" + urls + "*&days=120&json")
         return tasks
 
     """extract data we need from task dictionary """
-    def getTaskInfo(self, task):
+
+    def gettaskinfo(self, task):
         data = dict()
         jeditaskid = task['jeditaskid']
         """ Now select a number of jobs to calculate average cpu time and max Rss """
         uri = "http://panda-doma.cern.ch/jobs/?jeditaskid=" + str(jeditaskid) + \
-                "&limit=" + str(self.maxtask) + "&jobstatus=finished&json"
-        jobsdata = self.queryPanda(urlst=uri)
+              "&limit=" + str(self.maxtask) + "&jobstatus=finished&json"
+        jobsdata = self.querypanda(urlst=uri)
         """ list of jobs in the task """
         jobs = jobsdata['jobs']
         njobs = len(jobs)
         corecount = 0
-        maxRss = 0
+        max_rss = 0
         duration = 0
         attempts = 0
         starttime = float(round(time.time()))
@@ -133,8 +146,8 @@ class GetPanDaStat:
                 taskstart = datetime.datetime.strptime(startst, "%Y-%m-%d %H:%M:%S").timestamp()
                 if starttime >= taskstart:
                     starttime = taskstart
-                if maxRss <= jb['minramcount']:
-                    maxRss = jb['minramcount']
+                if max_rss <= jb['minramcount']:
+                    max_rss = jb['minramcount']
             corecount = float(corecount / njobs)
             duration = float(duration / njobs)
             attemptnr = float(attempts / njobs)
@@ -154,8 +167,8 @@ class GetPanDaStat:
         data['actualcorecount'] = jb['actualcorecount']
         data['starttime'] = task['starttime']
         tokens = task['endtime'].split('T')
-        data['endtime'] = tokens[0] + ' ' + tokens[1] # get rid of T in the date string
-        if task['starttime'] == None:
+        data['endtime'] = tokens[0] + ' ' + tokens[1]  # get rid of T in the date string
+        if task['starttime'] is None:
             task['starttime'] = tokens[0] + ' ' + tokens[1]
         data['starttime'] = task['starttime']
         data['maxattempt'] = jb['maxattempt']
@@ -170,7 +183,7 @@ class GetPanDaStat:
         tokens = jb['endtime'].split('T')
         data['jobendtime'] = tokens[0] + ' ' + tokens[1]  # get rid of T in the date string
         taskstart = datetime.datetime.strptime(data['starttime'], "%Y-%m-%d %H:%M:%S").timestamp()
-#        jobstart = datetime.datetime.strptime(data['jobstarttime'], "%Y-%m-%d %H:%M:%S").timestamp()
+        #        jobstart = datetime.datetime.strptime(data['jobstarttime'], "%Y-%m-%d %H:%M:%S").timestamp()
         jobstart = starttime
         taskend = datetime.datetime.strptime(data['endtime'], "%Y-%m-%d %H:%M:%S").timestamp()
         taskduration = taskend - taskstart
@@ -179,14 +192,15 @@ class GetPanDaStat:
         data['taskduration'] = jobduration
         data['exeerrorcode'] = jb['exeerrorcode']
         data['nfiles'] = dsinfo['nfiles']
-        data['Rss'] = maxRss
+        data['Rss'] = max_rss
         return data
 
     """given list of jobs get statistics for each job type """
-    def getTaskData(self, key, tasks):
-        taskData = list()
-        taskNames = list()
-        taskTypes = dict()
+
+    def gettaskdata(self, key, tasks):
+        taskdata = list()
+        tasknames = list()
+        tasktypes = dict()
         taskids = dict()
         """Let's sort tasks with jeditaskid """
         i = 0
@@ -206,7 +220,7 @@ class GetPanDaStat:
             taskname = name[:-1]
             taskid = task['jeditaskid']
             uri = "http://panda-doma.cern.ch/job?pandaid=" + str(taskid) + "&json"
-            data = self.getTaskInfo(task)
+            data = self.gettaskinfo(task)
             if len(data) == 0:
                 print("No data for ", taskname)
                 continue
@@ -216,7 +230,7 @@ class GetPanDaStat:
             taskname = taskname.split(comp)[1]
             tokens = taskname.split('_')
             name = ''
-            for i in range(1, len(tokens)-1):
+            for i in range(1, len(tokens) - 1):
                 name += (tokens[i] + '_')
             taskname = name[:-1]
             taskname = str(key) + '_' + taskname
@@ -227,41 +241,43 @@ class GetPanDaStat:
             if taskname not in self.allJobs[jobname]:
                 self.allJobs[jobname].append(taskname)
             data['walltime'] = data['taskduration']
-            taskData.append(data)
+            taskdata.append(data)
         """Now create a list of task types"""
-        for data in taskData:
+        for data in taskdata:
             name = data['taskname']
             if name not in self.taskCounts:
                 self.taskCounts[name] = 0
                 self.allTasks[name] = list()
-                taskNames.append(name)
+                tasknames.append(name)
         """Now create a list of tasks for each task type """
-        for taskname in taskNames:
+        for taskname in tasknames:
             tasklist = list()
-            for task in taskData:
+            for task in taskdata:
                 if taskname == task['taskname']:
                     tasklist.append(task)
                     if taskname in self.allTasks:
                         self.allTasks[taskname].append(task)
                         self.taskCounts[taskname] += 1
-            taskTypes[taskname] = tasklist
-        return taskTypes
+            tasktypes[taskname] = tasklist
+        return tasktypes
 
     """Select finished and sub finished workflow tasks """
-    def getTasks(self):
+
+    def gettasks(self):
         for key in self.workKeys:
             self.wfTasks[key] = list()
             _workflows = self.workflows[key]
             for wf in _workflows:
-                if str(wf['r_status']) == 'finished' or str(wf['r_status']) == 'subfinished' or str(wf['r_status']) == 'running':
+                if str(wf['r_status']) == 'finished' or str(wf['r_status']) == 'subfinished' or str(
+                        wf['r_status']) == 'running':
                     """ get tasks for this workflow """
-                    tasks = self.getWfTasks(wf)
+                    tasks = self.getwftasks(wf)
                     """get data for each task """
-                    taskTypes = self.getTaskData(key, tasks)
-                    self.wfTasks[key].append(taskTypes)
+                    tasktypes = self.gettaskdata(key, tasks)
+                    self.wfTasks[key].append(tasktypes)
 
     @staticmethod
-    def queryPanda(urlst):
+    def querypanda(urlst):
         success = False
         ntryes = 0
         result = dict()
@@ -270,7 +286,7 @@ class GetPanDaStat:
                 with urlopen(urlst) as url:
                     result = json.loads(url.read().decode())
                     success = True
-            except:
+            except url_error.URLError:
                 print("failed with ", urlst, " retrying")
                 print("ntryes=", ntryes)
                 success = False
@@ -280,16 +296,16 @@ class GetPanDaStat:
         sys.stdout.flush()
         return result
 
-    def getAllStat(self):
-        wfWall = 0
-        wfDisk = 0
-        wfCores = 0
-        wfRss = 0
-        wfDuration = 0.
-        wfNfiles = 0
-        wfParallel = 0
-        campStart = ''
-        campEnd = ''
+    def getallstat(self):
+        wfwall = 0
+        wfdisk = 0
+        wfcores = 0
+        wfrss = 0
+        wfduration = 0.
+        wfnfiles = 0
+        wfparallel = 0
+        campstart = ''
+        campend = ''
         self.allStat = dict()
         for ttype in self.allTasks:
             self.allStat[ttype] = dict()
@@ -304,7 +320,7 @@ class GetPanDaStat:
             duration = 0.
             taskduration = 0.
             nfiles = 0
-            maxRss = 0
+            max_rss = 0
             attempts = 0.
             maxdiskunit = 'MB'
             ntasks = len(tasks)
@@ -321,40 +337,41 @@ class GetPanDaStat:
                 corecount += int(tasks[i]['actualcorecount'])
                 nfiles = int(tasks[i]['nfiles'])
                 rss = tasks[i]['Rss']
-                if maxRss <= rss:
-                    maxRss = rss
-            taskduration = taskduration/ntasks
-            walltimePJ = cpuconsumption/ntasks
-            walltime = walltimePJ * nfiles
-            maxdiskPJ = maxdiskcount / ntasks
-            diskcount = maxdiskPJ * nfiles
-            corecountPJ = corecount / ntasks
-            corecount = corecountPJ * nfiles
-            cpueffPJ = cpuefficiency / ntasks
+                if max_rss <= rss:
+                    max_rss = rss
+            taskduration = taskduration / ntasks
+            walltime_pj = cpuconsumption / ntasks
+            walltime = walltime_pj * nfiles
+            maxdisk_pj = maxdiskcount / ntasks
+            diskcount = maxdisk_pj * nfiles
+            corecount_pj = corecount / ntasks
+            corecount = corecount_pj * nfiles
+            cpueff_pj = cpuefficiency / ntasks
             nparallel = int(math.ceil(walltime / taskduration))
             if nparallel < 1:
                 nparallel = 1
-            wfDuration += taskduration
-            wfWall += walltime
-            wfDisk += diskcount
-            wfCores += nparallel
-            wfNfiles += nfiles
-            if wfRss <= maxRss:
-                wfRss = maxRss
-            self.allStat[ttype] = {'nQuanta': float(nfiles), 'starttime':starttime,
+            wfduration += taskduration
+            wfwall += walltime
+            wfdisk += diskcount
+            wfcores += nparallel
+            wfnfiles += nfiles
+            if wf_rss <= max_rss:
+                wf_rss = max_rss
+            self.allStat[ttype] = {'nQuanta': float(nfiles), 'starttime': starttime,
                                    'wallclock': str(datetime.timedelta(seconds=taskduration)),
-                                   'cpu sec/job': float(walltimePJ),
+                                   'cpu sec/job': float(walltime_pj),
                                    'cpu-hours': str(datetime.timedelta(seconds=walltime)),
                                    'est. parallel jobs': nparallel}
 
-        wfParallel = int(math.ceil(wfWall / wfDuration))
-        self.allStat['Campaign'] = {'nQuanta': float(wfNfiles),
+        wfparallel = int(math.ceil(wfwall / wfduration))
+        self.allStat['Campaign'] = {'nQuanta': float(wfnfiles),
                                     'starttime': strftime("%Y-%m-%d %H:%M:%S", gmtime()),
-                                    'wallclock': str(datetime.timedelta(seconds=wfDuration)),
+                                    'wallclock': str(datetime.timedelta(seconds=wfduration)),
                                     'cpu sec/job': '-',
-                                    'cpu-hours':  str(datetime.timedelta(seconds=wfWall)),
-                                    'est. parallel jobs': wfParallel}
+                                    'cpu-hours': str(datetime.timedelta(seconds=wfwall)),
+                                    'est. parallel jobs': wfparallel}
 
+    @staticmethod
     def highlight_status(value):
         if str(value) == 'failed':
             return ['background-color: read'] * 9
@@ -363,7 +380,8 @@ class GetPanDaStat:
         else:
             return ['background-color: green'] * 9
 
-    def highlight_greaterthan_0(self,s):
+    @staticmethod
+    def highlight_greaterthan_0(s):
         if s.task_failed > 0.0:
             return ['background-color: red'] * 9
         elif s.task_subfinished > 0.0:
@@ -371,109 +389,108 @@ class GetPanDaStat:
         else:
             return ['background-color: white'] * 9
 
-    def make_table_from_csv(self, buffer, outFile, indexName, comment):
+    def make_table_from_csv(self, buffer, out_file, index_name, comment):
         newbody = comment + '\n'
-        newbody += outFile + '\n'
+        newbody += out_file + '\n'
         lines = buffer.split('\n')
-        COMMA_MATCHER = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
+        comma_matcher = re.compile(r",(?=(?:[^\"']*[\"'][^\"']*[\"'])*[^\"']*$)")
         i = 0
         for line in lines:
             if i == 0:
                 tokens = line.split(',')
-                line = '|' + indexName
-                for l in range(1, len(tokens)):
-                    line += '||' + tokens[l]
+                line = '|' + index_name
+                for ln in range(1, len(tokens)):
+                    line += '||' + tokens[ln]
                 line += '||\r\n'
             elif i >= 1:
-                tokens = COMMA_MATCHER.split(line)
-                line = "|"
+                tokens = comma_matcher.split(line)
+                line = '|'
                 for token in tokens:
                     line += token + '|'
                 line = line[:-1]
                 line += '|\r\n'
             newbody += line
             i += 1
-        newbody = newbody[:-2]
-        tbfile = open("/tmp/" + outFile + "-" + self.Jira + ".txt", 'w')
-        print(newbody, file=tbfile)
+        new_body = newbody[:-2]
+        tb_file = open("/tmp/" + out_file + "-" + self.Jira + ".txt", 'w')
+        print(new_body, file=tb_file)
         return newbody
 
-    def make_styled_table(self, dataFrame, outFile):
-        df_styled = dataFrame.style.apply(self.highlight_greaterthan_0, axis=1)
+    def make_styled_table(self, dataframe, outfile):
+        df_styled = dataframe.style.apply(self.highlight_greaterthan_0, axis=1)
         df_styled.set_table_attributes('border="1"')
         df_html = df_styled.render()
-        htfile = open("/tmp/" + outFile + "-" + self.Jira + ".html", 'w')
+        htfile = open("/tmp/" + outfile + "-" + self.Jira + ".html", 'w')
         print(df_html, file=htfile)
         htfile.close()
 
-    def make_table(self, dataFrame, tableName,indexName,comment):
-        fig,ax = plt.subplots(figsize=(20,35))  # set size frame
+    def make_table(self, data_frame, table_name, index_name, comment):
+        fig, ax = plt.subplots(figsize=(20, 35))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
         ax.set_frame_on(False)  # no visible frame, uncomment if size is ok
-        tabula = table(ax, dataFrame, loc='upper right')
+        tabula = table(ax, data_frame, loc='upper right')
         tabula.auto_set_font_size(False)  # Activate set fontsize manually
-        tabula.auto_set_column_width(col=list(range(len(dataFrame.columns))))
+        tabula.auto_set_column_width(col=list(range(len(data_frame.columns))))
         tabula.set_fontsize(12)  # if ++fontsize is necessary ++colWidths
         tabula.scale(1.2, 1.2)  # change size table
-        plt.savefig("/tmp/" + tableName + "-" + self.Jira + ".png", transparent=True)
+        plt.savefig("/tmp/" + table_name + "-" + self.Jira + ".png", transparent=True)
         plt.show()
-        dataFrame.to_csv("/tmp/" + tableName + "-" + self.Jira + ".csv",index=True)
-        csbuf = dataFrame.to_csv(index=True)
-        self.make_table_from_csv(csbuf, tableName,indexName,comment)
+        data_frame.to_csv("/tmp/" + table_name + "-" + self.Jira + ".csv", index=True)
+        csbuf = data_frame.to_csv(index=True)
+        self.make_table_from_csv(csbuf, table_name, index_name, comment)
 
     def run(self):
-        self.getWorkflows()
-        self.getTasks()
-        self.getAllStat()
+        self.get_workflows()
+        self.gettasks()
+        self.getallstat()
         print("workflow info")
-        wfInd = list()
+        wfind = list()
 
-        wfList = list()
-#        wfIndF = open('./wfInd.txt','w')
+        wflist = list()
+        #        wfIndF = open('./wfInd.txt','w')
         """ Let sort datasets by creation time"""
         _dfids = dict()
         _dfkeys = list()
-        wfList = list()
         for key in self.wfInfo:
             """wfInd.append(self.wfNames[key])"""
             utime = self.wfInfo[key]['created']
             _sttime = datetime.datetime.utcfromtimestamp(utime)
             self.wfInfo[key]['created'] = _sttime
             _dfids[key] = utime
-#
+        #
         for key in dict(sorted(_dfids.items(), key=lambda item: item[1])):
-            wfInd.append(str(key))
+            wfind.append(str(key))
             _dfkeys.append(key)
-            wfList.append(self.wfInfo[key])
-
+            wflist.append(self.wfInfo[key])
 
         pd.set_option('max_colwidth', 500)
         pd.set_option('precision', 1)
-        dataFrame = pd.DataFrame(wfList, index=wfInd)
+        dataframe = pd.DataFrame(wflist, index=wfind)
         comment = """ workflow status """
-        indexName = "workflow"
-        tableName = "pandaWfStat"
-        self.make_table(dataFrame, tableName, indexName,comment)
-        self.make_styled_table(dataFrame, tableName)
-
+        index_name = "workflow"
+        table_name = "pandaWfStat"
+        self.make_table(dataframe, table_name, index_name, comment)
+        self.make_styled_table(dataframe, table_name)
         _taskids = dict()
         ttypes = list()
-        statList = list()
+        statlist = list()
         """Let's sort entries by start time"""
         for ttype in self.allStat:
             utime = self.allStat[ttype]['starttime']
             utime = datetime.datetime.strptime(utime, "%Y-%m-%d %H:%M:%S").timestamp()
             _taskids[ttype] = utime
-#
+        #
         for ttype in dict(sorted(_taskids.items(), key=lambda item: item[1])):
             ttypes.append(ttype)
-            statList.append(self.allStat[ttype])
-        dfs = pd.DataFrame(statList, index=ttypes)
-        tableName = "pandaStat"
-        indexName = " Workflow Task "
+            statlist.append(self.allStat[ttype])
+        dfs = pd.DataFrame(statlist, index=ttypes)
+        table_name = "pandaStat"
+        index_name = " Workflow Task "
         comment = """ Panda campaign statistics """
-        self.make_table(dfs, tableName, indexName, comment)
+        self.make_table(dfs, table_name, index_name, comment)
+
+
 #        self.make_styled_table(dfs, tableName)
 
 if __name__ == "__main__":
@@ -494,18 +511,18 @@ if __name__ == "__main__":
         sys.exit(2)
     f_flag = 0
     inpF = ''
-    for opt,arg in opts:
-        print ("%s %s"%(opt, arg))
+    for opt, arg in opts:
+        print("%s %s" % (opt, arg))
         if opt == "-h":
             print("Usage: GetPanDaStat.py <required inputs>")
             print("  Required inputs:")
             print("  -f <inputYaml> - yaml file with input parameters")
             print("The yaml file format as following:")
             print("Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
-            "Jira: PREOPS-707\n",
-            "collType: 2.2i\n",
-            "workNames: Not used now\n",
-            "maxtask: 100\n")
+                  "Jira: PREOPS-707\n",
+                  "collType: 2.2i\n",
+                  "workNames: Not used now\n",
+                  "maxtask: 100\n")
             sys.exit(2)
         elif opt in ("-f", "--inputYaml"):
             f_flag = 1
@@ -520,4 +537,3 @@ if __name__ == "__main__":
     GPS = GetPanDaStat(inpF)
     GPS.run()
     print("End with GetPanDaStat.py")
-
