@@ -1,0 +1,18 @@
+project: 'Pre-Operations'
+Jira: PREOPS-911
+comments:
+- file: /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.txt
+  tokens:
+     - 'pandaWfStat'
+     - 'workflow'
+- file: /Users/kuropat/devel/reports/pandaStat-PREOPS-911.txt
+  tokens:
+     - 'pandaStat'
+     - 'campaign'
+- file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
+  tokens:
+    - 'butlerStat'
+    - 'Campeign'
+attachments:
+  - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.html
+
