@@ -278,7 +278,7 @@ class GetButlerStat:
                 task_res[task] = data
             key = self.CollKeys[collection]
             for task in task_res:
-                self.workflowRes[key + '_' + task] = self.makeSum(task_size[task], task_res[task])
+                self.workflowRes[key + '_' + task] = self.make_sum(task_size[task], task_res[task])
             """Now create pandas frame to display results"""
         dt = dict()
         all_tasks = list()

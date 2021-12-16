@@ -94,14 +94,14 @@ class GetPanDaStat:
                 processed_files = wf['processed_files']
                 task_statuses = wf['tasks_statuses']
                 finished = task_statuses['Finished']
-                if task_statuses['SubFinished'] is None:
-                    subfinished = 0
-                else:
+                if 'SubFinished' in task_statuses.keys():
                     subfinished = task_statuses['SubFinished']
-                if task_statuses['Failed'] is None:
-                    failed = 0
                 else:
+                    subfinished = 0
+                if 'Failed' in task_statuses.keys():
                     failed = task_statuses['Failed']
+                else:
+                    failed = 0
                 if key not in self.wfInfo:
                     self.wfInfo[key] = {'status': r_status, 'ntasks': float(total_tasks),
                                         'nfiles': float(total_files),
@@ -300,7 +300,7 @@ class GetPanDaStat:
         wfwall = 0
         wfdisk = 0
         wfcores = 0
-        wfrss = 0
+        wf_rss = 0
         wfduration = 0.
         wfnfiles = 0
         wfparallel = 0
