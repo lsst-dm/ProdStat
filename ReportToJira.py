@@ -106,7 +106,7 @@ if __name__ == "__main__":
             print("The yaml file format as following:")
             print("project: 'Pre-Operations \n",
                   "Jira: PREOPS-707 \n",
-                  "comments:"
+                  "comments: \n",
                   "- file: ./text_file1.txt \n",
                   "  tokens: \n",
                   "     - 'token1 \n",
