@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+#NOTES:  allow for clustering, and allow for appending to the DRP ticket description
+
 import sys
 
 def drpissueupdate(bpyamlfile,pissue,drpi,ts):
@@ -107,10 +109,10 @@ def drpissueupdate(bpyamlfile,pissue,drpi,ts):
 if __name__ == "__main__":
   nbpar = len(sys.argv)
   if nbpar < 2:
-        print("Usage: DRPIssueUpate.py <bps_submit_yaml> [Production Issue]")
+        print("Usage: DRPIssueUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
         print("  <bps_submit_yaml>: yaml file used with bps submit <bps_submit_yaml> .  Should be sitting in the same dir that bps submit was done, so that the submit/ dir can be searched for more info")
         print("  [Production Issue]: PREOPS-938 or similar production issue for this group of bps submissions")
-        print("  [DRP Issue]: DRP-51 or similar DRP issue for these ProdStats")
+        print("  [DRP Issue]: leave off if you want a new issue generated, to redo, include the DRP-issue generated last time")
         sys.exit(-2)
 
   

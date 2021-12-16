@@ -24,7 +24,7 @@ def parseissuedesc(jdesc,jsummary):
  jlines=jdesc.splitlines()
  L=iter(jlines)
  pattern1=re.compile("(.*)tract in (.*)")
- pattern2=re.compile("(.*)exposure <=(.*)and exposure >=(.*)")
+ pattern2=re.compile("(.*)exposure >=(.*) and exposure <=(.*)")
  pattern3=re.compile("(.*)Status:.*nTasks:(.*)nFiles:(.*)nRemain.*nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)")
  #pattern3=re.compile("(.*)Status:(.*)")
  pattern4=re.compile("(.*)PanDA.*link:(.*)")
@@ -39,9 +39,11 @@ def parseissuedesc(jdesc,jsummary):
      #print("hilow:",hilow)
    n2=pattern2.match(l)
    if(n2):
-     #print("exposurelo:",n2.group(2)," exphigh:",n2.group(3),":end")
-     hilow=str(n2.group(2))+","+str(n2.group(3))
+     print("exposurelo:",n2.group(2)," exphigh:",n2.group(3),":end")
+     hilow="("+str(int(n2.group(2)))+","+str(int(n2.group(3)))+")"
      #print("hilow:",hilow)
+   #else:
+     #print("no match to l",l)
    n3=pattern3.match(l)
    if(n3):
      #print("match is",n3.group(1),n3.group(2))
@@ -201,12 +203,14 @@ def drpaddjobtosummary(first,ts,pissue,jissue,status,frontend,frontend1,backend)
 
   newdict=json.dumps(dict)
   backendissue.update(fields={'description': newdict})
+  print("Summary updated, see DRP-55 or DRP-53")
 
 if __name__ == "__main__":
   numpar = len(sys.argv)
   print('numpar is',numpar)
   if(numpar<2 or numpar>4):
-    print("usage: DRPAddJobToSummary.py DRP-XX PREOPS-YY [reset|remove]")
+    print("usage: DRPAddJobToSummary.py PREOPS-YY DRP-XX [reset|remove]")
+    print("PREOPS-YY is the campaign defining ticket, also in the butler output name")
     print("DRP-XX is the issue created to track ProdStat for this bps submit")
     print("if you run the command twice with the same entries, it is ok")
     print("if you specify remove, it will instead remove one entry from the table with the DRP/PREOPS number")
@@ -214,11 +218,11 @@ if __name__ == "__main__":
     print("To see the output summary:View special DRP tickets DRP-53 (all bps submits entered) and https://jira.lsstcorp.org/browse/DRP-55 (step1 submits only)")
     sys.exit(1)
   if(numpar>1):
-    drpi=sys.argv[1]
-  if(numpar>2):
-    pissue=sys.argv[2]
+    pissue=sys.argv[1]
   else:
     pissue="DRP0"
+  if(numpar>2):
+    drpi=sys.argv[2]
     
   first=0
   if(numpar>3 and sys.argv[3]=="reset"):
