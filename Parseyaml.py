@@ -69,7 +69,7 @@ def parseyaml(bpsyamlfile,ts):
     #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
     
     skwlist=['bps_defined','executionButler', 'computeSite','cluster']
-    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue'],'cluster': ['visit_detector_1','visit_consolidate_1','patch_coaddition','patch_detect_deblend','patch_postprocess','diffim','association','forced_phot_detector','property_maps']}
+    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue'],'cluster': ['visit_detector_1']}
     
     f=open(fullbpsyaml)
     d=load(f,Loader=FullLoader)
@@ -89,7 +89,6 @@ def parseyaml(bpsyamlfile,ts):
     print("kwd",kwd)
     print(bpsstr)
     
-    sys.exit(1)
     
     qgraphfile=longpath+"/"+submittedyaml+".qgraph"
     (mode, ino, dev, nlink, uid, gid, qgraphfilesize, atime, mtime, ctime) = os.stat(qgraphfile)
@@ -120,6 +119,9 @@ def parseyaml(bpsyamlfile,ts):
     bpsstr += "timeToFillExecButlerDB:"+str('{:.1f}'.format(timetomakeexecbutlerdb/60.0))+"min\n"
     
     print(bpsstr)
+
+    #sys.exit(1)
+
   return (bpsstr,kwd,akwd,ts)
 
 if __name__ == "__main__":
