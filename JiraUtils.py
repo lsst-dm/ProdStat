@@ -193,6 +193,13 @@ class JiraUtils:
                         break
                 if found:
                     comment.update(body=comment_s)
+                else:
+                    work_log = dict()
+                    work_log['author'] = 'Nikolay Kuropatkin'
+                    t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    work_log['created'] = t_stamp
+                    work_log['comment'] = comment_s
+                    self.add_comment(issue, work_log)
         else:
             work_log = dict()
             work_log['author'] = 'Nikolay Kuropatkin'
@@ -225,14 +232,18 @@ class JiraUtils:
         attachments = issue.raw['fields']['attachment']
         print("attachments ", attachments)
         if len(attachments) != 0:
+            found = False
             for attachment in attachments:
                 print('attachment:', attachment['id'], ' ', attachment['filename'])
                 att_id = attachment['id']
                 filename = attachment['filename']
                 if filename in att_file:
+                    found = True
                     print(" Found attachment id ", attachment['id'])
                     jira.delete_attachment(int(att_id))
                     self.add_attachment(jira, issue, att_file)
+            if not found:
+                self.add_attachment(jira, issue, att_file)
         else:
             self.add_attachment(jira, issue, att_file)
 
