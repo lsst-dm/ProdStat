@@ -84,6 +84,14 @@ MakeProdGroups.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml  a
 
  
 
+#####################DRPAddJobToSummary DRP-XX PREOPS-YY
+usage: DRPAddJobToSummary.py DRP-XX PREOPS-YY [reset|remove]
+DRP-XX is the issue created to track ProdStat for this bps submit
+if you run the command twice with the same entries, it is ok
+if you specify remove, it will instead remove one entry from the table with the DRP/PREOPS number
+if you specify reset is will erase the whole table (don't do this lightly)
+To see the output summary:View special DRP tickets DRP-53 (all bps submits entered) and https://jira.lsstcorp.org/browse/DRP-55 (step1 submits only)
+
 ##################### submit a job to bps, record it in an issue
 
 bps submit clusttest-all-1.yaml
