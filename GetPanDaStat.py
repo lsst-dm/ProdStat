@@ -36,15 +36,25 @@ from pandas.plotting import table
 
 
 class GetPanDaStat:
-    def __init__(self, inpf):
-        """Get parameters - workflow keys from yaml file """
-        with open(inpf) as pf:
-            inpars = yaml.safe_load(pf)
-        self.Butler = inpars['Butler']
-        self.collType = inpars['collType']
-        self.workNames = inpars['workNames']
-        self.Jira = inpars['Jira']
-        self.maxtask = int(inpars['maxtask'])  # not used
+    def __init__(self, **kwargs):
+        """
+        Class to build production statistics tables using PanDa
+        database queries.
+        :param kwargs:
+        the structure of the input dictionary is as follow:
+         {'Butler': 's3://butler-us-central1-panda-dev/dc2/butler.yaml',
+         'Jira': 'PREOPS-910',
+         'collType': '300z', token that with jira ticket will uniquely define
+          the dataset (workflow)
+          'workNames': '', not used for now and may be skipped
+          'maxtask': '100'  maximum number of task files to analyse
+          }
+        """
+        self.Butler = kwargs['Butler']
+        self.collType = kwargs['collType']
+        self.workNames = kwargs['workNames']
+        self.Jira = kwargs['Jira']
+        self.maxtask = int(kwargs['maxtask'])  # not used
         self.workKeys = list()
         print(" Collecting information for Jira ticket ", self.Jira)
         self.workflows = dict()
@@ -363,7 +373,10 @@ class GetPanDaStat:
                                    'cpu-hours': str(datetime.timedelta(seconds=walltime)),
                                    'est. parallel jobs': nparallel}
 
-        wfparallel = int(math.ceil(wfwall / wfduration))
+        if  wfduration > 0:
+            wfparallel = int(math.ceil(wfwall / wfduration))
+        else:
+            wfparallel = 0
         self.allStat['Campaign'] = {'nQuanta': float(wfnfiles),
                                     'starttime': strftime("%Y-%m-%d %H:%M:%S", gmtime()),
                                     'wallclock': str(datetime.timedelta(seconds=wfduration)),
@@ -534,6 +547,8 @@ if __name__ == "__main__":
         print("  -f <inputYaml> - yaml file with input parameters")
         sys.exit(-2)
     # Create new threads
-    GPS = GetPanDaStat(inpF)
+    with open(inpF) as pf:
+        inpars = yaml.safe_load(pf)
+    GPS = GetPanDaStat(**inpars)
     GPS.run()
     print("End with GetPanDaStat.py")

@@ -38,14 +38,25 @@ from lsst.daf.base import PropertySet
 
 
 class GetButlerStat:
-    def __init__(self, parfile):
-        with open(parfile) as pf:
-            inpars = yaml.safe_load(pf)
-        self.Butler = inpars['Butler']
-        self.collType = inpars['collType']
-        self.workNames = inpars['workNames']
-        self.Jira = inpars['Jira']
-        self.maxtask = int(inpars['maxtask'])
+    def __init__(self, **kwargs):
+        """
+        Class to build production statistics table using Butler
+        meta data
+        :param kwargs:
+        the structure of the input dictionary is as follow:
+         {'Butler': 's3://butler-us-central1-panda-dev/dc2/butler.yaml',
+         'Jira': 'PREOPS-910',
+         'collType': '300z', token that with jira ticket will uniquely define
+          the dataset (workflow)
+          'workNames': '', not used for now and may be skipped
+          'maxtask': '100'  maximum number of task files to analyse
+          }
+        """
+        self.Butler = kwargs['Butler']
+        self.collType = kwargs['collType']
+        self.workNames = kwargs['workNames']
+        self.Jira = kwargs['Jira']
+        self.maxtask = int(kwargs['maxtask'])
         print(" Collecting information for Jira ticket ", self.Jira)
         self.REPO_ROOT = self.Butler
         self.butler = Butler(self.REPO_ROOT)
@@ -386,7 +397,8 @@ if __name__ == "__main__":
         print("  Required inputs:")
         print("  -f <yamlFile> - yaml file containing input parameters ")
         sys.exit(-2)
-    #
-    GBS = GetButlerStat(inpFile)
+    with open(inpFile) as pf:
+        inpars = yaml.safe_load(pf)
+    GBS = GetButlerStat(**inpars)
     GBS.run()
     print("End with GetButler Stat.py")
