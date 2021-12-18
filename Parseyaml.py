@@ -31,13 +31,13 @@ def parseyaml(bpsyamlfile,ts):
        bpsstr += str(k)+": "+str(v)+"\n"
   
   #print(bpsstr)
-  uniqid=os.path.dirname(bpsyamlfile)+"/submit/"+kwd['output']
+  uniqid="./"+os.path.dirname(bpsyamlfile)+"/submit/"+kwd['output']
   for k in kwd:
     v=kwd[k]
     uniqid=uniqid.replace('{'+str(k)+'}',v)
   #uniqid=uniqid.replace("/","_")
 
-  #print(uniqid)
+  print(uniqid)
   
   if(ts=="0"):
     allpath=glob.glob(uniqid+'/*')
@@ -69,7 +69,7 @@ def parseyaml(bpsyamlfile,ts):
     #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
     
     skwlist=['bps_defined','executionButler', 'computeSite','cluster']
-    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue'],'cluster': ['visit_detector_1']}
+    skw={'bps_defined': ['operator','uniqProcName'], 'executionButler': ['queue']}
     
     f=open(fullbpsyaml)
     d=load(f,Loader=FullLoader)
