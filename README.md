@@ -47,11 +47,12 @@ The table names created as /tmp/pandaStat-PREOPS-728.png and pandaStat-PREOPS-72
 Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
 
-#### DRPInit.py 
-Usage: DRPInit.py <bps_submit_yaml_template> <Production Issue> [DRP-issue]
+#### DRPIssueUpdate.py 
+Usage: DRPIssueUpdate.py <bps_submit_yaml_template> <Production Issue> [DRP-issue|DRP0] [timedatestampid]
   <bps_submit_yaml_template>: Template file with place holders for start/end dataset/visit/tracts (will be attached to Production Issue)
   <Production Issue>: Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link to ProdStat tracking issue(s) -- should match issue in template keyword 
-  [DRP-issue]: If present in form DRP-XXX, redo by overwriting an existing DRP-issue. If not present, create a new DRP-issue.  All ProdStat plots and links for group of bps submits will be tracked off this DRP-issue.  Production Issue will be updated with a link to this issue, by updating description (or later by using subtask link if all are DRP type). 
+  [DRP-issue|DRP0]: If present in form DRP-XXX, redo by overwriting an existing DRP-issue. If not present or DRP0: create a new DRP-issue.  All ProdStat plots and links for group of bps submits will be tracked off this DRP-issue.  
+  [timedatestampid] by default DRPIssueUpdate looks for a timestampid subdir in the submit directory tree with the most recent stamp. If you are 'redoing' this, then include the DRP-XXX issue to overwrite *and* include the correct timedatestampid.
 
 Example: 
 git clone https://github.com/lsst-dm/ProdStat.git
@@ -62,7 +63,10 @@ export PATH=${PATH}:</home/yourname/ProdStat>
 
 mkdir mywork
 cd mywork
-DRPInit.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml PREOPS-938
+DRPIssueUpdate.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml PREOPS-938 DRP0 [20211225T122522Z]
+or:
+DRPIssueUpdate.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml PREOPS-938 
+(this will use the latest timestamp in the submit subdir)
 
 This will return a new DRP-XXX issue where the  prodstats for the PREOPS-938 issue step will be stored
 and updated later.
@@ -77,7 +81,7 @@ Usage: MakeProdGroups.py <bps_submit_yaml_template> <band|'all'> <groupsize(visi
  <ngroups> how many groups (maximum)
  <explist> text file listing <band1> <exposure1> for all visits to use
 
-Example: (same setup as for DRPInit.py)
+Example: (same setup as for DRPIssueUpdate.py)
 mkdir mywork
 cd mywork
 MakeProdGroups.py ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml  all 500 0 100 ../dp02-processing/full/rehearsal/PREOPS-938/explist
@@ -96,36 +100,40 @@ To see the output summary:View special DRP tickets DRP-53 (all bps submits enter
 
 bps submit clusttest-all-1.yaml
 
-(this is not yet implemented, but will add to the DRP- ticket created in DRPInit.py)
-DRPIssueUpdate.py clusttest-all-1.yaml 
+DRPIssueUpdate.py clusttest-all-1.yaml PREOPS-XXX DRP0 [20211225T122512Z]
+or:
+DRPIssueUpdate.py clusttest-all-1.yaml PREOPS-XXX 
+(and it will pick the most recent timestamp that it can find with that PREOPS-XXX in the submit tree)
 
+(this will return a new DRP-YYY issue number, recall it)
+DRPAddToSummary PREOPS-XXX DRP-YYY
+(then look at DRP-55 or DRP-53 for the current table.
+
+
+You can remove an unwanted entry from the DRP-55 table by doing this:
+DRPAddToSummary PREOPS-XXX DRP-YYY remove
+
+############################################ Update Butler, Panda Stats when job is done ########
+
+When job completes, you can update the stats table in the DRP-YYY ticket with this call:
+
+DRPStatUpdate.py PREOPS_XXX DRP-YYY
+(this will take several minute to query the butler, panda and generate the updated stats)
+DRPAddToSummary PREOPS-XXX DRP-YYY
+(this will then update the entry in the DRP-55 table with the new nTasks,nFiles,nFinished,nFail,nSub 
+stats)
 ########################## initial setup for JIRA and ProdStat (before its in the production stack)
 
-On your data-int.lsst.cloud note, to enable running scripts, like DRPInit.py, DRPIssueUpdate.py, etc
+On your data-int.lsst.cloud note, to enable running scripts, like DRPIssueUpdate.py, etc
 one needs to install jira locally in you home area and add a login credential .netrc file.
 To install jira to this:
 
 pip install jira
 
-Then create a small file with an editor (such as vi) that looks like this:
-cat ~/.netrc
-#test jira from python scripts
-machine lsstjira 
-        account https://jira.lsstcorp.org
-	login <yourname>
-	password <yourjirapasswd>
+Until tokens are enabled for jira access, one can use a .netrc file.
 
-#########
-Note that your login <yourname> may be different from your data-int.lsst.cloud login name.
-Use your LSST/Rubin/Jira login name here (and associated passwd)
-#####
-Be sure to 'chmod og-rwx ~/.netrc' so it can't be read
 
-############
-
-This only needs to be done once.
-
-####### To call the ProdStat routines, such as MakeProdGroups and DRPInit.py you will need to
+####### To call the ProdStat routines, such as MakeProdGroups and DRPIssueUpdate.py you will need to
 ####### check out the packages from git:
 cd 
 git clone https://github.com/lsst-dm/ProdStat		(and to update cd ProdStat; git update)
@@ -137,8 +145,6 @@ cd
 git clone https://github.com/lsst-dm/dp02-processing  (and to update: cd dp02-processing;git update)
 
 The explist, templates, and clustering yaml memoryRequest yaml are in: dp02-processing/full/rehearsal/PREOPS-938/
-Please note that these may need small updates before DP0.2 step1 launch.o
-############
 
 ###########
 
