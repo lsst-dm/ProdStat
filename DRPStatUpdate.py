@@ -57,7 +57,8 @@ def drpstatupdate(pissue,drpi):
   fup.close()
 
 
-  result=subprocess.run(["python","GetButlerStat.py","-f",inname],capture_output=True,text=True)
+  result=subprocess.run(["GetButlerStat.py","-f",inname],capture_output=True,text=True)
+  print("result",result)
 
   butfilename="/tmp/butlerStat-"+str(pissue)+".txt"
   if(os.path.exists(butfilename)):
@@ -67,7 +68,6 @@ def drpstatupdate(pissue,drpi):
   else:
    butstat="\n"
   
-  #print("result",result)
   downname="input"+str(pissue)+str(drpi)+"lower.yaml"
   fdown=open(downname,"w")
   fdown.write("Butler: s3://butler-us-central1-panda-dev/dc2/butler-external.yaml\n")
@@ -77,8 +77,8 @@ def drpstatupdate(pissue,drpi):
   fdown.write("maxtask: 100")
   fdown.close()
   
-  resultdown=subprocess.run(["python","GetPanDaStat.py","-f",downname],capture_output=True,text=True)
-  #print("resultdown",resultdown)
+  resultdown=subprocess.run(["GetPanDaStat.py","-f",downname],capture_output=True,text=True)
+  print("resultdown",resultdown)
 
   panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
   if(os.path.exists(panfilename)):
@@ -129,7 +129,7 @@ def drpstatupdate(pissue,drpi):
 if __name__ == "__main__":
   nbpar = len(sys.argv)
   if nbpar < 2:
-        print("Usage: DRPIssueUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
+        print("Usage: DRPStatUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
         print("  <bps_submit_yaml>: yaml file used with bps submit <bps_submit_yaml> .  Should be sitting in the same dir that bps submit was done, so that the submit/ dir can be searched for more info")
         print("  [Production Issue]: PREOPS-938 or similar production issue for this group of bps submissions")
         print("  [DRP Issue]: leave off if you want a new issue generated, to redo, include the DRP-issue generated last time")
