@@ -25,6 +25,7 @@ def parseissuedesc(jdesc,jsummary):
  L=iter(jlines)
  pattern1=re.compile("(.*)tract in (.*)")
  pattern2=re.compile("(.*)exposure >=(.*) and exposure <=(.*)")
+ pattern2a=re.compile("(.*)detector>=([0-9]*).*exposure >=(.*) and exposure <=(.*)")
  pattern3=re.compile("(.*)Status:.*nTasks:(.*)nFiles:(.*)nRemain.*nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)")
  #pattern3=re.compile("(.*)Status:(.*)")
  pattern4=re.compile("(.*)PanDA.*link:(.*)")
@@ -44,6 +45,10 @@ def parseissuedesc(jdesc,jsummary):
      #print("hilow:",hilow)
    #else:
      #print("no match to l",l)
+   n2a=pattern2a.match(l)
+   if(n2a):
+     print("detlo",n2a.group(2),"exposurelo:",n2a.group(3)," exphigh:",n2a.group(4),":end")
+     hilow="("+str(int(n2a.group(3)))+","+str(int(n2a.group(4)))+")d"+str(int(n2a.group(2)))
    n3=pattern3.match(l)
    if(n3):
      #print("match is",n3.group(1),n3.group(2))
@@ -102,8 +107,8 @@ def dicttotable(dict,sorton):
    #print(shortyear,shortmon,shortday)
 
    what=dict[i][4]
-   if(len(what)>25):
-    what=what[0:25]
+   if(len(what)>28):
+    what=what[0:28]
 
    table += "| "+str(shortyear)+"-"+str(shortmon)+"-"+str(shortday)+" | ["+str(dict[i][0])+"|https://jira.lsstcorp.org/browse/"+str(dict[i][0])+"] | "+str(dict[i][1])+ "|{color:"+scolor+"}"+statstring+"{color} | [pDa|"+dict[i][3]+"] |"+str(what)+"|\n"
 
