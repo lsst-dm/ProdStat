@@ -57,10 +57,12 @@ def drpstatupdate(pissue,drpi):
   fup.close()
 
 
+  butfilename="/tmp/butlerStat-"+str(pissue)+".txt"
+  result=subprocess.run(["rm","-f",butfilename],capture_output=True,text=True)
+  print("result",result)
   result=subprocess.run(["GetButlerStat.py","-f",inname],capture_output=True,text=True)
   print("result",result)
 
-  butfilename="/tmp/butlerStat-"+str(pissue)+".txt"
   if(os.path.exists(butfilename)):
    fbstat=open(butfilename,"r")
    butstat=fbstat.read()
@@ -77,10 +79,12 @@ def drpstatupdate(pissue,drpi):
   fdown.write("maxtask: 100")
   fdown.close()
   
+  panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
+  resultdown=subprocess.run(["rm ","-f",panffilename],capture_output=True,text=True)
+  print("resultdown",resultdown)
   resultdown=subprocess.run(["GetPanDaStat.py","-f",downname],capture_output=True,text=True)
   print("resultdown",resultdown)
 
-  panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
   if(os.path.exists(panfilename)):
     fpstat=open(panfilename,"r")
     statstr=fpstat.read()
