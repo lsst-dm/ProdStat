@@ -80,7 +80,7 @@ def drpstatupdate(pissue,drpi):
   fdown.close()
   
   panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
-  resultdown=subprocess.run(["rm ","-f",panfilename],capture_output=True,text=True)
+  resultdown=subprocess.run(["rm","-f",panfilename],capture_output=True,text=True)
   print("resultdown",resultdown)
   resultdown=subprocess.run(["GetPanDaStat.py","-f",downname],capture_output=True,text=True)
   print("resultdown",resultdown)
