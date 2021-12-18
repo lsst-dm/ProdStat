@@ -353,7 +353,7 @@ class GetButlerStat:
         cs_buf = data_frame.to_csv(index=True)
         table_name = 'butlerStat'
         index_name = " Workflow Task "
-        comment = """ Campaign Butler statistics """
+        comment = " Campaign Butler statistics " + self.Jira
         self.make_table_from_csv(cs_buf, table_name, index_name, comment)
 
 

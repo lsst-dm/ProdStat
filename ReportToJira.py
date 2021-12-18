@@ -49,7 +49,7 @@ attachments:
 
     def __init__(self, inp_file):
         self.ju = JiraUtils()
-        (self.a_jira, account, password) = self.ju.get_login()
+        (self.a_jira, account) = self.ju.get_login()
         with open(inp_file) as pf:
             in_pars = yaml.safe_load(pf)
         self.ticket = in_pars['Jira']

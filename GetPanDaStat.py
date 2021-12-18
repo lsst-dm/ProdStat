@@ -480,7 +480,7 @@ class GetPanDaStat:
         pd.set_option('max_colwidth', 500)
         pd.set_option('precision', 1)
         dataframe = pd.DataFrame(wflist, index=wfind)
-        comment = """ workflow status """
+        comment = " workflow status " + self.Jira
         index_name = "workflow"
         table_name = "pandaWfStat"
         self.make_table(dataframe, table_name, index_name, comment)
@@ -500,7 +500,7 @@ class GetPanDaStat:
         dfs = pd.DataFrame(statlist, index=ttypes)
         table_name = "pandaStat"
         index_name = " Workflow Task "
-        comment = """ Panda campaign statistics """
+        comment = " Panda campaign statistics " + self.Jira
         self.make_table(dfs, table_name, index_name, comment)
 
 

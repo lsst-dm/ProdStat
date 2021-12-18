@@ -30,7 +30,7 @@ class JiraUtils:
         secrets = netrc.netrc()
         username, account, password = secrets.authenticators('lsstjira')
         self.ajira = JIRA(options={'server': account}, basic_auth=(username, password))
-
+        self.user_name = username
     def get_login(self):
         """
         tries to get user info from ~/.netrc
@@ -38,8 +38,9 @@ class JiraUtils:
         """
         secrets = netrc.netrc()
         username, account, password = secrets.authenticators('lsstjira')
+        self.user_name = username
         self.ajira = JIRA(options={'server': account}, basic_auth=(username, password))
-        return self.ajira, username, password
+        return self.ajira, self.user_name
 
     def get_issue(self, ticket):
         """
@@ -178,12 +179,11 @@ class JiraUtils:
         """
         issue = self.get_issue(key)
         all_comments = self.get_comments(issue)
-        if len(all_comments) != 0:
+        if len(all_comments) > 0:
+            updated = False
             for sid in all_comments:
                 comm_str = self.get_comment(jira, issue_id, sid)
-                print('Id:', sid, " comment:", comm_str)
                 comment = jira.comment(key, sid)  # with key and comment id
-                print("Found comment:", comm_str)
                 found = False
                 for token in tokens:
                     if token in comm_str:
@@ -193,16 +193,20 @@ class JiraUtils:
                         break
                 if found:
                     comment.update(body=comment_s)
-                else:
-                    work_log = dict()
-                    work_log['author'] = 'Nikolay Kuropatkin'
-                    t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    work_log['created'] = t_stamp
-                    work_log['comment'] = comment_s
-                    self.add_comment(issue, work_log)
+                    updated = True
+            if not updated:
+                " if not found comment to update add a new one "
+                work_log = dict()
+                work_log['author'] = self.user_name
+                t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                work_log['created'] = t_stamp
+                work_log['comment'] = comment_s
+                self.add_comment(issue, work_log)
+
         else:
+            """ if no comments create a new one """
             work_log = dict()
-            work_log['author'] = 'Nikolay Kuropatkin'
+            work_log['author'] = self.user_name
             t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             work_log['created'] = t_stamp
             work_log['comment'] = comment_s
@@ -230,7 +234,6 @@ class JiraUtils:
         :return:
         """
         attachments = issue.raw['fields']['attachment']
-        print("attachments ", attachments)
         if len(attachments) != 0:
             found = False
             for attachment in attachments:
@@ -239,7 +242,6 @@ class JiraUtils:
                 filename = attachment['filename']
                 if filename in att_file:
                     found = True
-                    print(" Found attachment id ", attachment['id'])
                     jira.delete_attachment(int(att_id))
                     self.add_attachment(jira, issue, att_file)
             if not found:
@@ -271,7 +273,7 @@ def main():
     ticket = options.ticket
     print("ticket=", ticket)
     ju = JiraUtils()
-    jira, username, password = ju.get_login()
+    jira, username = ju.get_login()
     """ We will not create issue because we can not delete one
     issue_fields = {
         "summary": "Test Ticket",
