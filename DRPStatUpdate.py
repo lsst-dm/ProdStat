@@ -59,9 +59,13 @@ def drpstatupdate(pissue,drpi):
 
   result=subprocess.run(["python","GetButlerStat.py","-f",inname],capture_output=True,text=True)
 
-  fbstat=open("/tmp/butlerStat-"+str(pissue)+".txt","r")
-  butstat=fbstat.read()
-  fbstat.close()
+  butfilename="/tmp/butlerStat-"+str(pissue)+".txt"
+  if(os.path.exists(butfilename)):
+   fbstat=open(butfilename,"r")
+   butstat=fbstat.read()
+   fbstat.close()
+  else:
+   butstat="\n"
   
   #print("result",result)
   downname="input"+str(pissue)+str(drpi)+"lower.yaml"
@@ -76,23 +80,28 @@ def drpstatupdate(pissue,drpi):
   resultdown=subprocess.run(["python","GetPanDaStat.py","-f",downname],capture_output=True,text=True)
   #print("resultdown",resultdown)
 
-  fpstat=open("/tmp/pandaStat-"+str(pissue)+".txt","r")
-  statstr=fpstat.read()
-  fpstat.close()
-  fstat=open("/tmp/pandaWfStat-"+str(pissue)+".csv","r")
-  line1=fstat.readline()
-  line2=fstat.readline()
-  a=line2.split(",")
-  fstat.close()
-  #print(len(a),a)
-  pstat=a[1]
-  pntasks=int(a[2][:-2])
-  pnfiles=int(a[3][:-2])
-  pnproc=int(a[4][:-2])
-  pnfin=int(a[6][:-2])
-  pnfail=int(a[7][:-2])
-  psubfin=int(a[8][:-2])
-  curstat = "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
+  panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
+  if(os.path.exists(panfilename)):
+    fpstat=open(panfilename,"r")
+    statstr=fpstat.read()
+    fpstat.close()
+    fstat=open("/tmp/pandaWfStat-"+str(pissue)+".csv","r")
+    line1=fstat.readline()
+    line2=fstat.readline()
+    a=line2.split(",")
+    fstat.close()
+    #print(len(a),a)
+    pstat=a[1]
+    pntasks=int(a[2][:-2])
+    pnfiles=int(a[3][:-2])
+    pnproc=int(a[4][:-2])
+    pnfin=int(a[6][:-2])
+    pnfail=int(a[7][:-2])
+    psubfin=int(a[8][:-2])
+    curstat = "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
+  else:
+   statstr="\n"
+   curstat="\n"
 
   #sys.exit(1)
 
@@ -105,7 +114,7 @@ def drpstatupdate(pissue,drpi):
   print("year:",year)
   print("year:",month)
   print("year:",day)
-  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
+  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn.lower()+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
   print("link:",link)
   linkline = "PanDA link:"+link+"\n"
   #print(butstat+statstr+curstat)
