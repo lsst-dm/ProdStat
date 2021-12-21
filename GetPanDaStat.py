@@ -103,7 +103,10 @@ class GetPanDaStat:
                 remaining_files = wf['remaining_files']
                 processed_files = wf['processed_files']
                 task_statuses = wf['tasks_statuses']
-                finished = task_statuses['Finished']
+                if 'Finished' in task_statuses.keys():
+                    finished = task_statuses['Finished']
+                else:
+                    finished = 0
                 if 'SubFinished' in task_statuses.keys():
                     subfinished = task_statuses['SubFinished']
                 else:

@@ -1,5 +1,5 @@
 Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
-Jira: PREOPS-910
-collType: 300z
+Jira: PREOPS-905
+collType: 2.2i
 workNames:
 maxtask: 100
