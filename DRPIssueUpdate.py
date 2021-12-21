@@ -27,7 +27,7 @@ def drpissueupdate(bpyamlfile,pissue,drpi,ts):
   print("year:",year)
   print("year:",month)
   print("year:",day)
-  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
+  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn.lower()+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
   print("link:",link)
   dobut=0
   dopan=0

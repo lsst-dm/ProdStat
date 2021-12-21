@@ -57,13 +57,19 @@ def drpstatupdate(pissue,drpi):
   fup.close()
 
 
-  result=subprocess.run(["python","GetButlerStat.py","-f",inname],capture_output=True,text=True)
+  butfilename="/tmp/butlerStat-"+str(pissue)+".txt"
+  result=subprocess.run(["rm","-f",butfilename],capture_output=True,text=True)
+  print("result",result)
+  result=subprocess.run(["GetButlerStat.py","-f",inname],capture_output=True,text=True)
+  print("result",result)
 
-  fbstat=open("/tmp/butlerStat-"+str(pissue)+".txt","r")
-  butstat=fbstat.read()
-  fbstat.close()
+  if(os.path.exists(butfilename)):
+   fbstat=open(butfilename,"r")
+   butstat=fbstat.read()
+   fbstat.close()
+  else:
+   butstat="\n"
   
-  #print("result",result)
   downname="input"+str(pissue)+str(drpi)+"lower.yaml"
   fdown=open(downname,"w")
   fdown.write("Butler: s3://butler-us-central1-panda-dev/dc2/butler-external.yaml\n")
@@ -73,26 +79,33 @@ def drpstatupdate(pissue,drpi):
   fdown.write("maxtask: 100")
   fdown.close()
   
-  resultdown=subprocess.run(["python","GetPanDaStat.py","-f",downname],capture_output=True,text=True)
-  #print("resultdown",resultdown)
+  panfilename="/tmp/pandaStat-"+str(pissue)+".txt"
+  resultdown=subprocess.run(["rm","-f",panfilename],capture_output=True,text=True)
+  print("resultdown",resultdown)
+  resultdown=subprocess.run(["GetPanDaStat.py","-f",downname],capture_output=True,text=True)
+  print("resultdown",resultdown)
 
-  fpstat=open("/tmp/pandaStat-"+str(pissue)+".txt","r")
-  statstr=fpstat.read()
-  fpstat.close()
-  fstat=open("/tmp/pandaWfStat-"+str(pissue)+".csv","r")
-  line1=fstat.readline()
-  line2=fstat.readline()
-  a=line2.split(",")
-  fstat.close()
-  #print(len(a),a)
-  pstat=a[1]
-  pntasks=int(a[2][:-2])
-  pnfiles=int(a[3][:-2])
-  pnproc=int(a[4][:-2])
-  pnfin=int(a[6][:-2])
-  pnfail=int(a[7][:-2])
-  psubfin=int(a[8][:-2])
-  curstat = "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
+  if(os.path.exists(panfilename)):
+    fpstat=open(panfilename,"r")
+    statstr=fpstat.read()
+    fpstat.close()
+    fstat=open("/tmp/pandaWfStat-"+str(pissue)+".csv","r")
+    line1=fstat.readline()
+    line2=fstat.readline()
+    a=line2.split(",")
+    fstat.close()
+    #print(len(a),a)
+    pstat=a[1]
+    pntasks=int(a[2][:-2])
+    pnfiles=int(a[3][:-2])
+    pnproc=int(a[4][:-2])
+    pnfin=int(a[6][:-2])
+    pnfail=int(a[7][:-2])
+    psubfin=int(a[8][:-2])
+    curstat = "Status:"+str(pstat)+" nTasks:"+str(pntasks)+" nFiles:"+str(pnfiles)+" nRemain:"+str(pnproc)+" nProc:"+" nFinish:"+str(pnfin)+" nFail:"+str(pnfail)+" nSubFinish:"+str(psubfin)+"\n"
+  else:
+   statstr="\n"
+   curstat="\n"
 
   #sys.exit(1)
 
@@ -105,7 +118,7 @@ def drpstatupdate(pissue,drpi):
   print("year:",year)
   print("year:",month)
   print("year:",day)
-  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
+  link="https://panda-doma.cern.ch/tasks/?taskname=*"+pupn.lower()+"*&date_from="+str(day)+"-"+str(month)+"-"+str(year)+"&days=62&sortby=time-ascending"
   print("link:",link)
   linkline = "PanDA link:"+link+"\n"
   #print(butstat+statstr+curstat)
@@ -120,7 +133,7 @@ def drpstatupdate(pissue,drpi):
 if __name__ == "__main__":
   nbpar = len(sys.argv)
   if nbpar < 2:
-        print("Usage: DRPIssueUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
+        print("Usage: DRPStatUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
         print("  <bps_submit_yaml>: yaml file used with bps submit <bps_submit_yaml> .  Should be sitting in the same dir that bps submit was done, so that the submit/ dir can be searched for more info")
         print("  [Production Issue]: PREOPS-938 or similar production issue for this group of bps submissions")
         print("  [DRP Issue]: leave off if you want a new issue generated, to redo, include the DRP-issue generated last time")
