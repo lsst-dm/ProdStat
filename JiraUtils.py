@@ -31,6 +31,7 @@ class JiraUtils:
         username, account, password = secrets.authenticators('lsstjira')
         self.ajira = JIRA(options={'server': account}, basic_auth=(username, password))
         self.user_name = username
+
     def get_login(self):
         """
         tries to get user info from ~/.netrc
