@@ -847,7 +847,6 @@ class DRPUtils:
         :param ts:
         :return:
         """
-        """
         bpsstr, kwd, akwd, pupn, nquanta = self.parse_yaml(bpsyamlfile, ts)
         print('pupn:', pupn)
         year = str(pupn[0:4])
@@ -946,4 +945,3 @@ class DRPUtils:
             issue = self.ajira.issue(drpi)
         issue.update(fields={'summary': stepcut + "#" + upn, 'description': bpsstr + tasktable})
         print("issue:" + str(issue))
-        """
