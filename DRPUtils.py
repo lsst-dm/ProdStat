@@ -36,8 +36,8 @@ class DRPUtils:
         """
         self.ju = JiraUtils()
         self.ajira, self.user_name = self.ju.get_login()
-        self.get_butler_stat = GetButlerStat()
-        self.get_panda_stat = GetPanDaStat()
+        #self.get_butler_stat = GetButlerStat()
+        #self.get_panda_stat = GetPanDaStat()
 
     @staticmethod
     def parse_template(bps_yaml_file):
@@ -118,7 +118,10 @@ class DRPUtils:
         akwd = dict()
         if os.path.exists(origyamlfile):
             mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime = os.stat(origyamlfile)
-            # print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
+            if os.path.exists(fullbpsyaml):
+              print("full bps yaml file exists -- updating start graph generation timestamp")
+              mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime = os.stat(fullbpsyaml)
+              #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
             skwlist = ['bps_defined', 'executionButler', 'computeSite', 'cluster']
             skw = {'bps_defined': ['operator', 'uniqProcName'], 'executionButler': ['queue']}
 
@@ -487,6 +490,7 @@ class DRPUtils:
         else:
             butstat = "\n"
         panfilename = "/tmp/pandaStat-" + str(pissue) + ".txt"
+        in_pars['collType'] = ts.lower()
         get_panda_stat = GetPanDaStat(**in_pars)
         get_panda_stat.run()
         if os.path.exists(panfilename):
@@ -847,7 +851,7 @@ class DRPUtils:
         :param ts:
         :return:
         """
-        bpsstr, kwd, akwd, pupn, nquanta = self.parse_yaml(bpsyamlfile, ts)
+        bpsstr, kwd, akwd, pupn = self.parse_yaml(bpsyamlfile, ts)
         print('pupn:', pupn)
         year = str(pupn[0:4])
         month = str(pupn[4:6])
@@ -906,7 +910,7 @@ class DRPUtils:
         tasktable += "\n"
         print(tasktable)
 
-        tasktable += "PanDA PREOPS: " + str(pissue) + " link:" + link + "\n"
+        tasktable += "PanDA PREOPS: " + str(pissue) + " link:" + a_link + "\n"
         if dopan == 1:
             tasktable += "Panda Statistics as of: " + nowut + "\n" + "|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||" + "\n"
             for s in sl:
