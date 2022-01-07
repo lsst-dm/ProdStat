@@ -107,7 +107,7 @@ class GetButlerStat:
                         continue
         return results
 
-    def get_butle(self,butler_string):
+    def get_butler(self, butler_string):
         self.Butler = butler_string
 
     def search_collections(self):
