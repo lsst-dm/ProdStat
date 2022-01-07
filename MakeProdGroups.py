@@ -1,78 +1,90 @@
 #!/usr/bin/env python
+"""Split a list of exposures into groups defined in yaml files.
+
+Creates yaml files suitable for passing to `bps submit` that define
+subsets of a provided list of exposures.
+"""
 
 import sys
+import os
+import pandas as pd
+import numpy as np
+import click
 
-def makeprodgroups(template,band,groupsize,skipgroups,ngroups,explist):
-  import subprocess
-  import re
-  import os
-  
-  f=open(explist,"r")
-  tempstr=os.path.basename(template)
-  patt=re.compile("(.*).yaml")
-  m=patt.match(tempstr)
-  if(m):
-   outtemp=m.group(1)
-  else:
-   outtemp=tempstr
-  
-  done=0
-  lastgroup=skipgroups+ngroups
- 
-  highexp=0
-  lowexp=0
-  groupcount=int(0)
-  totcount=int(0)
-  for l in f:
-    line=l.strip()
-    if line=="":
-      break
-    a=line.split()
-    aband=str(a[0])
-    expnum=int(a[1])
-    if aband != band and band!= 'all' and band != 'f':
-      continue
-    groupcount += 1
-    totcount += 1
-    curgroup= int(totcount / groupsize)
-    curcount= totcount % groupsize
-    if(curcount == 1):
-     lowexp=expnum
-    if (curcount == 0 and curgroup > skipgroups and curgroup <= lastgroup):
-      highexp=expnum
-      com = "sed -e s/BAND/"+str(band)+"/g -e s/GNUM/"+str(int(curgroup))+"/g -e s/LOWEXP/"+str(lowexp)+"/g -e s/HIGHEXP/"+str(highexp)+"/g " + str(template)+" >"+str(outtemp)+"_"+str(band)+"_"+str(int(curgroup))+".yaml"
-      return_val=subprocess.call(com,shell=True) 
-      print(com+" "+str(return_val))
-  
-#lastgroup
-  curgroup= int(totcount / groupsize)+1
-  curcount= totcount % groupsize
-  if (curcount != 0 and curgroup > skipgroups and curgroup <= lastgroup):
-    highexp=expnum
-    com = "sed -e s/BAND/"+str(band)+"/g -e s/GNUM/"+str(int(curgroup))+"/g -e s/LOWEXP/"+str(lowexp)+"/g -e s/HIGHEXP/"+str(highexp)+"/g " + str(template)+" >"+str(outtemp)+"_"+str(band)+"_"+str(int(curgroup))+".yaml"
-    return_val=subprocess.call(com,shell=True) 
-    print(com+" "+str(return_val))
-  
-  
+
+@click.command()
+@click.argument(
+    "template",
+    "Template file with place holders for start/end dataset/visit/tracts (optional .yaml suffix here will be added)",
+)
+@click.argument(
+    "band",
+    "Which band to restrict to (or 'all' for no restriction, matches BAND in template if not 'all')",
+)
+@click.argument("groupsize", "How many visits (later tracts) per group (i.e. 500)")
+@click.argument(
+    "skipgroups",
+    "skip <skipgroups> groups (if others generating similar campaigns)",
+    type=int,
+)
+@click.argument("ngroups", "how many groups (maximum)", type=int)
+@click.argument(
+    "explist", "text file listing <band1> <exposure1> for all visits to use"
+)
+def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
+    """Split a list of exposures into groups defined in yaml files.
+
+    Parameters
+    ----------
+    template : `str`
+        Template file with place holders for start/end dataset/visit/tracts
+        (optional .yaml suffix here will be added)
+    band : `str`
+        Which band to restrict to (or 'all' for no restriction, matches BAND
+        in template if not 'all')
+    groupsize : `int`
+        How many visits (later tracts) per group (i.e. 500)
+    skipgroups: `int`
+        skip <skipgroups> groups (if others generating similar campaigns)
+    ngroups : `int`
+        how many groups (maximum)
+    explists : `str`
+        text file listing <band1> <exposure1> for all visits to use
+    """
+    template_base = os.path.basename(template)
+    template_fname, template_ext = os.path.splitext(template_base)
+    out_base = template_fname if template_ext == ".yaml" else template_base
+
+    with open(template, "r") as template_file:
+        template_content = template_file.read()
+
+    exposures = pd.read_csv(explist, names=["band", "exp_id"], delimiter="\s+")
+    exposures.sort_values("exp_id", inplace=True)
+    if band not in ("all", "f"):
+        exposures.query("band=={band}", inplace=True)
+
+    # Add a new column to the DataFrame with group ids
+    num_exposures = len(exposures)
+    exposures["group_id"] = np.floor(np.arange(num_exposures) / groupsize).astype(int)
+
+    for group_id in range(skipgroups, skipgroups + ngroups):
+        group_exposures = exposures.query(f"group_id == {group_id}")
+        min_exp_id = group_exposures.exp_id.min()
+        max_exp_id = group_exposures.exp_id.max()
+
+        # Add 1 to the group id so it starts at 1, not 0
+        group_num = group_id + 1
+        out_content = (
+            template_content.replace("GNUM", str(group_num))
+            .replace("BAND", band)
+            .replace("LOWEXP", str(min_exp_id))
+            .replace("HIGHEXP", str(max_exp_id))
+        )
+
+        out_fname = f"{out_base}-{band}-{group_num}.yaml"
+        with open(out_fname, "w") as out_file:
+            out_file.write(out_content)
+
+
 if __name__ == "__main__":
-  nbpar = len(sys.argv)
-  if nbpar < 7:
-        print("Usage: MakeProdGroups.py <bps_submit_yaml_template> <band|'all'> <groupsize(visits/group)> <skipgroups(skip first skipgroups groups)> <ngroups> <explist>")
-        print("  <bps_submit_yaml_template>: Template file with place holders for start/end dataset/visit/tracts (optional .yaml suffix here will be added)")
-        print(" <band|'all'> Which band to restrict to (or 'all' for no restriction, matches BAND in template if not 'all')")
-        print(" <groupsize> How many visits (later tracts) per group (i.e. 500)")
-        print(" <skipgroups> skip <skipgroups> groups (if others generating similar campaigns")
-        print(" <ngroups> how many groups (maximum)") 
-        print(" <explist> text file listing <band1> <exposure1> for all visits to use")
-        sys.exit(-2)
-
-  
-  template=str(sys.argv[1])
-  band=str(sys.argv[2])
-  groupsize=int(sys.argv[3])
-  skipgroups=int(sys.argv[4])
-  ngroups=int(sys.argv[5])
-  explist=str(sys.argv[6])
-  
-  makeprodgroups(template,band,groupsize,skipgroups,ngroups,explist)
-
+    make_prod_groups()
