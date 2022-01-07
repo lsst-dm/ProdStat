@@ -52,7 +52,10 @@ class GetButlerStat:
           'maxtask': '100'  maximum number of task files to analyse
           }
         """
-        self.Butler = kwargs['Butler']
+        if 'Butler' in kwargs:
+            self.Butler = kwargs['Butler']
+        else:
+            self.Butler = ''
         self.collType = kwargs['collType']
         self.workNames = kwargs['workNames']
         self.Jira = kwargs['Jira']
@@ -103,6 +106,9 @@ class GetButlerStat:
                         results[max_field] = float(value)
                         continue
         return results
+
+    def get_butle(self,butler_string):
+        self.Butler = butler_string
 
     def search_collections(self):
         """ Select collections """
