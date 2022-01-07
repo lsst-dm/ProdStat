@@ -146,7 +146,7 @@ class GetButlerStat:
             if float(s) >= max_s:
                 max_s = float(s)
         return {'nQuanta': int(task_size), 'startTime': time_start[0], 'cpu sec/job': float(cpu_per_task),
-                'cpu-hours': float(total_cpu), 'MaxRSS MB': float(max_s / 1048576.)}
+                'cpu-hours': float(total_cpu), 'MaxRSS GB': float(max_s / 1048576.)}
 
     def gettaskdata(self, collections):
         """ We can collect datasets and data IDs
@@ -302,19 +302,19 @@ class GetButlerStat:
             dt[task] = self.workflowRes[task]
             camp_cpu += float(self.workflowRes[task]['cpu-hours'])
             camp_jobs += self.workflowRes[task]['nQuanta']
-            if float(self.workflowRes[task]['MaxRSS MB']) >= camp_rss:
-                camp_rss = float(self.workflowRes[task]['MaxRSS MB'])
+            if float(self.workflowRes[task]['MaxRSS GB']) >= camp_rss:
+                camp_rss = float(self.workflowRes[task]['MaxRSS GB'])
         all_tasks.append('Campaign')
         utime = strftime("%Y-%m-%d %H:%M:%S", gmtime())
         camp_data = {'nQuanta': int(camp_jobs), 'startTime': utime, 'cpu sec/job': camp_cpu_per_task,
-                     'cpu-hours': float(camp_cpu), 'MaxRSS MB': float(camp_rss)}
+                     'cpu-hours': float(camp_cpu), 'MaxRSS GB': float(camp_rss)}
         dt['campaign'] = camp_data
         for ttype in dt:
             task = dt[ttype]
             task['cpu-hours'] = str(datetime.timedelta(seconds=task['cpu-hours']))
             if isinstance(task['cpu sec/job'], float):
                 task['cpu sec/job'] = round(task['cpu sec/job'], 2)
-            task['MaxRSS MB'] = round(task['MaxRSS MB'], 2)
+            task['MaxRSS GB'] = round(task['MaxRSS GB'], 2)
         print('')
         pd.set_option('max_colwidth', 500)
         pd.set_option('precision', 1)
