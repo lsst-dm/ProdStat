@@ -405,6 +405,8 @@ if __name__ == "__main__":
         sys.exit(-2)
     with open(inpFile) as pf:
         inpars = yaml.safe_load(pf)
+    butler_uri = inpars['Butler']
     GBS = GetButlerStat(**inpars)
+    GBS.get_butler(butler_uri)
     GBS.run()
     print("End with GetButler Stat.py")
