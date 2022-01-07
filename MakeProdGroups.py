@@ -13,24 +13,12 @@ import click
 
 
 @click.command()
-@click.argument(
-    "template",
-    "Template file with place holders for start/end dataset/visit/tracts (optional .yaml suffix here will be added)",
-)
-@click.argument(
-    "band",
-    "Which band to restrict to (or 'all' for no restriction, matches BAND in template if not 'all')",
-)
-@click.argument("groupsize", "How many visits (later tracts) per group (i.e. 500)")
-@click.argument(
-    "skipgroups",
-    "skip <skipgroups> groups (if others generating similar campaigns)",
-    type=int,
-)
-@click.argument("ngroups", "how many groups (maximum)", type=int)
-@click.argument(
-    "explist", "text file listing <band1> <exposure1> for all visits to use"
-)
+@click.argument("template")
+@click.argument("band")
+@click.argument("groupsize", type=int)
+@click.argument("skipgroups", type=int)
+@click.argument("ngroups", type=int)
+@click.argument("explist")
 def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
     """Split a list of exposures into groups defined in yaml files.
 
