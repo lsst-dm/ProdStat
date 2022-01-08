@@ -36,8 +36,6 @@ class DRPUtils:
         """
         self.ju = JiraUtils()
         self.ajira, self.user_name = self.ju.get_login()
-        #self.get_butler_stat = GetButlerStat()
-        #self.get_panda_stat = GetPanDaStat()
 
     @staticmethod
     def parse_template(bps_yaml_file):
@@ -777,7 +775,8 @@ class DRPUtils:
         backendissue.update(fields={'description': newdict})
         print("Summary updated, see DRP-55 or DRP-53")
 
-    def make_prod_groups(self, template, band, groupsize, skipgroups, ngroups, explist):
+    @staticmethod
+    def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
         """
 
         :param template:
@@ -935,8 +934,8 @@ class DRPUtils:
             tasktable += "Total wall-hours: " + str('{:.1f}'.format(ptotmaxmem)) + " Total core-hours: " + str(
             '{:.1f}'.format(ptotsumsec)) + "\n"
             tasktable += "Status:" + str(pstat) + " nTasks:" + str(pntasks) + " nFiles:" + str(pnfiles) + " nRemain:" + str(
-            pnproc) + " nProc:" + " nFinish:" + str(pnfin) + " nFail:" + str(pnfail) + " nSubFinish:" + str(
-            psubfin) + "\n"
+                pnproc) + " nProc:" + " nFinish:" + str(pnfin) + " nFail:" + str(pnfail) + " nSubFinish:" + str(
+                psubfin) + "\n"
         tasktable += "\n"
         print(tasktable)
         # (totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem)=parsebutlertable(butstepfile)

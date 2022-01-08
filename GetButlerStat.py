@@ -107,7 +107,7 @@ class GetButlerStat:
                         continue
         return results
 
-    def get_butler(self, butler_string):
+    def set_butler(self, butler_string):
         self.Butler = butler_string
 
     def search_collections(self):
@@ -407,6 +407,6 @@ if __name__ == "__main__":
         inpars = yaml.safe_load(pf)
     butler_uri = inpars['Butler']
     GBS = GetButlerStat(**inpars)
-    GBS.get_butler(butler_uri)
+    GBS.set_butler(butler_uri)
     GBS.run()
     print("End with GetButler Stat.py")
