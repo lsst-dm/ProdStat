@@ -113,6 +113,7 @@ class DRPUtils:
         fullbpsyaml = longpath + "/" + submittedyaml + "_config.yaml"
         # print(fullbpsyaml)
         origyamlfile = longpath + "/" + os.path.basename(bps_yaml_file)
+        bpsstr = bpsstr+ "bps_submit_yaml_file: " + str(bps_yaml_file) + "\n"
         akwd = dict()
         if os.path.exists(origyamlfile):
             mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime = os.stat(origyamlfile)
