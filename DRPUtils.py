@@ -560,8 +560,8 @@ class DRPUtils:
         jlines = jdesc.splitlines()
         lm = iter(jlines)
         pattern1 = re.compile("(.*)tract in (.*)")
-        pattern2 = re.compile("(.*)exposure >=(.*) and exposure <=(.*)")
-        pattern2a = re.compile("(.*)detector>=([0-9]*).*exposure >=(.*) and exposure <=(.*)")
+        pattern2 = re.compile("(.*)exposure >=([0-9]*) and exposure <=( *[0-9]*)")
+        pattern2a = re.compile("(.*)detector>=([0-9]*).*exposure >=( *[0-9]*) and exposure <=( *[0-9]*)")
         pattern3 = re.compile(
             "(.*)Status:.*nTasks:(.*)nFiles:(.*)nRemain.*nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)")
         # pattern3=re.compile("(.*)Status:(.*)")
@@ -622,6 +622,7 @@ class DRPUtils:
             table_out += str(i) + "||"
         table_out += "\n"
 
+        #sortbydescrip=sorted(in_dict[3])
         for i in sorted(in_dict.keys(), reverse=True):
             pis = i.split("#")[0]
             ts = i.split("#")[1]
