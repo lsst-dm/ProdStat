@@ -3,3 +3,5 @@ Jira: PREOPS-905
 collType: 2.2i
 workNames:
 maxtask: 100
+bin_width: 30.
+n_bins: 100000
