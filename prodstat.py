@@ -44,6 +44,7 @@ def cli():
 def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
     """Split a list of exposures into groups defined in yaml files.
 
+    \b
     Parameters
     ----------
     template : `str`
@@ -69,11 +70,13 @@ def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
 def get_butler_stat(param_file):
     """Get butler Statistics.
 
+    \b
     Parameters
     ----------
     param_file : `typing.TextIO`
         A file from which to read butler parameters
 
+    \b
     Note
     ----
     The yaml file follows this format::
@@ -83,7 +86,6 @@ def get_butler_stat(param_file):
         collType: 2.2i
         workNames: not used now
         maxtask: 100
-
     """
     params = yaml.safe_load(param_file)
     butler_uri = inpars["Butler"]
