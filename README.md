@@ -29,7 +29,7 @@ maxRss wil be calculated and resulting table will be created as
 as /tmp/butlerStat-PREOPS-XXX.txt
 
 ###GetPanDaStat.py
-####Call:\
+####Call:
 GetPanDaStat.p -f inpfile.yaml \
 The input file format is exactly same as for GetButlerStat.py program
 
@@ -48,6 +48,42 @@ The table names created as /tmp/pandaStat-PREOPS-XXX.png and pandaStat-PREOPS-XX
 
 Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
+###MakePandaPlots.py
+####Call:
+MakePandaPlots.py -f inpfile.yaml \
+The input yaml file should contain following parameters: \
+Jira: PREOPS-905 - jira ticket corresponding given campaign. \
+collType: 2.2i - a token to help identify campaign workflows. \
+bin_width: 30. - the width of the plot bin in sec. \
+n_bins: 100000 - total number of bins in plots \
+
+####Operation:
+The program scan panda database to collect timing information for all job types in the campaign.
+It creates then plots of jobs time distribution for each job type.
+The names of plots create are like: \
+timing_<job_type>.png \
+The program also saves timing information in /tmp directory with file names like: \
+panda_time_series_<job_type>.csv 
+
+###MakePlots.py
+####Call:
+MakePlots.py -f plot.yaml \
+The input yaml file should contain following parameters: \
+bin_width: 30. - width of the plot bin in sec. \
+start_at: 0. - time shift the plot begins with in hours.  \
+stop_at: 550. - time shift the plot ends in hours. 
+
+####Operation:
+The program reads timing data created by MakePandaPlots.py and build plots for
+each type of jobs in given time boundaries.
+
+####Caution:
+The list of known job types is hardcoded in 
+MakePandaPlots.py and MakePlots.py. In future development we will transfer this information in the input file.
+
+
+
+####Operation:
 
 #### DRPIssueUpdate.py 
 Usage: \

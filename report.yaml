@@ -1,5 +1,5 @@
 project: 'Pre-Operations'
-Jira: PREOPS-906
+Jira: PREOPS-905
 comments:
 - file: /Users/kuropat/devel/reports/pandaStat-PREOPS-905.txt
   tokens:
@@ -12,4 +12,4 @@ comments:
      - 'PREOPS-905'
 attachments:
   - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-905.html
-
+  - /Users/kuropat/devel/reports/timing_visit_focal_plane.png
