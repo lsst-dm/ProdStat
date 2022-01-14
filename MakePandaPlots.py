@@ -25,11 +25,11 @@ import urllib.error as url_error
 from urllib.request import urlopen
 from time import sleep
 import datetime
-import getopt
 import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import click
 
 
 class MakePandaPlots:
@@ -49,7 +49,7 @@ class MakePandaPlots:
         self.collType = kwargs['collType']
         self.Jira = kwargs['Jira']
         " bin width in seconds "
-        self.bin_width = kwargs['scale_factor']
+        self.bin_width = kwargs['bin_width']
         self.n_bins = kwargs['n_bins']
         self.start_time = 0
         self.workKeys = list()
@@ -265,48 +265,36 @@ class MakePandaPlots:
             self.make_plot(data_list, self.bin_width, self.n_bins, job_name)
 
 
-if __name__ == "__main__":
-    print(sys.argv)
-    nbpar = len(sys.argv)
-    if nbpar < 1:
-        print("Usage: MakePandPlots.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
+@click.group()
+def cli():
+    """Command line interface for ProdStat."""
+    pass
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["inputYaml="])
-    except getopt.GetoptError:
-        print("Usage: MakePandPlots.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(2)
-    f_flag = 0
-    inpF = ''
-    for opt, arg in opts:
-        print("%s %s" % (opt, arg))
-        if opt == "-h":
-            print("Usage: MakePandaPlots.py <required inputs>")
-            print("  Required inputs:")
-            print("  -f <inputYaml> - yaml file with input parameters")
-            print("The yaml file should contain following parameters:")
-            print("Jira: PREOPS-707 ; campaign name\n",
-                  "collType: 2.2i ; token to identify data collection\n",
-                  "bin_width: 30. bin width in seconds\n",
-                  "n_bins: 100000 number of bins in the plot\n")
-            sys.exit(2)
-        elif opt in ("-f", "--inputYaml"):
-            f_flag = 1
-            inpF = arg
-    inpsum = f_flag
-    if inpsum != 1:
-        print("Usage: MakePandaPlots.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
-    # Create new threads
-    with open(inpF) as pf:
-        inpars = yaml.safe_load(pf)
-    MPP = MakePandaPlots(**inpars)
-    MPP.run()
-    print("End with MakePandaPlots.py")
+
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def make_panda_plots(param_file):
+    """Create  timing plots of the campaign jobs
+    Parameters
+    ----------
+    param_file : `typing.TextIO`
+        A file from which to read  parameters
+    Note
+    ----
+    The yaml file should provide following parameters::
+        Jira: PREOPS-905
+        collType: 2.2i
+        bin_width: 30.
+        n_bins: 100000
+    """
+    click.echo('Start with MakePandaPlots')
+    params = yaml.safe_load(param_file)
+    panda_plot_maker = MakePandaPlots(**params)
+    panda_plot_maker.run()
+    print("Finish with MakePandaPlots")
+
+
+cli.add_command(make_panda_plots)
+
+if __name__ == "__main__":
+    cli()
