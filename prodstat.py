@@ -25,7 +25,7 @@
 import yaml
 
 import click
-from .DRPUtils import DRPUtils
+from DRPUtils import DRPUtils
 
 
 @click.group()
