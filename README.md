@@ -50,7 +50,7 @@ Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
 ###MakePandaPlots.py
 ####Call:
-MakePandaPlots.py -f inpfile.yaml \
+MakePandaPlots.py make-panda-plots ./inpfile.yaml \
 The input yaml file should contain following parameters: \
 Jira: PREOPS-905 - jira ticket corresponding given campaign. \
 collType: 2.2i - a token to help identify campaign workflows. \
@@ -67,7 +67,7 @@ panda_time_series_<job_type>.csv
 
 ###MakePlots.py
 ####Call:
-MakePlots.py -f plot.yaml \
+MakePlots.py make-plots plot.yaml \
 The input yaml file should contain following parameters: \
 bin_width: 30. - width of the plot bin in sec. \
 start_at: 0. - time shift the plot begins with in hours.  \

@@ -19,13 +19,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-import sys
 import os
-import getopt
 import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import click
 
 
 class MakePlots:
@@ -79,47 +78,36 @@ class MakePlots:
                 self.make_plot(data_list, max_time, job_name)
 
 
-if __name__ == "__main__":
-    print(sys.argv)
-    nb_par = len(sys.argv)
-    if nb_par < 1:
-        print("Usage: MakePlots.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
+@click.group()
+def cli():
+    """Command line interface for ProdStat."""
+    pass
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["inputYaml="])
-    except getopt.GetoptError:
-        print("Usage: MakePlots.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(2)
-    f_flag = 0
-    inpF = ''
-    for opt, arg in opts:
-        print("%s %s" % (opt, arg))
-        if opt == "-h":
-            print("Usage: MakePlots.py <required inputs>")
-            print("  Required inputs:")
-            print("  -f <inputYaml> - yaml file with input parameters")
-            print("The yaml file format as following:")
-            print("bin_width: width of the plot bin in sec. \n",
-                  "start_at: time of the plot start in hours \n",
-                  "stop_at: time where plot should stop in hours \n")
-            sys.exit(2)
-        elif opt in ("-f", "--inputYaml"):
-            f_flag = 1
-            inpF = arg
-    inpsum = f_flag
-    if inpsum != 1:
-        print("Usage: MakePlots.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
-    # Create new threads
-    with open(inpF) as pf:
-        inpars = yaml.safe_load(pf)
-    MKP = MakePlots(**inpars)
-    MKP.run()
-    print("End with MakePlots.py")
+
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def make_plots(param_file):
+    """Create  timing plots of the campaign jobs using timing
+    information produced by MakePandaPlots.py
+    Parameters
+    ----------
+    param_file : `typing.TextIO`
+        A file from which to read  parameters
+    Note
+    ----
+    The yaml file should provide following parameters::
+        bin_width: 30. bin width in seconds
+        start_at: 0. start plot time  in hours
+        stop_at: 550. end plot time in hours
+    """
+    click.echo('Start with MakePlots')
+    params = yaml.safe_load(param_file)
+    plot_maker = MakePlots(**params)
+    plot_maker.run()
+    print("Finish with MakePlots")
+
+
+cli.add_command(make_plots)
+
+if __name__ == "__main__":
+    cli()
