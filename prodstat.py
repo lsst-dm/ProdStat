@@ -112,13 +112,13 @@ def update_issue(bps_submit_fname, production_issue, drp_issue, ts):
     ----------
     pbs_submit_fname : `str`
         The file name for the BPS submit file (yaml).
-    production_issue : `str`
-        yaml file used with bps submit <bps_submit_yaml>
         Should be sitting in the same dir that bps submit was done,
         so that the submit/ dir can be searched for more info
-    drp_issue : `str`
+    production_issue : `str`
         PREOPS-938 or similar production issue for this group of
         bps submissions
+    drp_issue : `str`
+        DRP issue created to track ProdStat for this bps submit
     ts : `str`
         unknown
     """
