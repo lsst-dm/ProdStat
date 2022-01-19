@@ -45,7 +45,7 @@ def cli():
 def make_prod_groups(
     template, band, groupsize, skipgroups, ngroups, explist
 ):  # pylint: disable=too-many-arguments
-    r"""Split a list of exposures into groups defined in yaml files.
+    """Split a list of exposures into groups defined in yaml files.
 
     \b
     Parameters
@@ -73,7 +73,7 @@ def make_prod_groups(
 @cli.command()
 @click.argument("param_file", type=click.File(mode="r"))
 def get_butler_stat(param_file):
-    r"""Get butler Statistics.
+    """Get butler Statistics.
 
     \b
     Parameters
@@ -100,12 +100,12 @@ def get_butler_stat(param_file):
 
 
 @cli.command()
-@click.argument("pbs_submit_fname", type=str)
+@click.argument("bps_submit_fname", type=str)
 @click.argument("production_issue", type=str)
 @click.argument("drp_issue", required=False, default="DRP0", type=str)
-@click.option("--ts", default="0", type=int)
+@click.option("--ts", default="0", type=str)
 def update_issue(bps_submit_fname, production_issue, drp_issue, ts):
-    r"""Update or create a DRP issue.
+    """Update or create a DRP issue.
 
     \b
     Parameters
@@ -134,7 +134,7 @@ def update_issue(bps_submit_fname, production_issue, drp_issue, ts):
 @click.option("--reset", default=False, type=bool)
 @click.option("--remove", default=False, type=bool)
 def add_job_to_summary(production_issue, drp_issue, reset, remove):
-    r"""Add a summary to a job summary table.
+    """Add a summary to a job summary table.
 
     \b
     Parameters
@@ -174,7 +174,7 @@ def add_job_to_summary(production_issue, drp_issue, reset, remove):
 @click.argument("production_issue", type=str)
 @click.argument("drp_issue", required=False, default="DRP0", type=str)
 def update_stat(production_issue, drp_issue):
-    r"""Update issue statistics.
+    """Update issue statistics.
 
     \b
     Parameters
