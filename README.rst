@@ -115,6 +115,8 @@ DRPIssueUpdate.py
 Usage::
   
   DRPIssueUpdate.py <bps_submit_yaml_template> <Production Issue> [DRP-issue|DRP0] [timedatestampid]
+
+Here,
   
  - `bps_submit_yaml_template`: Template file with place holders for start/end dataset/visit/tracts (will be attached to Production Issue) 
  - `Production Issue`: Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link to ProdStat tracking issue(s) -- should match issue in template keyword
@@ -150,7 +152,8 @@ Usage::
   
   MakeProdGroups.py <bps_submit_yaml_template> <band|'all'> <groupsize(visits/group)> <skipgroups(skip first skipgroups groups)> <ngroups> <explist>
 
- 
+Here,
+
  - `bps_submit_yaml_template`: Template file with place holders for start/end dataset/visit/tracts (optional .yaml suffix here will be added)
  - `band|'all`: Which band to restrict to (or 'all' for no restriction, matches BAND in template if not 'all')
  - `groupsize`: How many visits (later tracts) per group (i.e. 500)
