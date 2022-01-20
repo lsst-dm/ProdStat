@@ -21,6 +21,7 @@ The inpfile.yaml has following format::
 
   
 Here,
+
  - `Jira` represents Jira ticket that is used to identify workflows (data collections ) ,\
  - `collType` is a second token used to uniquely identify workflow, it can be part of workflow time stamp
 or user name, etc.
@@ -71,6 +72,7 @@ Call::
   MakePandaPlots.py make-panda-plots ./inpfile.yaml
   
 The input yaml file should contain following parameters:
+
  - `Jira: PREOPS-905` - jira ticket corresponding given campaign.
  - `collType: 2.2i` - a token to help identify campaign workflows.
  - `bin_width: 30.` - the width of the plot bin in sec.
@@ -79,18 +81,22 @@ The input yaml file should contain following parameters:
 The program scan panda database to collect timing information for all job types in the campaign.
 It creates then plots of jobs time distribution for each job type.
 The names of plots create are like::
+
   timing_<job_type>.png
 
 The program also saves timing information in /tmp directory with file names like::
+
   panda_time_series_<job_type>.csv 
 
 MakePlots.py
 ------------
 
 Call::
+  
   MakePlots.py make-plots plot.yaml
   
 The input yaml file should contain following parameters::
+  
  - `bin_width: 30.` - width of the plot bin in sec.
  - `start_at: 0.` - time shift the plot begins with in hours.
  - `stop_at: 550.` - time shift the plot ends in hours. 
@@ -108,6 +114,7 @@ DRPIssueUpdate.py
 -----------------
 
 Usage::
+  
   DRPIssueUpdate.py <bps_submit_yaml_template> <Production Issue> [DRP-issue|DRP0] [timedatestampid]
   
  - `bps_submit_yaml_template`: Template file with place holders for start/end dataset/visit/tracts (will be attached to Production Issue) 
@@ -116,6 +123,7 @@ Usage::
  - `[timedatestampid]`: by default DRPIssueUpdate looks for a timestampid subdir in the submit directory tree with the most recent stamp. If you are 'redoing' this, then include the DRP-XXX issue to overwrite *and* include the correct timedatestampid.
 
 Example::
+  
   git clone https://github.com/lsst-dm/ProdStat.git
   git clone https://github.com/lsst-dm/dp02-processing.git
   setup lsst_distrib
@@ -140,6 +148,7 @@ MakeProdGroups.py
 -----------------
 
 Usage::
+  
   MakeProdGroups.py <bps_submit_yaml_template> <band|'all'> <groupsize(visits/group)> <skipgroups(skip first skipgroups groups)> <ngroups> <explist>
 
  
@@ -195,6 +204,7 @@ DRPAddToSummary PREOPS-XXX DRP-YYY
 
 
 You can remove an unwanted entry from the DRP-55 table by doing this::
+  
   DRPAddToSummary PREOPS-XXX DRP-YYY remove
 
 Update Butler, Panda Stats when job is done
@@ -242,6 +252,7 @@ auxillary bps includes like memoryRequest.yaml and clustering.yaml::
   git clone https://github.com/lsst-dm/dp02-processing
 
 and to update::
+  
   cd dp02-processing; git update
 
 The explist, templates, and clustering yaml memoryRequest yaml are in: dp02-processing/full/rehearsal/PREOPS-938/
