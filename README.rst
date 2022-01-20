@@ -23,8 +23,7 @@ The inpfile.yaml has following format::
 Here,
 
  - `Jira` represents Jira ticket that is used to identify workflows (data collections ) ,\
- - `collType` is a second token used to uniquely identify workflow, it can be part of workflow time stamp
-or user name, etc.
+ - `collType` is a second token used to uniquely identify workflow, it can be part of workflow time stamp or user name, etc.
  - `workflows` is not used now,
  - `maxtask` maximum number of tasks (yaml) files to process for average cpu/wall time estimation.
 

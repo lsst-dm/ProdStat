@@ -185,5 +185,6 @@ def update_stat(production_issue, drp_issue):
     drp_utils.drp_stat_update(production_issue, drp_issue)
 
 
-if __name__ == "__main__":
-    cli()
+def main():
+    return cli()
+
