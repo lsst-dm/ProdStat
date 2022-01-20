@@ -36,8 +36,7 @@ def cli():
 
 @cli.command()
 @click.argument("template", type=str)
-@click.argument("band",
-                type=click.Choice(["all", "f", "u", "g", "r", "i", "z", "y"]))
+@click.argument("band", type=click.Choice(["all", "f", "u", "g", "r", "i", "z", "y"]))
 @click.argument("groupsize", type=int)
 @click.argument("skipgroups", type=int)
 @click.argument("ngroups", type=int)
@@ -123,9 +122,7 @@ def update_issue(bps_submit_fname, production_issue, drp_issue, ts):
         unknown
     """
     drp = DRPUtils.DRPUtils()
-    drp.drp_issue_update(
-        bps_submit_fname, production_issue, drp_issue, ts
-    )
+    drp.drp_issue_update(bps_submit_fname, production_issue, drp_issue, ts)
 
 
 @cli.command()
@@ -165,8 +162,7 @@ def add_job_to_summary(production_issue, drp_issue, reset, remove):
     status = "-1"
     drp = DRPUtils.DRPUtils()
     drp.drp_add_job_to_summary(
-        first, ts, production_issue, drp_issue, status, frontend, frontend1,
-        backend
+        first, ts, production_issue, drp_issue, status, frontend, frontend1, backend
     )
 
 

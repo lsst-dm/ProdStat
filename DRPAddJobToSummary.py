@@ -23,14 +23,20 @@ from DRPUtils import *
 
 if __name__ == "__main__":
     numpar = len(sys.argv)
-    print('numpar is', numpar)
+    print("numpar is", numpar)
     if numpar < 2 or numpar > 4:
         print("usage: DRPAddJobToSummary.py PREOPS-YY DRP-XX [reset|remove]")
-        print("PREOPS-YY is the campaign defining ticket, also in the butler output name")
+        print(
+            "PREOPS-YY is the campaign defining ticket, also in the butler output name"
+        )
         print("DRP-XX is the issue created to track ProdStat for this bps submit")
         print("if you run the command twice with the same entries, it is ok")
-        print("if you specify remove, it will instead remove one entry from the table with the DRP/PREOPS number")
-        print("if you specify reset is will erase the whole table (don't do this lightly)")
+        print(
+            "if you specify remove, it will instead remove one entry from the table with the DRP/PREOPS number"
+        )
+        print(
+            "if you specify reset is will erase the whole table (don't do this lightly)"
+        )
         print("To see the output summary:View special DRP tickets DRP-53 ")
         print("all bps submits entered) and https://jira.lsstcorp.org/browse/DRP-55")
         print("(step1 submits only)")
@@ -55,4 +61,6 @@ if __name__ == "__main__":
     ts = "-1"
     status = "-1"
     drp = DRPUtils()
-    drp.drp_add_job_to_summary(first, ts, pissue, drpi, status, frontend, frontend1, backend)
+    drp.drp_add_job_to_summary(
+        first, ts, pissue, drpi, status, frontend, frontend1, backend
+    )

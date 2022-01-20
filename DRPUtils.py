@@ -44,8 +44,17 @@ class DRPUtils:
         :return: bpsstr
         :return: kwd
         """
-        kwlist = ['campaign', 'project', 'payload', 'pipelineYaml']
-        kw = {'payload': ['payloadName', 'butlerConfig', 'dataQuery', 'inCollection', 'sw_image', 'output']}
+        kwlist = ["campaign", "project", "payload", "pipelineYaml"]
+        kw = {
+            "payload": [
+                "payloadName",
+                "butlerConfig",
+                "dataQuery",
+                "inCollection",
+                "sw_image",
+                "output",
+            ]
+        }
         f = open(bps_yaml_file)
         d = load(f, Loader=FullLoader)
         f.close()
@@ -64,7 +73,7 @@ class DRPUtils:
 
         for kw in kwd:
             v = kwd[kw]
-            bpsstr = bpsstr.replace('{' + str(kw) + '}', v)
+            bpsstr = bpsstr.replace("{" + str(kw) + "}", v)
         return bpsstr, kwd
 
     @staticmethod
@@ -75,9 +84,18 @@ class DRPUtils:
         :param ts:
         :return:
         """
-        kwlist = ['campaign', 'project', 'payload', 'pipelineYaml']
-        kw = {'payload': ['payloadName', 'butlerConfig', 'dataQuery', 'inCollection', 'sw_image', 'output']}
-        f = open(bps_yaml_file, 'r')
+        kwlist = ["campaign", "project", "payload", "pipelineYaml"]
+        kw = {
+            "payload": [
+                "payloadName",
+                "butlerConfig",
+                "dataQuery",
+                "inCollection",
+                "sw_image",
+                "output",
+            ]
+        }
+        f = open(bps_yaml_file, "r")
         d = load(f, Loader=FullLoader)
         f.close()
         kwd = dict()
@@ -91,13 +109,13 @@ class DRPUtils:
                 else:
                     kwd[k] = v
                     bpsstr += str(k) + ": " + str(v) + "\n"
-        uniqid = "./" + os.path.dirname(bps_yaml_file) + "/submit/" + kwd['output']
+        uniqid = "./" + os.path.dirname(bps_yaml_file) + "/submit/" + kwd["output"]
         for k in kwd:
             v = kwd[k]
-            uniqid = uniqid.replace('{' + str(k) + '}', v)
+            uniqid = uniqid.replace("{" + str(k) + "}", v)
         print(uniqid)
         if ts == "0":
-            allpath = glob.glob(uniqid + '/*')
+            allpath = glob.glob(uniqid + "/*")
             allpath.sort()
             longpath = allpath[-1]
             ts = os.path.basename(longpath)
@@ -105,24 +123,51 @@ class DRPUtils:
             ts = ts.upper()
             longpath = uniqid + "/" + ts
         # print(longpath)
-        submittedyaml = kwd['output'] + "_" + ts
+        submittedyaml = kwd["output"] + "_" + ts
         for k in kwd:
             v = kwd[k]
-            submittedyaml = submittedyaml.replace('{' + str(k) + '}', v)
+            submittedyaml = submittedyaml.replace("{" + str(k) + "}", v)
         submittedyaml = submittedyaml.replace("/", "_")
         fullbpsyaml = longpath + "/" + submittedyaml + "_config.yaml"
         # print(fullbpsyaml)
         origyamlfile = longpath + "/" + os.path.basename(bps_yaml_file)
-        bpsstr = bpsstr+ "bps_submit_yaml_file: " + str(bps_yaml_file) + "\n"
+        bpsstr = bpsstr + "bps_submit_yaml_file: " + str(bps_yaml_file) + "\n"
         akwd = dict()
         if os.path.exists(origyamlfile):
-            mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime = os.stat(origyamlfile)
+            (
+                mode,
+                ino,
+                dev,
+                nlink,
+                uid,
+                gid,
+                size,
+                atime,
+                origyamlfilemtime,
+                ctime,
+            ) = os.stat(origyamlfile)
             if os.path.exists(fullbpsyaml):
-              print("full bps yaml file exists -- updating start graph generation timestamp")
-              mode, ino, dev, nlink, uid, gid, size, atime, origyamlfilemtime, ctime = os.stat(fullbpsyaml)
-              #print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
-            skwlist = ['bps_defined', 'executionButler', 'computeSite', 'cluster']
-            skw = {'bps_defined': ['operator', 'uniqProcName'], 'executionButler': ['queue']}
+                print(
+                    "full bps yaml file exists -- updating start graph generation timestamp"
+                )
+                (
+                    mode,
+                    ino,
+                    dev,
+                    nlink,
+                    uid,
+                    gid,
+                    size,
+                    atime,
+                    origyamlfilemtime,
+                    ctime,
+                ) = os.stat(fullbpsyaml)
+                # print(origyamlfile,origyamlfilemtime,time.ctime(origyamlfilemtime))
+            skwlist = ["bps_defined", "executionButler", "computeSite", "cluster"]
+            skw = {
+                "bps_defined": ["operator", "uniqProcName"],
+                "executionButler": ["queue"],
+            }
 
             f = open(fullbpsyaml)
             d = load(f, Loader=FullLoader)
@@ -142,32 +187,80 @@ class DRPUtils:
             print("kwd", kwd)
             print(bpsstr)
             qgraphfile = longpath + "/" + submittedyaml + ".qgraph"
-            mode, ino, dev, nlink, uid, gid, qgraphfilesize, atime, mtime, ctime = os.stat(qgraphfile)
+            (
+                mode,
+                ino,
+                dev,
+                nlink,
+                uid,
+                gid,
+                qgraphfilesize,
+                atime,
+                mtime,
+                ctime,
+            ) = os.stat(qgraphfile)
             # print(qgraphfile,qgraphfilesize)
-            bpsstr += "qgraphsize:" + str('{:.1f}'.format(qgraphfilesize / 1.0e6)) + "MB\n"
+            bpsstr += (
+                "qgraphsize:" + str("{:.1f}".format(qgraphfilesize / 1.0e6)) + "MB\n"
+            )
             qgraphout = longpath + "/" + "quantumGraphGeneration.out"
-            mode, ino, dev, nlink, uid, gid, size, atime, qgraphoutmtime, ctime = os.stat(qgraphout)
+            (
+                mode,
+                ino,
+                dev,
+                nlink,
+                uid,
+                gid,
+                size,
+                atime,
+                qgraphoutmtime,
+                ctime,
+            ) = os.stat(qgraphout)
             f = open(qgraphout)
             qgstat = f.read()
             f.close()
-            m = re.search('QuantumGraph contains (.*) quanta for (.*) task', qgstat)
+            m = re.search("QuantumGraph contains (.*) quanta for (.*) task", qgstat)
             if m:
                 nquanta = m.group(1)
                 ntasks = m.group(2)
-                bpsstr += "nTotalQuanta:" + str('{:d}'.format(int(nquanta))) + "\n"
-                bpsstr += "nTotalPanDATasks:" + str('{:d}'.format(int(ntasks))) + "\n"
+                bpsstr += "nTotalQuanta:" + str("{:d}".format(int(nquanta))) + "\n"
+                bpsstr += "nTotalPanDATasks:" + str("{:d}".format(int(ntasks))) + "\n"
 
             # QuantumGraph contains 310365 quanta for 5 tasks
             # print(qgraphout,qgraphoutmtime,time.ctime(qgraphoutmtime))
             execbutlerdb = longpath + "/EXEC_REPO-" + submittedyaml + "/gen3.sqlite3"
-            mode, ino, dev, nlink, uid, gid, butlerdbsize, atime, butlerdbmtime, ctime = os.stat(execbutlerdb)
+            (
+                mode,
+                ino,
+                dev,
+                nlink,
+                uid,
+                gid,
+                butlerdbsize,
+                atime,
+                butlerdbmtime,
+                ctime,
+            ) = os.stat(execbutlerdb)
             # print(execbutlerdb,butlerdbsize,butlerdbmtime,time.ctime(butlerdbmtime))
-            bpsstr += "execbutlersize:" + str('{:.1f}'.format(butlerdbsize / 1.0e6)) + "MB" + "\n"
+            bpsstr += (
+                "execbutlersize:"
+                + str("{:.1f}".format(butlerdbsize / 1.0e6))
+                + "MB"
+                + "\n"
+            )
             timetomakeqg = qgraphoutmtime - origyamlfilemtime
             timetomakeexecbutlerdb = butlerdbmtime - qgraphoutmtime
             # print(timetomakeqg,timetomakeexecbutlerdb)
-            bpsstr += "timeConstructQGraph:" + str('{:.1f}'.format(timetomakeqg / 60.0)) + "min\n"
-            bpsstr += "timeToFillExecButlerDB:" + str('{:.1f}'.format(timetomakeexecbutlerdb / 60.0)) + "min\n"
+            bpsstr += (
+                "timeConstructQGraph:"
+                + str("{:.1f}".format(timetomakeqg / 60.0))
+                + "min\n"
+            )
+            bpsstr += (
+                "timeToFillExecButlerDB:"
+                + str("{:.1f}".format(timetomakeexecbutlerdb / 60.0))
+                + "min\n"
+            )
             print(bpsstr)
         # sys.exit(1)
         return bpsstr, kwd, akwd, ts
@@ -188,7 +281,7 @@ class DRPUtils:
         :return:
         """
         bpsstr, kwd = self.parse_template(template)
-        stepname = kwd['pipelineYaml']
+        stepname = kwd["pipelineYaml"]
         p = re.compile("(.*)#(.*)")
         m = p.match(stepname)
         print("stepname " + stepname)
@@ -203,21 +296,23 @@ class DRPUtils:
         print("steppath " + steppath)
         bpsstr += "pipelineYamlSteps: " + stepcut + "\n{code}\n"
 
-        uniqid = kwd['output']
+        uniqid = kwd["output"]
         for k in kwd:
             v = kwd[k]
-            uniqid = uniqid.replace('{' + str(k) + '}', v)
+            uniqid = uniqid.replace("{" + str(k) + "}", v)
         uniqid = uniqid.replace("/", "_")
         #
         if drpi == "DRP0":
-            drp_issue = self.ajira.create_issue(project='DRP',
-                                                issuetype='Task',
-                                                summary="a new issue",
-                                                description=bpsstr,
-                                                components=[{"name": "Test"}])
+            drp_issue = self.ajira.create_issue(
+                project="DRP",
+                issuetype="Task",
+                summary="a new issue",
+                description=bpsstr,
+                components=[{"name": "Test"}],
+            )
         else:
             drp_issue = self.ajira.issue(drpi)
-        issue_dict = {'summary': stepcut + '#' + uniqid, 'description': bpsstr}
+        issue_dict = {"summary": stepcut + "#" + uniqid, "description": bpsstr}
         self.ju.update_issue(drp_issue, issue_dict)
 
         jirapissue = self.ajira.issue(issue_name)
@@ -231,8 +326,12 @@ class DRPUtils:
             desc = olddesc
         else:
             desc = olddesc + "\n Production Statistics:" + str(drp_issue) + " here\n"
-        jirapissue.update(fields={'description': desc})
-        print("Production Issue: " + str(jirapissue) + " description updated with DRP issue link")
+        jirapissue.update(fields={"description": desc})
+        print(
+            "Production Issue: "
+            + str(jirapissue)
+            + " description updated with DRP issue link"
+        )
         print("DRP issue for ProdStats : " + str(drp_issue))
 
     @staticmethod
@@ -243,7 +342,7 @@ class DRPUtils:
         :return:
         """
         print("infile is " + intab)
-        f = open(intab, 'r')
+        f = open(intab, "r")
         done = 0
         nquanta = dict()
         startdate = dict()
@@ -288,7 +387,18 @@ class DRPUtils:
                 pnfin = b[7]
                 pnfail = b[8]
                 psubfin = b[9]
-                print("statline:", upn, pstat, pntasks, pnfiles, pnremain, pnproc, pnfin, pnfail, psubfin)
+                print(
+                    "statline:",
+                    upn,
+                    pstat,
+                    pntasks,
+                    pnfiles,
+                    pnremain,
+                    pnproc,
+                    pnfin,
+                    pnfail,
+                    psubfin,
+                )
                 continue
             taskname = ""
             if l > 5:
@@ -314,26 +424,48 @@ class DRPUtils:
                 if len(daysplit) > 1:
                     daysplit2 = hms[0].split("days,")
                     if len(daysplit2) > 1:
-                        wallhr[taskname] = int(daysplit2[0]) * 24 + \
-                                           int(daysplit2[1]) + float(hms[1]) / 60.0 \
-                                           + float(hms[2]) / 3600.0
+                        wallhr[taskname] = (
+                            int(daysplit2[0]) * 24
+                            + int(daysplit2[1])
+                            + float(hms[1]) / 60.0
+                            + float(hms[2]) / 3600.0
+                        )
                     else:
                         daysplit = hms[0].split("day,")
-                        wallhr[taskname] = int(daysplit[0]) * 24 + \
-                                           int(daysplit[1]) + float(hms[1]) / 60.0 + \
-                                           float(hms[2]) / 3600.0
+                        wallhr[taskname] = (
+                            int(daysplit[0]) * 24
+                            + int(daysplit[1])
+                            + float(hms[1]) / 60.0
+                            + float(hms[2]) / 3600.0
+                        )
                 else:
-                    wallhr[taskname] = int(hms[0]) + float(hms[1]) / 60.0 \
-                                       + float(hms[2]) / 3600.0
-                sumtime[taskname] = nquanta[taskname] * \
-                                    secperstep[taskname] / 3600.0
+                    wallhr[taskname] = (
+                        int(hms[0]) + float(hms[1]) / 60.0 + float(hms[2]) / 3600.0
+                    )
+                sumtime[taskname] = nquanta[taskname] * secperstep[taskname] / 3600.0
                 maxmem[taskname] = float(b[7])
                 totsumsec = totsumsec + sumtime[taskname]
                 totmaxmem = totmaxmem + wallhr[taskname]
-        result = (totmaxmem, totsumsec, nquanta, startdate,
-                  secperstep, wallhr, sumtime, maxmem, upn,
-                  preqid, pstat, pntasks, pnfiles, pnremain,
-                  pnproc, pnfin, pnfail, psubfin)
+        result = (
+            totmaxmem,
+            totsumsec,
+            nquanta,
+            startdate,
+            secperstep,
+            wallhr,
+            sumtime,
+            maxmem,
+            upn,
+            preqid,
+            pstat,
+            pntasks,
+            pnfiles,
+            pnremain,
+            pnproc,
+            pnfin,
+            pnfail,
+            psubfin,
+        )
         return result
 
     @staticmethod
@@ -360,20 +492,20 @@ class DRPUtils:
         taskdict = dict()
         stepdict = dict()
         stepdesdict = dict()
-        subsets = drpyaml['subsets']
+        subsets = drpyaml["subsets"]
         for k, v in subsets.items():
             stepname = k
-            tasklist = v['subset']
-            tasklist.insert(0, 'pipetaskInit')
-            tasklist.append('mergeExecutionButler')
+            tasklist = v["subset"]
+            tasklist.insert(0, "pipetaskInit")
+            tasklist.append("mergeExecutionButler")
             # print(len(tasklist))
             # print('tasklist:',tasklist)
-            taskdict['pipetaskInit'] = stepname
+            taskdict["pipetaskInit"] = stepname
             for t in tasklist:
                 taskdict[t] = stepname
-            taskdict['mergeExecutionButler'] = stepname
+            taskdict["mergeExecutionButler"] = stepname
             stepdict[stepname] = tasklist
-            stepdesdict[stepname] = v['description']
+            stepdesdict[stepname] = v["description"]
         # assumes tasknames are unique
         # i.e. that there's not more than one step
         # with the same taskname
@@ -398,7 +530,7 @@ class DRPUtils:
         :return:
         """
         print("infile is " + intab)
-        f = open(intab, 'r')
+        f = open(intab, "r")
         done = 0
         nquanta = dict()
         startdate = dict()
@@ -433,14 +565,24 @@ class DRPUtils:
                     nquanta[taskname] = int(b[2])
                     startdate[taskname] = b[3]
                     secperstep[taskname] = float(b[4])
-                    sumtime[taskname] = nquanta[taskname] * secperstep[taskname] / 3600.0
+                    sumtime[taskname] = (
+                        nquanta[taskname] * secperstep[taskname] / 3600.0
+                    )
                     maxmem[taskname] = float(b[6])
                     totsumsec = totsumsec + sumtime[taskname]
                     if maxmem[taskname] > totmaxmem and taskname != "Campaign":
                         totmaxmem = maxmem[taskname]
                         print("bumping maxmem to " + str(totmaxmem))
-        result = (totmaxmem, totsumsec, nquanta, startdate, secperstep,
-                  sumtime, maxmem, upn)
+        result = (
+            totmaxmem,
+            totsumsec,
+            nquanta,
+            startdate,
+            secperstep,
+            sumtime,
+            maxmem,
+            upn,
+        )
         return result
 
     def drp_stat_update(self, pissue, drpi):
@@ -474,11 +616,11 @@ class DRPUtils:
 
         print(ts, what)
         # run butler and/or panda stats for one timestamp.
-        in_pars['Butler'] = "s3://butler-us-central1-panda-dev/dc2/butler-external.yaml"
-        in_pars['Jira'] = str(pissue)
-        in_pars['collType'] = ts.upper()
-        in_pars['workNames'] = ''
-        in_pars['maxtask'] = 100
+        in_pars["Butler"] = "s3://butler-us-central1-panda-dev/dc2/butler-external.yaml"
+        in_pars["Jira"] = str(pissue)
+        in_pars["collType"] = ts.upper()
+        in_pars["workNames"] = ""
+        in_pars["maxtask"] = 100
         get_butler_stat = GetButlerStat(**in_pars)
         get_butler_stat.run()
         butfilename = "/tmp/butlerStat-" + str(pissue) + ".txt"
@@ -489,7 +631,7 @@ class DRPUtils:
         else:
             butstat = "\n"
         panfilename = "/tmp/pandaStat-" + str(pissue) + ".txt"
-        in_pars['collType'] = ts.lower()
+        in_pars["collType"] = ts.lower()
         get_panda_stat = GetPanDaStat(**in_pars)
         get_panda_stat.run()
         if os.path.exists(panfilename):
@@ -509,11 +651,24 @@ class DRPUtils:
             pnfin = int(a[6][:-2])
             pnfail = int(a[7][:-2])
             psubfin = int(a[8][:-2])
-            curstat = "Status:" + str(pstat) + " nTasks:" + \
-                      str(pntasks) + " nFiles:" + str(pnfiles) + \
-                      " nRemain:" + str(pnproc) + " nProc:" + \
-                      " nFinish:" + str(pnfin) + " nFail:" + \
-                      str(pnfail) + " nSubFinish:" + str(psubfin) + "\n"
+            curstat = (
+                "Status:"
+                + str(pstat)
+                + " nTasks:"
+                + str(pntasks)
+                + " nFiles:"
+                + str(pnfiles)
+                + " nRemain:"
+                + str(pnproc)
+                + " nProc:"
+                + " nFinish:"
+                + str(pnfin)
+                + " nFail:"
+                + str(pnfail)
+                + " nSubFinish:"
+                + str(psubfin)
+                + "\n"
+            )
         else:
             statstr = "\n"
             curstat = "\n"
@@ -527,15 +682,24 @@ class DRPUtils:
         print("year:", year)
         print("year:", month)
         print("year:", day)
-        link = "https://panda-doma.cern.ch/tasks/?taskname=*" + \
-               pupn.lower() + "*&date_from=" + str(day) + "-" + \
-               str(month) + "-" + str(year) + \
-               "&days=62&sortby=time-ascending"
+        link = (
+            "https://panda-doma.cern.ch/tasks/?taskname=*"
+            + pupn.lower()
+            + "*&date_from="
+            + str(day)
+            + "-"
+            + str(month)
+            + "-"
+            + str(year)
+            + "&days=62&sortby=time-ascending"
+        )
         print("link:", link)
         linkline = "PanDA link:" + link + "\n"
         # print(butstat+statstr+curstat)
-        nowut = datetime.datetime.now(timezone('GMT')).strftime("%Y-%m-%d %H:%M:%S") + "Z"
-        issue_dict = {'description': newdesc + butstat + linkline + statstr + curstat}
+        nowut = (
+            datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
+        )
+        issue_dict = {"description": newdesc + butstat + linkline + statstr + curstat}
         drp_issue.update(fields=issue_dict)
         print("issue:" + str(drp_issue) + " Stats updated")
 
@@ -561,9 +725,12 @@ class DRPUtils:
         lm = iter(jlines)
         pattern1 = re.compile("(.*)tract in (.*)")
         pattern2 = re.compile("(.*)exposure >=([0-9]*) and exposure <=( *[0-9]*)")
-        pattern2a = re.compile("(.*)detector>=([0-9]*).*exposure >=( *[0-9]*) and exposure <=( *[0-9]*)")
+        pattern2a = re.compile(
+            "(.*)detector>=([0-9]*).*exposure >=( *[0-9]*) and exposure <=( *[0-9]*)"
+        )
         pattern3 = re.compile(
-            "(.*)Status:.*nTasks:(.*)nFiles:(.*)nRemain.*nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)")
+            "(.*)Status:.*nTasks:(.*)nFiles:(.*)nRemain.*nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)"
+        )
         # pattern3=re.compile("(.*)Status:(.*)")
         pattern4 = re.compile("(.*)PanDA.*link:(.*)")
         hilow = "()"
@@ -584,8 +751,23 @@ class DRPUtils:
             # print("no match to l",l)
             n2a = pattern2a.match(ls)
             if n2a:
-                print("detlo", n2a.group(2), "exposurelo:", n2a.group(3), " exphigh:", n2a.group(4), ":end")
-                hilow = "(" + str(int(n2a.group(3))) + "," + str(int(n2a.group(4))) + ")d" + str(int(n2a.group(2)))
+                print(
+                    "detlo",
+                    n2a.group(2),
+                    "exposurelo:",
+                    n2a.group(3),
+                    " exphigh:",
+                    n2a.group(4),
+                    ":end",
+                )
+                hilow = (
+                    "("
+                    + str(int(n2a.group(3)))
+                    + ","
+                    + str(int(n2a.group(4)))
+                    + ")d"
+                    + str(int(n2a.group(2)))
+                )
             n3 = pattern3.match(ls)
             if n3:
                 # print("match is",n3.group(1),n3.group(2))
@@ -615,14 +797,14 @@ class DRPUtils:
         :param sorton:
         :return:
         """
-        dictheader = ['Date', 'PREOPS', 'STATS', '(T,Q,D,Fa,Sf)', 'PANDA', 'DESCRIP']
+        dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
         for i in dictheader:
             table_out += str(i) + "||"
         table_out += "\n"
 
-        #sortbydescrip=sorted(in_dict[3])
+        # sortbydescrip=sorted(in_dict[3])
         for i in sorted(in_dict.keys(), reverse=True):
             pis = i.split("#")[0]
             ts = i.split("#")[1]
@@ -632,7 +814,17 @@ class DRPUtils:
             nFin = status[2]
             nFail = status[3]
             nSubF = status[4]
-            statstring = str(nT) + "," + str(nFile) + "," + str(nFin) + "," + str(nFail) + "," + str(nSubF)
+            statstring = (
+                str(nT)
+                + ","
+                + str(nFile)
+                + ","
+                + str(nFin)
+                + ","
+                + str(nFail)
+                + ","
+                + str(nSubF)
+            )
             scolor = "black"
             # print(statstring,nT,nFile,nFin,nFail,nSubF)
             if nFail > 0:
@@ -654,13 +846,29 @@ class DRPUtils:
             if len(what) > 28:
                 what = what[0:28]
 
-            table_out += "| " + str(shortyear) + "-" + str(shortmon) + \
-                         "-" + str(shortday) + " | [" + \
-                         str(in_dict[i][0]) + "|https://jira.lsstcorp.org/browse/" + \
-                         str(in_dict[i][0]) + "] | " + str(in_dict[i][1]) + \
-                         "|{color:" + scolor + "}" + statstring + \
-                         "{color} | [pDa|" + in_dict[i][3] + "] |" + \
-                         str(what) + "|\n"
+            table_out += (
+                "| "
+                + str(shortyear)
+                + "-"
+                + str(shortmon)
+                + "-"
+                + str(shortday)
+                + " | ["
+                + str(in_dict[i][0])
+                + "|https://jira.lsstcorp.org/browse/"
+                + str(in_dict[i][0])
+                + "] | "
+                + str(in_dict[i][1])
+                + "|{color:"
+                + scolor
+                + "}"
+                + statstring
+                + "{color} | [pDa|"
+                + in_dict[i][3]
+                + "] |"
+                + str(what)
+                + "|\n"
+            )
         return table_out
 
     @staticmethod
@@ -671,7 +879,7 @@ class DRPUtils:
         :param sorton:
         :return:
         """
-        dictheader = ['Date', 'PREOPS', 'STATS', '(T,Q,D,Fa,Sf)', 'PANDA', 'DESCRIP']
+        dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
         for i in dictheader:
@@ -692,7 +900,17 @@ class DRPUtils:
                 nFin = status[2]
                 nFail = status[3]
                 nSubF = status[4]
-                statstring = str(nT) + "," + str(nFile) + "," + str(nFin) + "," + str(nFail) + "," + str(nSubF)
+                statstring = (
+                    str(nT)
+                    + ","
+                    + str(nFile)
+                    + ","
+                    + str(nFin)
+                    + ","
+                    + str(nFail)
+                    + ","
+                    + str(nSubF)
+                )
                 scolor = "black"
                 if nFail > 0:
                     scolor = "red"
@@ -712,16 +930,34 @@ class DRPUtils:
                 what = in_dict[i][4]
                 if len(what) > 25:
                     what = what[0:25]
-                table_out += "| " + str(shortyear) + "-" + str(shortmon) + \
-                             "-" + str(shortday) + " | [" + str(in_dict[i][0]) + \
-                             "|https://jira.lsstcorp.org/browse/" + \
-                             str(in_dict[i][0]) + "] | " + str(in_dict[i][1]) + \
-                             "|{color:" + scolor + "}" + statstring + \
-                             "{color} | [pDa|" + in_dict[i][3] + "] |" + \
-                             str(what) + "|\n"
+                table_out += (
+                    "| "
+                    + str(shortyear)
+                    + "-"
+                    + str(shortmon)
+                    + "-"
+                    + str(shortday)
+                    + " | ["
+                    + str(in_dict[i][0])
+                    + "|https://jira.lsstcorp.org/browse/"
+                    + str(in_dict[i][0])
+                    + "] | "
+                    + str(in_dict[i][1])
+                    + "|{color:"
+                    + scolor
+                    + "}"
+                    + statstring
+                    + "{color} | [pDa|"
+                    + in_dict[i][3]
+                    + "] |"
+                    + str(what)
+                    + "|\n"
+                )
         return table_out
 
-    def drp_add_job_to_summary(self, first, ts, pissue, jissue, status, frontend, frontend1, backend):
+    def drp_add_job_to_summary(
+        self, first, ts, pissue, jissue, status, frontend, frontend1, backend
+    ):
         """
 
         :param first:
@@ -747,7 +983,14 @@ class DRPUtils:
         jsummary = jissue.fields.summary
         print("summary is", jsummary)
         ts, status, hilow, pandalink, what = self.parse_issue_desc(jdesc, jsummary)
-        print("new entry (ts,status,hilow,pandalink,step)", ts, status, hilow, pandalink, what)
+        print(
+            "new entry (ts,status,hilow,pandalink,step)",
+            ts,
+            status,
+            hilow,
+            pandalink,
+            what,
+        )
 
         if first == 1:
             a_dict = dict()
@@ -763,18 +1006,22 @@ class DRPUtils:
                     del a_dict[key]
                     break
         else:
-            a_dict[str(pissue) + "#" + str(ts)] = \
-                [str(pissue), str(jissue), status, pandalink,
-                 what + str(hilow)]
+            a_dict[str(pissue) + "#" + str(ts)] = [
+                str(pissue),
+                str(jissue),
+                status,
+                pandalink,
+                what + str(hilow),
+            ]
 
         newdesc = self.dict_to_table(a_dict, -1)
-        frontendissue.update(fields={'description': newdesc})
+        frontendissue.update(fields={"description": newdesc})
 
         newdesc1 = self.dict_to_table1(a_dict, -1)
-        frontendissue1.update(fields={'description': newdesc1})
+        frontendissue1.update(fields={"description": newdesc1})
 
         newdict = json.dumps(a_dict)
-        backendissue.update(fields={'description': newdict})
+        backendissue.update(fields={"description": newdict})
         print("Summary updated, see DRP-55 or DRP-53")
 
     @staticmethod
@@ -813,7 +1060,7 @@ class DRPUtils:
             a = line.split()
             aband = str(a[0])
             expnum = int(a[1])
-            if aband != band and band != 'all' and band != 'f':
+            if aband != band and band != "all" and band != "f":
                 continue
             groupcount += 1
             totcount += 1
@@ -823,11 +1070,25 @@ class DRPUtils:
                 lowexp = expnum
             if curcount == 0 and skipgroups < curgroup <= lastgroup:
                 highexp = expnum
-                com = "sed -e s/BAND/" + str(band) + "/g -e s/GNUM/" + \
-                      str(int(curgroup)) + "/g -e s/LOWEXP/" + str(lowexp) + \
-                      "/g -e s/HIGHEXP/" + str(highexp) + "/g " + \
-                      str(template) + " >" + str(outtemp) + "_" + str(band) + \
-                      "_" + str(int(curgroup)) + ".yaml"
+                com = (
+                    "sed -e s/BAND/"
+                    + str(band)
+                    + "/g -e s/GNUM/"
+                    + str(int(curgroup))
+                    + "/g -e s/LOWEXP/"
+                    + str(lowexp)
+                    + "/g -e s/HIGHEXP/"
+                    + str(highexp)
+                    + "/g "
+                    + str(template)
+                    + " >"
+                    + str(outtemp)
+                    + "_"
+                    + str(band)
+                    + "_"
+                    + str(int(curgroup))
+                    + ".yaml"
+                )
                 return_val = subprocess.call(com, shell=True)
                 print(com + " " + str(return_val))
         # lastgroup
@@ -835,11 +1096,25 @@ class DRPUtils:
         curcount = totcount % groupsize
         if curcount != 0 and skipgroups < curgroup <= lastgroup:
             highexp = expnum
-            com = "sed -e s/BAND/" + str(band) + "/g -e s/GNUM/" + \
-                  str(int(curgroup)) + "/g -e s/LOWEXP/" + str(lowexp) + \
-                  "/g -e s/HIGHEXP/" + str(highexp) + "/g " + \
-                  str(template) + " >" + str(outtemp) + "_" + \
-                  str(band) + "_" + str(int(curgroup)) + ".yaml"
+            com = (
+                "sed -e s/BAND/"
+                + str(band)
+                + "/g -e s/GNUM/"
+                + str(int(curgroup))
+                + "/g -e s/LOWEXP/"
+                + str(lowexp)
+                + "/g -e s/HIGHEXP/"
+                + str(highexp)
+                + "/g "
+                + str(template)
+                + " >"
+                + str(outtemp)
+                + "_"
+                + str(band)
+                + "_"
+                + str(int(curgroup))
+                + ".yaml"
+            )
             return_val = subprocess.call(com, shell=True)
             print(com + " " + str(return_val))
 
@@ -853,7 +1128,7 @@ class DRPUtils:
         :return:
         """
         bpsstr, kwd, akwd, pupn = self.parse_yaml(bpsyamlfile, ts)
-        print('pupn:', pupn)
+        print("pupn:", pupn)
         year = str(pupn[0:4])
         month = str(pupn[4:6])
         # day=str(pupn[6:8])
@@ -861,10 +1136,17 @@ class DRPUtils:
         print("year:", year)
         print("year:", month)
         print("year:", day)
-        a_link = "https://panda-doma.cern.ch/tasks/?taskname=*" + \
-                 pupn.lower() + "*&date_from=" + str(day) + "-" + \
-                 str(month) + "-" + str(year) + \
-                 "&days=62&sortby=time-ascending"
+        a_link = (
+            "https://panda-doma.cern.ch/tasks/?taskname=*"
+            + pupn.lower()
+            + "*&date_from="
+            + str(day)
+            + "-"
+            + str(month)
+            + "-"
+            + str(year)
+            + "&days=62&sortby=time-ascending"
+        )
 
         print("link:", a_link)
         dobut = 0
@@ -872,13 +1154,15 @@ class DRPUtils:
         print(dobut, dopan)
         # print(totmaxmem,nquanta,pnquanta)
 
-        nowut = datetime.datetime.now(timezone('GMT')).strftime("%Y-%m-%d %H:%M:%S") + "Z"
+        nowut = (
+            datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
+        )
         print(bpsstr, kwd, akwd)
 
-        upn = kwd['campaign'] + "/" + pupn
+        upn = kwd["campaign"] + "/" + pupn
         # upn.replace("/","_")
         # upn=d['bps_defined']['uniqProcName']
-        stepname = kwd['pipelineYaml']
+        stepname = kwd["pipelineYaml"]
         p = re.compile("(.*)#(.*)")
         m = p.match(stepname)
         print("stepname " + stepname)
@@ -894,59 +1178,157 @@ class DRPUtils:
 
         print(upn + "#" + stepcut)
         sl = self.parse_drp(steppath, stepcut)
-        tasktable = "Butler Statistics\n" + "|| Step || Task || Start || nQ || sec/Q || sum(hr) || maxGB ||" + "\n"
+        tasktable = (
+            "Butler Statistics\n"
+            + "|| Step || Task || Start || nQ || sec/Q || sum(hr) || maxGB ||"
+            + "\n"
+        )
         for s in sl:
             if dobut == 0 or s[1] not in nquanta.keys():
                 print("skipping:", s[0])
-                tasktable += "|" + s[0] + "|" + s[
-                1] + "|" + " " + "|" + " " + "|" + " " + "|" + " " + "|" + " " + "|" + "\n"
+                tasktable += (
+                    "|"
+                    + s[0]
+                    + "|"
+                    + s[1]
+                    + "|"
+                    + " "
+                    + "|"
+                    + " "
+                    + "|"
+                    + " "
+                    + "|"
+                    + " "
+                    + "|"
+                    + " "
+                    + "|"
+                    + "\n"
+                )
             else:
-                tasktable += "|" + s[0] + "|" + s[1] + "|" + str(startdate[s[1]]) + "|" + str(nquanta[s[1]]) + "|" + str(
-                '{:.1f}'.format(secperstep[s[1]])) + "|" + str('{:.1f}'.format(sumtime[s[1]])) + "|" + str(
-                '{:.2f}'.format(maxmem[s[1]])) + "| \n"
+                tasktable += (
+                    "|"
+                    + s[0]
+                    + "|"
+                    + s[1]
+                    + "|"
+                    + str(startdate[s[1]])
+                    + "|"
+                    + str(nquanta[s[1]])
+                    + "|"
+                    + str("{:.1f}".format(secperstep[s[1]]))
+                    + "|"
+                    + str("{:.1f}".format(sumtime[s[1]]))
+                    + "|"
+                    + str("{:.2f}".format(maxmem[s[1]]))
+                    + "| \n"
+                )
 
         if dobut == 1:
-            tasktable += "Total core-hours: " + str('{:.1f}'.format(totsumsec)) + " Peak Memory (GB): " + str(
-            '{:.1f}'.format(totmaxmem)) + "\n"
+            tasktable += (
+                "Total core-hours: "
+                + str("{:.1f}".format(totsumsec))
+                + " Peak Memory (GB): "
+                + str("{:.1f}".format(totmaxmem))
+                + "\n"
+            )
         tasktable += "\n"
         print(tasktable)
 
         tasktable += "PanDA PREOPS: " + str(pissue) + " link:" + a_link + "\n"
         if dopan == 1:
-            tasktable += "Panda Statistics as of: " + nowut + "\n" + "|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||" + "\n"
+            tasktable += (
+                "Panda Statistics as of: "
+                + nowut
+                + "\n"
+                + "|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||"
+                + "\n"
+            )
             for s in sl:
                 if dopan == 0 or s[1] not in pnquanta.keys():
-                    tasktable += "|" + s[0] + "|" + s[1] + \
-                             "|" + " " + "|" + " " + "|" + \
-                             " " + "|" + " " + "|" + " " + \
-                             "|" + " " + "|" + "\n"
+                    tasktable += (
+                        "|"
+                        + s[0]
+                        + "|"
+                        + s[1]
+                        + "|"
+                        + " "
+                        + "|"
+                        + " "
+                        + "|"
+                        + " "
+                        + "|"
+                        + " "
+                        + "|"
+                        + " "
+                        + "|"
+                        + " "
+                        + "|"
+                        + "\n"
+                    )
                 else:
-                    tasktable += "|" + s[0] + "|" + s[1] + "|" + \
-                             str(pstartdate[s[1]]) + "|" + \
-                             str(pnquanta[s[1]]) + "|" + \
-                             str('{:.1f}'.format(psecperstep[s[1]])) + \
-                             "|" + str('{:.1f}'.format(pwallhr[s[1]])) + \
-                             "|" + str('{:.2f}'.format(psumtime[s[1]])) + \
-                             "|" + str('{:.0f}'.format(pmaxmem[s[1]])) + \
-                             "| \n"
+                    tasktable += (
+                        "|"
+                        + s[0]
+                        + "|"
+                        + s[1]
+                        + "|"
+                        + str(pstartdate[s[1]])
+                        + "|"
+                        + str(pnquanta[s[1]])
+                        + "|"
+                        + str("{:.1f}".format(psecperstep[s[1]]))
+                        + "|"
+                        + str("{:.1f}".format(pwallhr[s[1]]))
+                        + "|"
+                        + str("{:.2f}".format(psumtime[s[1]]))
+                        + "|"
+                        + str("{:.0f}".format(pmaxmem[s[1]]))
+                        + "| \n"
+                    )
 
         # (ptotmaxmem,ptotsumsec,pnquanta,psecperstep,wallhr,sumtime,maxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
 
         if dopan == 1:
-            tasktable += "Total wall-hours: " + str('{:.1f}'.format(ptotmaxmem)) + " Total core-hours: " + str(
-            '{:.1f}'.format(ptotsumsec)) + "\n"
-            tasktable += "Status:" + str(pstat) + " nTasks:" + str(pntasks) + " nFiles:" + str(pnfiles) + " nRemain:" + str(
-                pnproc) + " nProc:" + " nFinish:" + str(pnfin) + " nFail:" + str(pnfail) + " nSubFinish:" + str(
-                psubfin) + "\n"
+            tasktable += (
+                "Total wall-hours: "
+                + str("{:.1f}".format(ptotmaxmem))
+                + " Total core-hours: "
+                + str("{:.1f}".format(ptotsumsec))
+                + "\n"
+            )
+            tasktable += (
+                "Status:"
+                + str(pstat)
+                + " nTasks:"
+                + str(pntasks)
+                + " nFiles:"
+                + str(pnfiles)
+                + " nRemain:"
+                + str(pnproc)
+                + " nProc:"
+                + " nFinish:"
+                + str(pnfin)
+                + " nFail:"
+                + str(pnfail)
+                + " nSubFinish:"
+                + str(psubfin)
+                + "\n"
+            )
         tasktable += "\n"
         print(tasktable)
         # (totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem)=parsebutlertable(butstepfile)
 
         if drpi == "DRP0":
-            issue = self.ajira.create_issue(project='DRP', issuetype='Task', summary="a new issue",
+            issue = self.ajira.create_issue(
+                project="DRP",
+                issuetype="Task",
+                summary="a new issue",
                 description=bpsstr + tasktable,
-                components=[{"name": "Test"}])
+                components=[{"name": "Test"}],
+            )
         else:
             issue = self.ajira.issue(drpi)
-        issue.update(fields={'summary': stepcut + "#" + upn, 'description': bpsstr + tasktable})
+        issue.update(
+            fields={"summary": stepcut + "#" + upn, "description": bpsstr + tasktable}
+        )
         print("issue:" + str(issue))

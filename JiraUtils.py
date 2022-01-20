@@ -28,8 +28,8 @@ import datetime
 class JiraUtils:
     def __init__(self):
         secrets = netrc.netrc()
-        username, account, password = secrets.authenticators('lsstjira')
-        self.ajira = JIRA(options={'server': account}, basic_auth=(username, password))
+        username, account, password = secrets.authenticators("lsstjira")
+        self.ajira = JIRA(options={"server": account}, basic_auth=(username, password))
         self.user_name = username
 
     def get_login(self):
@@ -38,9 +38,9 @@ class JiraUtils:
         :return: (jira instance, username, password), tuple
         """
         secrets = netrc.netrc()
-        username, account, password = secrets.authenticators('lsstjira')
+        username, account, password = secrets.authenticators("lsstjira")
         self.user_name = username
-        self.ajira = JIRA(options={'server': account}, basic_auth=(username, password))
+        self.ajira = JIRA(options={"server": account}, basic_auth=(username, password))
         return self.ajira, self.user_name
 
     def get_issue(self, ticket):
@@ -60,9 +60,7 @@ class JiraUtils:
         :return: issueId, string
         """
         jql_str = "project=%s AND issue=%s " % (project, key)
-        query = self.ajira.search_issues(
-            jql_str=jql_str
-        )
+        query = self.ajira.search_issues(jql_str=jql_str)
         print("query=", query)
         issue_id = int(query[0].id)
         print("Issue id=", issue_id)
@@ -76,10 +74,10 @@ class JiraUtils:
         :return: dictionary commentID:comment['body']
         """
         all_comments = dict()
-        for field_name in issue.raw['fields']:
+        for field_name in issue.raw["fields"]:
             if "comment" in field_name:
-                comments = issue.raw['fields'][field_name]
-                com_list = comments['comments']
+                comments = issue.raw["fields"][field_name]
+                com_list = comments["comments"]
                 print("comments")
                 for comment in com_list:
                     all_comments[comment["id"]] = comment["body"]
@@ -93,12 +91,12 @@ class JiraUtils:
         :return: dictionary issueId:issue.filename
         """
         all_attachments = dict()
-        for field_name in issue.raw['fields']:
+        for field_name in issue.raw["fields"]:
             if "attachment" in field_name:
-                attachments = issue.raw['fields'][field_name]
+                attachments = issue.raw["fields"][field_name]
                 for attachment in attachments:
                     all_attachments[attachment["id"]] = attachment["filename"]
-                    print(attachment["id"], ' ', attachment["filename"])
+                    print(attachment["id"], " ", attachment["filename"])
         return all_attachments
 
     @staticmethod
@@ -109,8 +107,8 @@ class JiraUtils:
         :return: summary
         """
         summary = issue.fields.summary
-        for field_name in issue.raw['fields']:
-            print("Field:", field_name, "Value:", issue.raw['fields'][field_name])
+        for field_name in issue.raw["fields"]:
+            print("Field:", field_name, "Value:", issue.raw["fields"][field_name])
         return summary
 
     @staticmethod
@@ -166,7 +164,7 @@ class JiraUtils:
                'comment': comment body, string
         :return:
         """
-        issue.update(comment=work_log['comment'])
+        issue.update(comment=work_log["comment"])
 
     def update_comment(self, jira, key, issue_id, tokens, comment_s):
         """
@@ -196,21 +194,21 @@ class JiraUtils:
                     comment.update(body=comment_s)
                     updated = True
             if not updated:
-                " if not found comment to update add a new one "
+                "if not found comment to update add a new one"
                 work_log = dict()
-                work_log['author'] = self.user_name
+                work_log["author"] = self.user_name
                 t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                work_log['created'] = t_stamp
-                work_log['comment'] = comment_s
+                work_log["created"] = t_stamp
+                work_log["comment"] = comment_s
                 self.add_comment(issue, work_log)
 
         else:
-            """ if no comments create a new one """
+            """if no comments create a new one"""
             work_log = dict()
-            work_log['author'] = self.user_name
+            work_log["author"] = self.user_name
             t_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            work_log['created'] = t_stamp
-            work_log['comment'] = comment_s
+            work_log["created"] = t_stamp
+            work_log["comment"] = comment_s
             self.add_comment(issue, work_log)
 
     @staticmethod
@@ -234,13 +232,13 @@ class JiraUtils:
         :param att_file: file /path/name, string
         :return:
         """
-        attachments = issue.raw['fields']['attachment']
+        attachments = issue.raw["fields"]["attachment"]
         if len(attachments) != 0:
             found = False
             for attachment in attachments:
-                print('attachment:', attachment['id'], ' ', attachment['filename'])
-                att_id = attachment['id']
-                filename = attachment['filename']
+                print("attachment:", attachment["id"], " ", attachment["filename"])
+                att_id = attachment["id"]
+                filename = attachment["filename"]
                 if filename in att_file:
                     found = True
                     jira.delete_attachment(int(att_id))
@@ -257,7 +255,7 @@ class JiraUtils:
         :param issue: issue instance
         :return: description, string
         """
-        description = issue.raw['fields']['description']
+        description = issue.raw["fields"]["description"]
         return description
 
 
@@ -265,10 +263,8 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "-t",
-        "--ticket",
-        default='PREOPS-728',
-        help="Specify Jira ticket")
+        "-t", "--ticket", default="PREOPS-728", help="Specify Jira ticket"
+    )
 
     options = parser.parse_args()
     ticket = options.ticket
@@ -312,17 +308,17 @@ def main():
         print("Failed to delete issue")
     """
     issue = ju.get_issue(ticket)
-    issue_id = ju.get_issue_id(project='DRP', key=ticket)
+    issue_id = ju.get_issue_id(project="DRP", key=ticket)
     print("issueId=", issue_id)
     desc = ju.get_description(issue)
     print("desc:", desc)
     " Let's make attachment if not exists"
-    att_file = './table.html'
+    att_file = "./table.html"
     ju.update_attachment(jira, issue, att_file)
     print("issue fields attachment:", issue.fields.attachment)
     " Now create or update a comment"
     comment_s = """ The test comment for pandaStat and PREOPS-910"""
-    tokens = ['pandaStat', 'PREOPS-910']
+    tokens = ["pandaStat", "PREOPS-910"]
     ju.update_comment(jira, ticket, issue_id, tokens, comment_s)
     comment_s = """ New comment for pandaStat and PREOPS-910"""
     ju.update_comment(jira, ticket, issue_id, tokens, comment_s)
