@@ -26,15 +26,25 @@ if __name__ == "__main__":
     nbpar = len(sys.argv)
     if nbpar < 2:
         print("Usage: ")
-        print("   DRPStatUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]")
+        print(
+            "   DRPStatUpate.py <bps_submit_yaml> [Production Issue] [DRP Issue(toredo)]"
+        )
         print("  <bps_submit_yaml>: ")
-        print("       yaml file used with bps submit <bps_submit_yaml> .  Should be sitting ")
-        print("       in the same dir that bps submit was done, so that the submit/ dir can be")
+        print(
+            "       yaml file used with bps submit <bps_submit_yaml> .  Should be sitting "
+        )
+        print(
+            "       in the same dir that bps submit was done, so that the submit/ dir can be"
+        )
         print("       searched for more info")
         print("  [Production Issue]:")
-        print("       PREOPS-938 or similar production issue for this group of bps submissions")
+        print(
+            "       PREOPS-938 or similar production issue for this group of bps submissions"
+        )
         print("  [DRP Issue]: ")
-        print("        leave off if you want a new issue generated, to redo, include the DRP-issue generated last time")
+        print(
+            "        leave off if you want a new issue generated, to redo, include the DRP-issue generated last time"
+        )
         sys.exit(-2)
 
     if nbpar > 1:

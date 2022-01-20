@@ -34,12 +34,16 @@ if __name__ == "__main__":
         print("       dataset/visit/tracts (will be attached to Production Issue)")
         print("  <Production Issue>: ")
         print("       Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update ")
-        print("       with link to ProdStat tracking issue(s) -- should match issue in template keyword ")
+        print(
+            "       with link to ProdStat tracking issue(s) -- should match issue in template keyword "
+        )
         print("  [DRP-issue]: ")
         print("       If present in form DRP-XXX, redo by overwriting an ")
         print("       existing DRP-issue. If not present, create a new DRP-issue.")
         print("       All ProdStat plots and links for group of bps submits will be ")
-        print("       tracked off this DRP-issue.  Production Issue will be updated with")
+        print(
+            "       tracked off this DRP-issue.  Production Issue will be updated with"
+        )
         print("       a link to this issue, by updating description (or later by using")
         print("        subtask link if all are DRP type). ")
         sys.exit(-2)
