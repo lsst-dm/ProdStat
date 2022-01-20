@@ -1,3 +1,7 @@
 bin_width: 30.
 start_at: 0.
-stop_at: 550.
+stop_at: 10.
+job_names:
+  - 'pipetaskInit'
+  - 'mergeExecutionButler'
+  - 'visit_step2'

@@ -50,38 +50,29 @@ Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
 ###MakePandaPlots.py
 ####Call:
-MakePandaPlots.py make-panda-plots ./inpfile.yaml \
+MakePandaPlots.py prep-timing-data ./inp_file.yaml \
 The input yaml file should contain following parameters: \
 Jira: PREOPS-905 - jira ticket corresponding given campaign. \
 collType: 2.2i - a token to help identify campaign workflows. \
+job_names: - a list of job types \
+|   - 'pypetaskInit' \
+|   - 'mergeExecutionButler' \
+|   - 'visit_step2' \
 bin_width: 30. - the width of the plot bin in sec. \
-n_bins: 100000 - total number of bins in plots \
-
+start_at: 0. - plot starts at hours from first quanta \
+stor_at: 10. - plot stops at hours from first quanta
 ####Operation:
-The program scan panda database to collect timing information for all job types in the campaign.
-It creates then plots of jobs time distribution for each job type.
-The names of plots create are like: \
-timing_<job_type>.png \
-The program also saves timing information in /tmp directory with file names like: \
+The program scan panda database to collect timing information for all job types in the list.
+It creates then timing information in /tmp directory with file names like: \
 panda_time_series_<job_type>.csv 
 
-###MakePlots.py
+###Making plots
 ####Call:
-MakePlots.py make-plots plot.yaml \
-The input yaml file should contain following parameters: \
-bin_width: 30. - width of the plot bin in sec. \
-start_at: 0. - time shift the plot begins with in hours.  \
-stop_at: 550. - time shift the plot ends in hours. 
+MakePandaPlots.py plot-data inp_file.yaml 
 
 ####Operation:
-The program reads timing data created by MakePandaPlots.py and build plots for
-each type of jobs in given time boundaries.
-
-####Caution:
-The list of known job types is hardcoded in 
-MakePandaPlots.py and MakePlots.py. In future development we will transfer this information in the input file.
-
-
+The program reads timing data created by prep-timing-data command and
+build plots for each type of jobs in given time boundaries.
 
 ####Operation:
 

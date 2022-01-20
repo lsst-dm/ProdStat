@@ -24,9 +24,11 @@ import sys
 import getopt
 from JiraUtils import *
 
+
 class ReportToJira:
     """
-    This program is used to report production statistics to a Jira ticket
+    This program is used to report production statistics to a
+    Jira ticket
     It uses parameters from the input yaml file that looks like following:
 project: 'Pre-Operations'
 Jira: PREOPS-911

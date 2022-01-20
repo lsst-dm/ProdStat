@@ -1,7 +1,12 @@
 Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
 Jira: PREOPS-905
-collType: 2.2i
+collType: step2
 workNames:
 maxtask: 100
+job_names:
+  - 'pipetaskInit'
+  - 'mergeExecutionButler'
+  - 'visit_step2'
 bin_width: 30.
-n_bins: 100000
+start_at: 0.
+stop_at: 10.
