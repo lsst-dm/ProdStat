@@ -20,6 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
+import os
 import json
 import urllib.error as url_error
 from urllib.request import urlopen
@@ -40,17 +41,26 @@ class MakePandaPlots:
         :param kwargs:
         the structure of the input dictionary is as follow:
          {'Jira': 'PREOPS-910',
-         'collType': '2.2i', token that with jira ticket will uniquely define
-          the dataset (workflow)
+         'collType': '2.2i', token that with jira ticket will
+         uniquely define the dataset (workflow)
           'bin_width': '30.', plot bin width in sec.
-          'n_bins: '100000', number of bins in the plot
+          'start_at: 0., time in hours at which to start plot
+          'stop_at: 500., time in hours at which to stop plot
           }
         """
         self.collType = kwargs["collType"]
         self.Jira = kwargs["Jira"]
         " bin width in seconds "
         self.bin_width = kwargs["bin_width"]
-        self.n_bins = kwargs["n_bins"]
+        " bin width in hours "
+        self.scale_factor = self.bin_width / 3600.0
+        self.stop_at = int(kwargs["stop_at"])
+        self.start_at = float(kwargs["start_at"])
+
+        self.plot_n_bins = int((self.stop_at - self.start_at) /
+                               self.scale_factor)
+#        self.n_bins = int((self.stop_at - self.start_at) /
+#                          self.scale_factor)
         self.start_time = 0
         self.workKeys = list()
         print(" Collecting information for Jira ticket ", self.Jira)
@@ -60,8 +70,7 @@ class MakePandaPlots:
         self.allTasks = dict()  # info about tasks
         self.allJobs = dict()  # info about jobs
         self.wfTasks = dict()  # tasks per workflow
-        " add more names here for future production steps "
-        self.job_names = ["pipetaskInit", "visit_focal_plane", "mergeExecutionButler"]
+        self.job_names = kwargs["job_names"]
         self.wfNames = dict()
 
     def get_workflows(self):
@@ -150,8 +159,8 @@ class MakePandaPlots:
         urls = workflow["r_name"]
         tasks = self.query_panda(
             urlst="http://panda-doma.cern.ch/tasks/?taskname="
-            + urls
-            + "*&days=120&json"
+                  + urls
+                  + "*&days=120&json"
         )
         return tasks
 
@@ -162,8 +171,9 @@ class MakePandaPlots:
         :return:
         """
         jeditaskid = task["jeditaskid"]
-        """ Now select a number of jobs to calculate average cpu time and max Rss """
-        uri = "http://panda-doma.cern.ch/jobs/?jeditaskid=" + str(jeditaskid) + "&json"
+        """ Now select jobs to get timing information """
+        uri = "http://panda-doma.cern.ch/jobs/?jeditaskid=" + \
+              str(jeditaskid) + "&json"
         jobsdata = self.query_panda(urlst=uri)
         """ list of jobs in the task """
         jobs = jobsdata["jobs"]
@@ -178,7 +188,7 @@ class MakePandaPlots:
                 if isinstance(jb["starttime"], str):
                     tokens = jb["starttime"].split("T")
                     startst = (
-                        tokens[0] + " " + tokens[1]
+                            tokens[0] + " " + tokens[1]
                     )  # get rid of T in the date string
                     taskstart = datetime.datetime.strptime(
                         startst, "%Y-%m-%d %H:%M:%S"
@@ -189,10 +199,12 @@ class MakePandaPlots:
                 for _name in self.job_names:
                     if _name in job_name:
                         if _name in self.allJobs:
-                            self.allJobs[_name].append((delta_time, durationsec))
+                            self.allJobs[_name].append((delta_time,
+                                                        durationsec))
                         else:
                             self.allJobs[_name] = list()
-                            self.allJobs[_name].append((delta_time, durationsec))
+                            self.allJobs[_name].append((delta_time,
+                                                        durationsec))
         #            print(self.allJobs)
         else:
             return
@@ -252,22 +264,28 @@ class MakePandaPlots:
         sys.stdout.flush()
         return result
 
-    @staticmethod
-    def make_plot(data_list, bin_width, n_bins, job_name):
-        print("start with ", job_name)
+    def make_plot(self, data_list, max_time, job_name):
+        first_bin = int(self.start_at / self.scale_factor)
+        last_bin = first_bin + self.plot_n_bins
+        n_bins = int(max_time / self.bin_width)
         task_count = np.zeros(n_bins)
         for time_in, duration in data_list:
-            task_count[
-                int(time_in / bin_width) : int((time_in + duration) / bin_width)
-            ] += 1
-        plt.plot(
-            np.arange(n_bins) * bin_width / 3600.0, task_count, label=str(job_name)
-        )
+            task_count[int(time_in / self.bin_width): int(
+                (time_in + duration) / self.bin_width)] += 1
+        if self.plot_n_bins > n_bins:
+            last_bin = n_bins
+        sub_task_count = np.copy(task_count[first_bin:last_bin])
+        max_y = 1.1 * (max(sub_task_count) + 1.0)
+        sub_task_count.resize([self.plot_n_bins])
+        x_bins = np.arange(self.plot_n_bins) * self.scale_factor + \
+            self.start_at
+        plt.plot(x_bins, sub_task_count, label=str(job_name))
+        plt.axis([self.start_at, self.stop_at, 0, max_y])
         plt.xlabel("Hours since first quantum start")
         plt.ylabel("Number of running quanta")
         plt.savefig("timing_" + job_name + ".png")
 
-    def run(self):
+    def prep_data(self):
         self.get_workflows()
         self.get_tasks()
         print(" all time data")
@@ -281,21 +299,22 @@ class MakePandaPlots:
             dataframe.to_csv(
                 "/tmp/" + "panda_time_series_" + job_name + ".csv", index=True
             )
-            """ This part can be independent plotting program"""
+
+    def plot_data(self):
         for job_name in self.job_names:
-            df = pd.read_csv(
-                "/tmp/" + "panda_time_series_" + job_name + ".csv",
-                header=0,
-                index_col=0,
-                parse_dates=True,
-                squeeze=True,
-            )
-            #            print(df)
-            data_list = list()
-            for index, row in df.iterrows():
-                data_list.append((row[0], row[1]))
-            print(" job name ", job_name)
-            self.make_plot(data_list, self.bin_width, self.n_bins, job_name)
+            data_file = "/tmp/" + "panda_time_series_" + job_name + ".csv"
+            if os.path.exists(data_file):
+                df = pd.read_csv(
+                    data_file, header=0, index_col=0, parse_dates=True,
+                    squeeze=True)
+                data_list = list()
+                max_time = 0.0
+                for index, row in df.iterrows():
+                    if float(row[0]) >= max_time:
+                        max_time = row[0]
+                    data_list.append((row[0], row[1]))
+                print(" job name ", job_name)
+                self.make_plot(data_list, max_time, job_name)
 
 
 @click.group()
@@ -306,8 +325,8 @@ def cli():
 
 @cli.command()
 @click.argument("param_file", type=click.File(mode="r"))
-def make_panda_plots(param_file):
-    """Create  timing plots of the campaign jobs
+def prep_timing_data(param_file):
+    """Create  timing data of the campaign jobs
     Parameters
     ----------
     param_file : `typing.TextIO`
@@ -315,19 +334,53 @@ def make_panda_plots(param_file):
     Note
     ----
     The yaml file should provide following parameters::
-        Jira: PREOPS-905
-        collType: 2.2i
-        bin_width: 30.
-        n_bins: 100000
+        Jira: PREOPS-905, campaign jira ticket for which to select data
+        collType: 2.2i, token to help select data, like 2.2i or sttep2
+        job_names:, list of task names for which to collect data
+            - 'pipetaskInit'
+            - 'mergeExecutionButler'
+            - 'visit_step2'
+        bin_width: 30., bin width in seconds
+        start_at: 0.  , start of the plot in hours from first quanta
+        stop_at: 10.  , end of the plot in hours from first quanta
     """
     click.echo("Start with MakePandaPlots")
     params = yaml.safe_load(param_file)
     panda_plot_maker = MakePandaPlots(**params)
-    panda_plot_maker.run()
-    print("Finish with MakePandaPlots")
+    panda_plot_maker.prep_data()
+    print("Finish with prep_timing_data")
 
 
-cli.add_command(make_panda_plots)
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def plot_data(param_file):
+    """Create  timing data of the campaign jobs
+    Parameters
+    ----------
+    param_file : `typing.TextIO`
+        A file from which to read  parameters
+    Note
+    ----
+    The yaml file should provide following parameters::
+        Jira: PREOPS-905, campaign jira ticket for which to select data
+        collType: 2.2i, token to help select data, like 2.2i or sttep2
+        job_names:, list of task names for which to collect data
+            - 'pipetaskInit'
+            - 'mergeExecutionButler'
+            - 'visit_step2'
+        bin_width: 30., bin width in seconds
+        start_at: 0.  , start of the plot in hours from first quanta
+        stop_at: 10.  , end of the plot in hours from first quanta
+    """
+    click.echo("Start with plot_data")
+    params = yaml.safe_load(param_file)
+    panda_plot_maker = MakePandaPlots(**params)
+    panda_plot_maker.plot_data()
+    print("Finish with plot_data")
+
+
+cli.add_command(prep_timing_data)
+cli.add_command(plot_data)
 
 if __name__ == "__main__":
     cli()

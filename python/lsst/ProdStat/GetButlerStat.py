@@ -81,9 +81,9 @@ class GetButlerStat:
             f"start{_}Time" for _ in time_types
         ]
         max_fields = (
-            [f"End{_}Time" for _ in time_types]
-            + [f"end{_}Time" for _ in time_types]
-            + ["MaxResidentSetSize"]
+                [f"End{_}Time" for _ in time_types]
+                + [f"end{_}Time" for _ in time_types]
+                + ["MaxResidentSetSize"]
         )
         time_stamp = ["startUtc", "prepUtc"]
         results = dict()
@@ -97,7 +97,7 @@ class GetButlerStat:
                     if "T" in value:
                         tokens = starts.split("T")
                         startst = (
-                            tokens[0] + " " + tokens[1]
+                                tokens[0] + " " + tokens[1]
                         )  # get rid of T in the date string
                     if "timestamp" not in results:
                         results["timestamp"] = startst
@@ -280,7 +280,7 @@ class GetButlerStat:
                             sys.stdout.flush()
                     try:
                         refyaml = self.butler.getURI(dataref, collections=collection)
-                    except OSError():
+                    except ValueError:
                         print("Yaml file not found skipping")
                         continue
                     dest = ButlerURI("/tmp/tempTask.yaml")
@@ -298,8 +298,8 @@ class GetButlerStat:
                     """parse results """
                     results = self.parse_metadata_yaml(yaml_file="/tmp/tempTask.yaml")
                     if (
-                        results.get("EndCpuTime", None) is None
-                        and results.get("endCpuTime", None) is not None
+                            results.get("EndCpuTime", None) is None
+                            and results.get("endCpuTime", None) is not None
                     ):
                         cpu_time = float(results.get("endCpuTime", None))
                     else:

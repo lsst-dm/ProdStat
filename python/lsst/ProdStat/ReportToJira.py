@@ -27,25 +27,26 @@ from .JiraUtils import *
 
 class ReportToJira:
     """
-        This program is used to report production statistics to a Jira ticket
-        It uses parameters from the input yaml file that looks like following:
-    project: 'Pre-Operations'
-    Jira: PREOPS-911
-    comments:
-    - file: /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.txt
-      tokens:
-         - 'pandaWfStat'
-         - 'workflow'
-    - file: /Users/kuropat/devel/reports/pandaStat-PREOPS-911.txt
-      tokens:
-         - 'pandaStat'
-         - 'campaign'
-    - file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
-      tokens:
-        - 'butlerStat'
-        - 'Campaign'
-    attachments:
-      - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.html
+    This program is used to report production statistics to a
+    Jira ticket
+    It uses parameters from the input yaml file that looks like following:
+project: 'Pre-Operations'
+Jira: PREOPS-911
+comments:
+- file: /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.txt
+  tokens:
+     - 'pandaWfStat'
+     - 'workflow'
+- file: /Users/kuropat/devel/reports/pandaStat-PREOPS-911.txt
+  tokens:
+     - 'pandaStat'
+     - 'campaign'
+- file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
+  tokens:
+    - 'butlerStat'
+    - 'Campaign'
+attachments:
+  - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.html
     """
 
     def __init__(self, inp_file):
@@ -53,12 +54,12 @@ class ReportToJira:
         (self.a_jira, account) = self.ju.get_login()
         with open(inp_file) as pf:
             in_pars = yaml.safe_load(pf)
-        self.ticket = in_pars["Jira"]
-        self.comments = in_pars["comments"]
+        self.ticket = in_pars['Jira']
+        self.comments = in_pars['comments']
         print(self.comments)
-        self.attachments = in_pars["attachments"]
+        self.attachments = in_pars['attachments']
         print(self.attachments)
-        self.project = in_pars["project"]
+        self.project = in_pars['project']
 
     def run(self):
         print("The summary for ticket:", self.ticket)
@@ -67,10 +68,10 @@ class ReportToJira:
         summary = self.ju.get_summary(issue)
         print(summary)
         for comment in self.comments:
-            com_file = comment["file"]
-            tokens = comment["tokens"]
-            str_buff = ""
-            for line in open(com_file, "r"):
+            com_file = comment['file']
+            tokens = comment['tokens']
+            str_buff = ''
+            for line in open(com_file, 'r'):
                 str_buff += line
             self.ju.update_comment(self.a_jira, self.ticket, issue_id, tokens, str_buff)
         for attachment in self.attachments:
@@ -96,7 +97,7 @@ if __name__ == "__main__":
         print("-f <inputYaml> - yaml file with input parameters")
         sys.exit(2)
     f_flag = 0
-    inpF = ""
+    inpF = ''
     for opt, arg in opts:
         print("%s %s" % (opt, arg))
         if opt in ("-h", "--help"):
@@ -104,22 +105,20 @@ if __name__ == "__main__":
             print("  Required inputs:")
             print("  -f <inputYaml> - yaml file with input parameters")
             print("The yaml file format as following:")
-            print(
-                "project: 'Pre-Operations \n",
-                "Jira: PREOPS-707 \n",
-                "comments: \n",
-                "- file: ./text_file1.txt \n",
-                "  tokens: \n",
-                "     - 'token1 \n",
-                "     - 'token2 \n",
-                "- file: ./text_file2.txt \n",
-                "     - 'token3 \n",
-                "     - 'token4 \n",
-                "attachments:\n",
-                "- file1.html\n",
-                "- file2.png\n",
-                "- file3.pgn\n",
-            )
+            print("project: 'Pre-Operations \n",
+                  "Jira: PREOPS-707 \n",
+                  "comments: \n",
+                  "- file: ./text_file1.txt \n",
+                  "  tokens: \n",
+                  "     - 'token1 \n",
+                  "     - 'token2 \n",
+                  "- file: ./text_file2.txt \n",
+                  "     - 'token3 \n",
+                  "     - 'token4 \n",
+                  "attachments:\n",
+                  "- file1.html\n",
+                  "- file2.png\n",
+                  "- file3.pgn\n")
             sys.exit(2)
         elif opt in ("-f", "--inputYaml"):
             f_flag = 1

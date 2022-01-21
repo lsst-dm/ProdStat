@@ -6,10 +6,10 @@ comments:
      - 'pandaStat'
      - 'campaign'
      - 'PREOPS-905'
-- file: /Users/kuropat/devel/reports/butlerStat-PREOPS-905.txt
-  tokens:
-     - 'butlerStat'
-     - 'PREOPS-905'
+#- file: /Users/kuropat/devel/reports/butlerStat-PREOPS-905.txt
+#  tokens:
+#     - 'butlerStat'
+#     - 'PREOPS-905'
 attachments:
   - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-905.html
-  - /Users/kuropat/devel/reports/timing_visit_focal_plane.png
+  - /Users/kuropat/devel/reports/timing_visit_step2.png
