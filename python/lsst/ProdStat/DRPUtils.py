@@ -25,7 +25,7 @@ from datetime import datetime
 from pytz import timezone
 from .GetButlerStat import *
 from .GetPanDaStat import *
-from JiraUtils import *
+from .JiraUtils import *
 import subprocess
 
 

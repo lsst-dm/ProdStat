@@ -22,7 +22,7 @@
 import yaml
 import sys
 import getopt
-from JiraUtils import *
+from .JiraUtils import *
 
 
 class ReportToJira:
