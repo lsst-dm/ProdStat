@@ -186,5 +186,5 @@ def update_stat(production_issue, drp_issue):
 
 
 def main():
+    """Run the command line interface."""
     return cli()
-
