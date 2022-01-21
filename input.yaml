@@ -9,4 +9,4 @@ job_names:
   - 'visit_step2'
 bin_width: 30.
 start_at: 0.
-stop_at: 10.
+stop_at: 50.
