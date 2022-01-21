@@ -19,7 +19,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from DRPUtils import *
+import sys
+from .DRPUtils import DRPUtils
+
 
 if __name__ == "__main__":
     numpar = len(sys.argv)

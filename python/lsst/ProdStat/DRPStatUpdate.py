@@ -20,7 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # NOTES:  allow for clustering, and allow for appending to the DRP ticket description
-from DRPUtils import *
+import sys
+from .DRPUtils import DRPUtils
 
 if __name__ == "__main__":
     nbpar = len(sys.argv)

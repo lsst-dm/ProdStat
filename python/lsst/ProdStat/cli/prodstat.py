@@ -25,8 +25,8 @@
 import yaml
 
 import click
-import DRPUtils
-from GetButlerStat import GetButlerStat
+from .. import DRPUtils
+from .. import GetButlerStat
 
 
 @click.group()
@@ -93,7 +93,7 @@ def get_butler_stat(param_file):
     """
     params = yaml.safe_load(param_file)
     butler_uri = params["Butler"]
-    butler_stat_getter = GetButlerStat(**params)
+    butler_stat_getter = GetButlerStat.GetButlerStat(**params)
     butler_stat_getter.set_butler(butler_uri)
     butler_stat_getter.run()
 
