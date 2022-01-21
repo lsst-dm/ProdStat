@@ -27,6 +27,9 @@ import yaml
 import click
 from .. import DRPUtils
 from .. import GetButlerStat
+from .. import GetPanDaStat
+from .. import ReportToJira
+from .. import MakePandaPlots
 
 
 @click.group()
@@ -184,6 +187,167 @@ def update_stat(production_issue, drp_issue):
     drp_utils = DRPUtils.DRPUtils()
     drp_utils.drp_stat_update(production_issue, drp_issue)
 
+
+@cli.command()
+@click.argument("pbs_submit_template", type=str)
+@click.argument("production_issue", type=str)
+@click.argument("drp_issue", type=str, defaulte="DRP0")
+def init(bps_submit_template, production_issue, drp_issue):
+    """Initialize a DRP issue.
+
+    \b
+    Parameters
+    ----------
+    bps_submit_template : `str`
+        Template file with place holders for start/end
+        dataset/visit/tracts (will be attached to Production Issue
+    production_issue : `str`
+        Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update
+        with link to ProdStat tracking issue(s) -- should match issue
+        in template keyword.
+    drp_issue : `str`
+        If present in form DRP-XXX, redo by overwriting an
+        existing DRP-issue. If not present, create a new DRP-issue.
+        All ProdStat plots and links for group of bps submits will be
+        tracked off this DRP-issue.  Production Issue will be updated with
+        a link to this issue, by updating description (or later by using
+        subtask link if all are DRP type).
+
+    \b
+    Returns
+    -------
+    None.
+
+    """
+    drp = DRPUtils.DRPUtils()
+    drp.drp_init(bps_submit_template, production_issue, drp_issue)
+
+
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def get_panda_stat(param_file):
+    """Get butler statistics.
+
+    \b
+    Paramaters
+    ----------
+    param_file : `typing.IO`
+        File with butler stat parameters, like::
+
+            Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
+            Jira: PREOPS-707
+            collType: 2.2i
+            workNames: not used now
+            maxtask: 100"
+
+    \b
+    Returns
+    -------
+    None.
+    """
+    params = yaml.safe_load(param_file)
+    panda_stat = GetPanDaStat.GetPanDaStat(**params)
+    panda_stat.run()
+
+
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def prep_timing_data(param_file):
+    """Create  timing data of the campaign jobs.
+
+    Parameters
+    ----------
+    param_file : `typing.TextIO`
+        A file from which to read  parameters
+
+    Note
+    ----
+    The yaml file should provide following parameters::
+
+        Jira: PREOPS-905, campaign jira ticket for which to select data
+        collType: 2.2i, token to help select data, like 2.2i or sttep2
+        job_names:, list of task names for which to collect data
+            - 'pipetaskInit'
+            - 'mergeExecutionButler'
+            - 'visit_step2'
+        bin_width: 30., bin width in seconds
+        start_at: 0.  , start of the plot in hours from first quanta
+        stop_at: 10.  , end of the plot in hours from first quanta
+    """
+    click.echo("Start with MakePandaPlots")
+    params = yaml.safe_load(param_file)
+    panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
+    panda_plot_maker.prep_data()
+    print("Finish with prep_timing_data")
+
+
+@cli.command()
+@click.argument("param_file", type=click.File(mode="r"))
+def plot_data(param_file):
+    """Create  timing data of the campaign jobs.
+
+    \b
+    Parameters
+    ----------
+    param_file : `typing.TextIO`
+        A file from which to read  parameters
+
+    \b
+    Note
+    ----
+    The yaml file should provide following parameters::
+
+        Jira: PREOPS-905, campaign jira ticket for which to select data
+        collType: 2.2i, token to help select data, like 2.2i or sttep2
+        job_names:, list of task names for which to collect data
+            - 'pipetaskInit'
+            - 'mergeExecutionButler'
+            - 'visit_step2'
+        bin_width: 30., bin width in seconds
+        start_at: 0.  , start of the plot in hours from first quanta
+        stop_at: 10.  , end of the plot in hours from first quanta
+    """
+    click.echo("Start with plot_data")
+    params = yaml.safe_load(param_file)
+    panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
+    panda_plot_maker.plot_data()
+    print("Finish with plot_data")
+
+
+@cli.command()
+@click.argument("param_file", type=str)
+def report_to_jira(param_file):
+    """Report to jira.
+
+    \b
+    Parameters
+    ----------
+    param_file : `str`
+        Name of file from which to read  parameters
+
+    \b
+    Note
+    ----
+    The yaml file should provide following parameters::
+
+        project: 'Pre-Operations
+         Jira: PREOPS-707
+         comments:
+         - file: ./text_file1.txt
+           tokens:
+              - 'token1
+              - 'token2
+         - file: ./text_file2.txt
+              - 'token3
+              - 'token4
+         attachments:
+         - file1.html
+         - file2.png
+         - file3.pgn
+
+    """
+    report = ReportToJira.ReportToJira(param_file)
+    report.run()
 
 def main():
     """Run the command line interface."""
