@@ -39,19 +39,22 @@ from lsst.daf.base import PropertySet
 
 class GetButlerStat:
     def __init__(self, **kwargs):
+        """Build production statistics table using Butler meta data.
+
+        Parameters
+        ----------
+        Butler : `str`
+            TODO
+        Jira : `str`
+            TODO
+        CollType : `str`
+            token that with jira ticket will uniquely define the dataset (workflow)
+        workNames : `str`
+            Not used
+        maxtask : `str`
+            maximum number of task files to analyse
         """
-        Class to build production statistics table using Butler
-        meta data
-        :param kwargs:
-        the structure of the input dictionary is as follow:
-         {'Butler': 's3://butler-us-central1-panda-dev/dc2/butler.yaml',
-         'Jira': 'PREOPS-910',
-         'collType': '300z', token that with jira ticket will uniquely define
-          the dataset (workflow)
-          'workNames': '', not used for now and may be skipped
-          'maxtask': '100'  maximum number of task files to analyse
-          }
-        """
+        
         if "Butler" in kwargs:
             self.Butler = kwargs["Butler"]
         else:
@@ -71,11 +74,24 @@ class GetButlerStat:
 
     @staticmethod
     def parse_metadata_yaml(yaml_file):
+        """Parse the runtime and RSS data in the metadata yaml.
+        
+        Parameters
+        ----------
+        yaml_file : `str`
+            File name for the runtime yaml metadata file.
+        
+        Returns
+        -------
+        results : TODO
+            TODO
+        
+        Note
+        ----
+        The yaml file should be file created by the lsst.pipe.base.timeMethod decorator
+        as applied to pipetask methods.
         """
-        Parse the runtime and RSS data in the metadata yaml file created
-        by the lsst.pipe.base.timeMethod decorator as applied to pipetask
-        methods.
-        """
+        
         time_types = "Cpu User System".split()
         min_fields = [f"Start{_}Time" for _ in time_types] + [
             f"start{_}Time" for _ in time_types
@@ -116,10 +132,25 @@ class GetButlerStat:
         return results
 
     def set_butler(self, butler_string):
+        """Set the butler.
+        
+        Parameters
+        ----------
+        butler_string : `str`
+            Defines how to access the butlery
+        """
+        
         self.Butler = butler_string
 
     def search_collections(self):
-        """Select collections"""
+        """Select collections.
+        
+        Returns
+        -------
+        collections : `list`
+            A list of collections.
+        """
+        
         collections = []
         preops = self.Jira
         for c in sorted(self.registry.queryCollections()):
@@ -136,12 +167,32 @@ class GetButlerStat:
         return collections
 
     def make_sum(self, task_size, task_res):
+        """Calculate max RSS.
+        
+        Parameters
+        ----------
+        task_size : TODO
+            TODO
+        task_res : TODO
+            TODO
+            
+        Returns
+        -------
+        summary : `dict`
+            summary dictionary including:
+            
+            ``"nQuanta"``
+                Number of quanta (`int`)
+            ``"startTime"``
+                TODO (TODO)
+            ``"cpu sec/job"``
+                TODO (`float`)
+            ``"cpu-hours"``
+                TODO (`float`)
+            ``"MaxRSS GB"``
+                TODO (`float`)
         """
-        Calculate max RSS
-        :param task_size:
-        :param task_res:
-        :return:
-        """
+        
         cputime = task_res["cpu_time"]
         max_rss = task_res["maxRSS"]
         time_start = task_res["startTime"]
@@ -168,9 +219,14 @@ class GetButlerStat:
         }
 
     def gettaskdata(self, collections):
-        """We can collect datasets and data IDs
-        for each collection and create subset of ID's for each
-        process type"""
+        """Collect datasets & IDs for each collection in subsets of IDs by process type.
+        
+        Parameters
+        ----------
+        collections : TODO
+            TODO
+        """
+        
         datatype_pattern = ".*_metadata"
         pattern = re.compile(datatype_pattern)
         for collection in collections:
@@ -213,14 +269,25 @@ class GetButlerStat:
             self.collSize[collection] = task_size
 
     def make_table_from_csv(self, buffer, out_file, index_name, comment):
+        """Create table from csv file
+        
+        Parameters
+        ----------
+        buffer : TODO
+            TODO
+        out_file : TODO
+            TODO
+        index_name : TODO
+            TODO
+        comment : TODO
+            TODO
+            
+        Returns
+        -------
+        newbody : `str`
+            TODO
         """
-        Create table from csv file
-        :param buffer:
-        :param out_file:
-        :param index_name:
-        :param comment:
-        :return:
-        """
+        
         newbody = comment + "\n"
         newbody += out_file + "\n"
         lines = buffer.split("\n")
@@ -250,6 +317,9 @@ class GetButlerStat:
         return newbody
 
     def run(self):
+        """TODO
+        """
+        
         collections = self.search_collections()
         """Recreate Butler and registry """
         self.butler = Butler(self.REPO_ROOT, collections=collections)

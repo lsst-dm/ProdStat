@@ -31,18 +31,26 @@ import subprocess
 
 class DRPUtils:
     def __init__(self):
-        """
-        The class to organize various DRP utilities in a single class
+        """Collection of DRP utilities.
         """
         self.ju = JiraUtils()
         self.ajira, self.user_name = self.ju.get_login()
 
     @staticmethod
     def parse_template(bps_yaml_file):
-        """
-        :param bps_yaml_file:
-        :return: bpsstr
-        :return: kwd
+        """TODO.
+        
+        Parameters
+        ----------
+        bps_yaml_file : `str`
+            File name for yaml file with BPS connection data.
+            
+        Returns
+        -------
+        bpsstr: `str`
+            TODO
+        kwd: `dict`
+            TODO
         """
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
@@ -78,11 +86,14 @@ class DRPUtils:
 
     @staticmethod
     def parse_yaml(bps_yaml_file, ts):
-        """
+        """TODO.
 
-        :param bps_yaml_file:
-        :param ts:
-        :return:
+        Parameters
+        ----------
+        bps_yaml_file : `str`
+            File name for yaml file with BPS connection data.
+        ts: TODO
+            TODO
         """
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
@@ -266,19 +277,23 @@ class DRPUtils:
         return bpsstr, kwd, akwd, ts
 
     def drp_init(self, template, issue_name, drpi):
-        """
-        Creates or update DRP issue
-        :param template: <bps_submit_yaml_template>. Template file with place holders for
-                        start/end dataset/visit/tracts (will be attached to Production Issue)")
-        :param issue_name: <Production Issue> Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link
-                     to ProdStat tracking issue(s) -- should match issue in template keyword "
-        :param drpi: DRP-issue. If present in form DRP-XXX, redo by overwriting an existing DRP-issue.
-                     If not present, create a new DRP-issue.
-                     All ProdStat plots and links for group of bps submits will be tracked
-                     off this DRP-issue.
-                     Production Issue will be updated with a link to this issue, by updating
-                     description (or later by using subtask link if all are DRP type). ")
-        :return:
+        """Create or update a DRP issue.
+        
+        Parameters
+        ----------
+        template : `str`
+            Template file with place holders for start/end dataset/visit/tracts
+            (will be attached to Production Issue).
+        issue_name : `str`
+            Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link
+            to ProdStat tracking issue(s) -- should match issue in template keyword.
+        drpi : `str`
+            If present in form DRP-XXX, redo by overwriting an existing DRP-issue.
+            If not present, create a new DRP-issue.
+            All ProdStat plots and links for group of bps submits will be tracked
+            off this DRP-issue. The Production Issue will be updated with a link to this
+            issue, by updating description (or later by using subtask link if all are DRP
+            type).
         """
         bpsstr, kwd = self.parse_template(template)
         stepname = kwd["pipelineYaml"]
@@ -336,10 +351,12 @@ class DRPUtils:
 
     @staticmethod
     def parse_panda_table(intab):
-        """
-
-        :param intab: input txt table created by GetPanDaStat.py
-        :return:
+        """TODO
+        
+        Parameters
+        ----------
+        intab : `str`
+            input txt table created by GetPanDaStat
         """
         print("infile is " + intab)
         f = open(intab, "r")
@@ -470,13 +487,20 @@ class DRPUtils:
 
     @staticmethod
     def parse_drp(steppath, tocheck):
-        """
+        """TODO.
+        
+        Parameters
+        ----------
+        steppath : `str`
+            TODO
+        tocheck : TODO
+            TODO
+            
+        Note
+        ----
         If the DRP.yaml as put out by the Pipeline team changes
         -- this file should be updated.
         It is in  $OBS_LSST_DIR/pipelines/imsim/DRP.yaml
-        :param steppath:
-        :param tocheck:
-        :return:
         """
         stepenvironsplit = steppath.split("}")
         if len(stepenvironsplit) > 1:
@@ -525,9 +549,12 @@ class DRPUtils:
 
     @staticmethod
     def parse_butler_table(intab):
-        """
-        :param intab:
-        :return:
+        """TODO
+        
+        Parameters
+        ----------
+        intab : `str`
+            TODO
         """
         print("infile is " + intab)
         f = open(intab, "r")
@@ -586,11 +613,14 @@ class DRPUtils:
         return result
 
     def drp_stat_update(self, pissue, drpi):
-        """
+        """TODO.
 
-        :param pissue:
-        :param drpi:
-        :return:
+        Parameters
+        ----------
+        pissue : `str`
+            TODO
+        drpi : `str`
+            TODO
         """
         #        ts = "0"
         # get summary from DRP ticket
@@ -705,11 +735,27 @@ class DRPUtils:
 
     @staticmethod
     def parse_issue_desc(jdesc, jsummary):
-        """
-        Extracts some information from jira issue
-        :param jdesc: issue description field
-        :param jsummary:  issue summary field
-        :return:
+        """Extracts some information from jira issue.
+        
+        Parameters
+        ----------
+        jdesc : `str`
+            TODO
+        jsummary : `str`
+            TODO
+            
+        Returns
+        -------
+        ts : TODO
+            TODO
+        status : TODO
+            TODO
+        hilow : TODO
+            TODO
+        pandalink: TODO
+            TODO
+        what : TODO
+            TODO
         """
         pattern0 = "(.*)#(.*)(20[0-9][0-9][0-9][0-9][0-9][0-9][Tt][0-9][0-9][0-9][0-9][0-9][0-9][Zz])"
         mts = re.match(pattern0, jsummary)
@@ -796,11 +842,19 @@ class DRPUtils:
 
     @staticmethod
     def dict_to_table(in_dict, sorton):
-        """
-
-        :param in_dict:
-        :param sorton:
-        :return:
+        """TODO
+        
+        Paramateres
+        -----------
+        in_dict : `dict`
+            TODO
+        sorton : `str`
+            TODO
+            
+        Returns
+        -------
+        table_out : `str`
+            TODO
         """
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
@@ -878,11 +932,19 @@ class DRPUtils:
 
     @staticmethod
     def dict_to_table1(in_dict, sorton):
-        """
-
-        :param in_dict:
-        :param sorton:
-        :return:
+        """TODO
+        
+        Parameters
+        ----------
+        in_dict : `dict`
+            TODO
+        sorton : `str`
+            TODO
+            
+        Returns
+        -------
+        table_out : `str`
+            TODO
         """
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
@@ -963,17 +1025,26 @@ class DRPUtils:
     def drp_add_job_to_summary(
         self, first, ts, pissue, jissue, status, frontend, frontend1, backend
     ):
-        """
-
-        :param first:
-        :param ts:
-        :param pissue:
-        :param jissue:
-        :param status:
-        :param frontend:
-        :param frontend1:
-        :param backend:
-        :return:
+        """TODO
+        
+        Parameters
+        ----------
+        first : TODO
+            TODO
+        ts : TODO
+            TODO
+        pissue : TODO
+            TODO
+        jissue : TODO
+            TODO
+        status : TODO
+            TODO
+        frontend : TODO
+            TODO
+        frontend1 : TODO
+            TODO
+        backend : TODO
+            TODO
         """
         #        ju = JiraUtils()
         #        ajira, username = self.ju.get_login()
@@ -1031,15 +1102,27 @@ class DRPUtils:
 
     @staticmethod
     def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
-        """
+        """TODO
 
-        :param template:
-        :param band:
-        :param groupsize:
-        :param skipgroups:
-        :param ngroups:
-        :param explist:
-        :return:
+        Paramaters
+        ----------
+        template : `str`
+            TODO
+        band : `str`
+            TODO
+        groupsize : TODO
+            TODO
+        skipgroups : TODO
+            TODO
+        ngroups : TODO
+            TODO
+        explist : TODO
+            TODO
+            
+        Returns
+        -------
+        call_retrun : TODO
+            TODO
         """
         f = open(explist, "r")
         tempstr = os.path.basename(template)
@@ -1124,13 +1207,18 @@ class DRPUtils:
             print(com + " " + str(return_val))
 
     def drp_issue_update(self, bpsyamlfile, pissue, drpi, ts):
-        """
-
-        :param bpsyamlfile:
-        :param pissue:
-        :param drpi:
-        :param ts:
-        :return:
+        """TODO
+        
+        Parameters
+        ----------
+        bpsyamlfile : TODO
+            TODO
+        pissue : `str`
+            TODO
+        drpi : `str`
+            TODO
+        ts : TODO
+            TODO
         """
         bpsstr, kwd, akwd, pupn = self.parse_yaml(bpsyamlfile, ts)
         print("pupn:", pupn)

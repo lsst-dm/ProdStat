@@ -37,19 +37,22 @@ from pandas.plotting import table
 
 class GetPanDaStat:
     def __init__(self, **kwargs):
+        """Build production statistics tables using PanDa database queries.
+
+        Parameters
+        ----------
+        Butler : `str`
+            TODO
+        Jira : `str`
+            TODO
+        CollType : `str`
+            token that with jira ticket will uniquely define the dataset (workflow)
+        workNames : `str`
+            Not used
+        maxtask : `str`
+            maximum number of task files to analyse
         """
-        Class to build production statistics tables using PanDa
-        database queries.
-        :param kwargs:
-        the structure of the input dictionary is as follow:
-         {'Butler': 's3://butler-us-central1-panda-dev/dc2/butler.yaml',
-         'Jira': 'PREOPS-910',
-         'collType': '300z', token that with jira ticket will uniquely define
-          the dataset (workflow)
-          'workNames': '', not used for now and may be skipped
-          'maxtask': '100'  maximum number of task files to analyse
-          }
-        """
+        
         self.Butler = kwargs["Butler"]
         self.collType = kwargs["collType"]
         self.workNames = kwargs["workNames"]
@@ -68,7 +71,9 @@ class GetPanDaStat:
         self.wfNames = dict()
 
     def get_workflows(self):
-        """First lets get all workflows with given keys"""
+        """First lets get all workflows with given keys.
+        """
+        
         wfdata = self.querypanda(
             urlst="http://panda-doma.cern.ch/idds/wfprogress/?json"
         )
@@ -132,9 +137,21 @@ class GetPanDaStat:
                         "created": created,
                     }
 
-    """Select tasks for given workflow (jobs)"""
 
     def getwftasks(self, workflow):
+        """Select tasks for given workflow (jobs).
+        
+        Parameters
+        ----------
+        workflow : TODO
+            TODO
+            
+        Returns
+        -------
+        tasks : TODO
+            TODO
+        """
+        
         urls = workflow["r_name"]
         tasks = self.querypanda(
             urlst="http://panda-doma.cern.ch/tasks/?taskname="
@@ -143,9 +160,20 @@ class GetPanDaStat:
         )
         return tasks
 
-    """extract data we need from task dictionary """
-
     def gettaskinfo(self, task):
+        """Extract data we need from task dictionary.
+        
+        Paramaters
+        ----------
+        task : TODO
+            TODO
+            
+        Returns
+        -------
+        data : `dict`
+            TODO
+        """
+        
         data = dict()
         jeditaskid = task["jeditaskid"]
         """ Now select a number of jobs to calculate average cpu time and max Rss """
@@ -234,9 +262,22 @@ class GetPanDaStat:
         data["Rss"] = max_rss
         return data
 
-    """given list of jobs get statistics for each job type """
-
     def gettaskdata(self, key, tasks):
+        """Given list of jobs get statistics for each job type.
+
+        Parameters
+        ----------
+        key : TODO
+            TODO
+        tasks : TODO
+            TODO
+        
+        Returns
+        -------
+        tasktypes : `dict`
+            TODO
+        """
+        
         taskdata = list()
         tasknames = list()
         tasktypes = dict()
@@ -300,9 +341,10 @@ class GetPanDaStat:
             tasktypes[taskname] = tasklist
         return tasktypes
 
-    """Select finished and sub finished workflow tasks """
-
     def gettasks(self):
+        """Select finished and sub finished workflow tasks.
+        """
+        
         for key in self.workKeys:
             self.wfTasks[key] = list()
             _workflows = self.workflows[key]

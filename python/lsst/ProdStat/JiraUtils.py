@@ -33,9 +33,14 @@ class JiraUtils:
         self.user_name = username
 
     def get_login(self):
-        """
-        tries to get user info from ~/.netrc
-        :return: (jira instance, username, password), tuple
+        """Tries to get user info from ~/.netrc
+        
+        Returns
+        -------
+        ajira : TODO
+            TODO
+        user_name : TODO
+            TODO
         """
         secrets = netrc.netrc()
         username, account, password = secrets.authenticators("lsstjira")
@@ -44,10 +49,17 @@ class JiraUtils:
         return self.ajira, self.user_name
 
     def get_issue(self, ticket):
-        """
-        return issue object for given ticket
-        :param ticket: issue key, string
-        :return: issue instance
+        """Return issue object for given ticket.
+        
+        Parameters
+        ----------
+        ticket : `str`
+            TODO
+            
+        Returns
+        -------
+        issue_object
+            TODO
         """
         issue_object = self.ajira.issue(ticket)
         return issue_object
@@ -68,10 +80,17 @@ class JiraUtils:
 
     @staticmethod
     def get_comments(issue):
-        """
-        Creates dictionary of comments with keys = commentId
-        :param issue: issue instance
-        :return: dictionary commentID:comment['body']
+        """Creates dictionary of comments with keys = commentId.
+        
+        Parameters
+        ----------
+        issue : TODO
+            issue instance
+        
+        Returns
+        -------
+        all_comments
+            commentID:comment['body'] (`dict`)
         """
         all_comments = dict()
         for field_name in issue.raw["fields"]:
@@ -85,11 +104,19 @@ class JiraUtils:
 
     @staticmethod
     def get_attachments(issue):
+        """Select all attachments in the issue and get dict of attachmentId: filename.
+
+        Parameters
+        ----------
+        issue : TODO
+            issue instance
+            
+        Returns
+        -------
+        all_attachments
+            issueId:issue.filename (`dict`)
         """
-        select all attachments in the issue and return dictionary of attachmentId: filename
-        :param issue: issue instance
-        :return: dictionary issueId:issue.filename
-        """
+        
         all_attachments = dict()
         for field_name in issue.raw["fields"]:
             if "attachment" in field_name:
@@ -101,11 +128,19 @@ class JiraUtils:
 
     @staticmethod
     def get_summary(issue):
+        """Return summary of given issue.
+        
+        Parameters
+        ----------
+        issue : TODO
+            TODO
+            
+        Returns
+        -------
+        summary : 
+            TODO
         """
-        return summary of given issue
-        :param issue: issue instance
-        :return: summary
-        """
+        
         summary = issue.fields.summary
         for field_name in issue.raw["fields"]:
             print("Field:", field_name, "Value:", issue.raw["fields"][field_name])
@@ -113,12 +148,14 @@ class JiraUtils:
 
     @staticmethod
     def add_attachment(jira, issue, att_file):
-        """
-        Add attachment file to an issue
-        :param jira: jira instance
-        :param issue: issue instance
-        :param att_file: attachment file
-        :return:
+        """Add attachment file to an issue.
+        
+        Parameters
+        ----------
+        jira : TODO
+            jira instance
+        issue : TODO
+            issue instance
         """
         jira.add_attachment(issue=issue, attachment=att_file)
 
@@ -134,48 +171,82 @@ class JiraUtils:
 
     @staticmethod
     def create_issue(jira, issue_dict):
-        """
-        Create an issue
-        :param jira: jira instance
-        :param issue_dict: dictionary with issue fields
-        :return: issue instance
+        """Create an issue.
+        
+        Parameters
+        ----------
+        jira : TODO
+            jira instance
+        issue_dict : TODO
+            dictionary with issue fields:
+                
+            ``"summary"``
+                TODO (`str`)
+            ``"description"``
+                TODO (`str`)
+            ``"project"``
+                TODO (TODO)
+            ``"issuetype"``
+                TODO (TODO)
+            
+        Returns
+        -------
+        new_issue
+            issue instance
         """
         new_issue = jira.create_issue(fields=issue_dict)
         return new_issue
 
     @staticmethod
     def update_issue(issue, issue_dict):
-        """
-        Update some or all issue fields
-        :param issue: issue instance
-        :param issue_dict: dictionary with issue fields
-        :return:
+        """Update some or all issue fields.
+        
+        Parameters
+        ----------
+        issue : TODO
+            issue insntance
+        issue_dict : TODO
+            dictionary with issue fields
         """
         issue.update(fields=issue_dict)
 
     @staticmethod
     def add_comment(issue, work_log):
-        """
-        Add comment to an issue
-        :param issue: issue instance
-        :param work_log: dictionary containing:
-              'author': author name, string
-              'created': timestamp, string
-               'comment': comment body, string
-        :return:
+        """Add comment to an issue.
+        
+        Parameters
+        ----------
+        issue : TODO
+            issue instance
+        work_log : `dict`
+            A work log dictionary with:
+                
+            ``"author"``
+                auther name (`str`)
+            ``"created"''
+                timestamp (`str`)
+            ``"comment"``
+                comment string (`str`)
         """
         issue.update(comment=work_log["comment"])
 
     def update_comment(self, jira, key, issue_id, tokens, comment_s):
+        """Update comment replacing its body.
+        
+        Parameters
+        ----------
+        jira : TODO
+            api instance
+        key : `str`
+            issue key
+        token : `str`
+            issue token
+        comment_s : `str`
+            comment body
+        issue_id : TODO
+            TODO
         """
-        Update comment replacing its body
-        :param jira: api instance
-        :param key:  issue key, string
-        :param tokens: tokens to identify comment, list of strings
-        :param comment_s: comment body, string
-        :param issue_id:
-        :return:
-        """
+        
         issue = self.get_issue(key)
         all_comments = self.get_comments(issue)
         if len(all_comments) > 0:
@@ -213,24 +284,42 @@ class JiraUtils:
 
     @staticmethod
     def get_comment(jira, issue_id, comment_id):
+        """Return comment body identified by issueID and commentId.
+        
+        Parameters
+        ----------
+        jira : TODO
+            jira API instance
+        issue_id : `str`
+            issue id
+        comment_id : `str`
+            comment id
+            
+        Returns
+        -------
+        com_str
+            TODO (`str`)
         """
-        Return comment body identified by issueID and commentId
-        :param jira: jira API instance
-        :param issue_id: issue id, string
-        :param comment_id: comment id, string
-        :return:
-        """
+        
         com_str = jira.comment(int(issue_id), int(comment_id)).body
         return com_str
 
     def update_attachment(self, jira, issue, att_file):
-        """
-        to replace attachment in an issue we first delete one containing
+        """Replate an attachment in an issue.
+        
+        Parameters
+        ----------
+        jira : TODO
+            jira API instance
+        issue : TODO
+            issue instance
+        att_file : `str`
+            file /path/name
+            
+        Note
+        ----
+        To replace attachment in an issue we first delete one containing
         selected filename and then add a new one
-        :param jira: jira API instance
-        :param issue: issue instance
-        :param att_file: file /path/name, string
-        :return:
         """
         attachments = issue.raw["fields"]["attachment"]
         if len(attachments) != 0:
@@ -250,10 +339,17 @@ class JiraUtils:
 
     @staticmethod
     def get_description(issue):
-        """
-        read issue description
-        :param issue: issue instance
-        :return: description, string
+        """Read issue description.
+
+        Parameters
+        ----------
+        issue : TODO
+            issue instance
+            
+        Returns
+        -------
+        description
+            the description (`str`)
         """
         description = issue.raw["fields"]["description"]
         return description

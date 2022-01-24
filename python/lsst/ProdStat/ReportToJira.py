@@ -26,8 +26,7 @@ from .JiraUtils import *
 
 
 class ReportToJira:
-    """
-    This program is used to report production statistics to a
+    """This program is used to report production statistics to a
     Jira ticket
     It uses parameters from the input yaml file that looks like following:
 project: 'Pre-Operations'

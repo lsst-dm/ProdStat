@@ -35,19 +35,22 @@ import click
 
 class MakePandaPlots:
     def __init__(self, **kwargs):
+        """Build production statistics tables using PanDa database queries.
+        
+        Parameters
+        ----------
+        Jira : `str`
+            TODO
+        collType : `str`
+            token that with jira ticket will uniquely define the dataset (workflow)
+        bin_width : `str`
+            plot bin width in sec.
+        start_at : `float`
+            time in hours at which to start plot
+        stop_at : `float`
+            time in hours at which to stop plot
         """
-        Class to build production statistics tables using PanDa
-        database queries.
-        :param kwargs:
-        the structure of the input dictionary is as follow:
-         {'Jira': 'PREOPS-910',
-         'collType': '2.2i', token that with jira ticket will
-         uniquely define the dataset (workflow)
-          'bin_width': '30.', plot bin width in sec.
-          'start_at: 0., time in hours at which to start plot
-          'stop_at: 500., time in hours at which to stop plot
-          }
-        """
+        
         self.collType = kwargs["collType"]
         self.Jira = kwargs["Jira"]
         " bin width in seconds "
@@ -74,7 +77,9 @@ class MakePandaPlots:
         self.wfNames = dict()
 
     def get_workflows(self):
-        """First lets get all workflows with given keys"""
+        """First lets get all workflows with given keys.
+        """
+        
         wfdata = self.query_panda(
             urlst="http://panda-doma.cern.ch/idds/wfprogress/?json"
         )
@@ -151,10 +156,17 @@ class MakePandaPlots:
         print("all started at ", self.start_time)
 
     def get_wf_tasks(self, workflow):
-        """
-        Select tasks for given workflow (jobs)
-        :param workflow:
-        :return:
+        """Select tasks for given workflow (jobs).
+        
+        Parameters
+        ----------
+        workflow: TODO
+            TODO
+
+        Returns
+        -------
+        tasks
+            TODO
         """
         urls = workflow["r_name"]
         tasks = self.query_panda(
@@ -165,11 +177,14 @@ class MakePandaPlots:
         return tasks
 
     def get_task_info(self, task):
+        """Extract data we need from task dictionary.
+        
+        Parameters
+        ----------
+        task : TODO
+            TODO
         """
-        extract data we need from task dictionary
-        :param task:
-        :return:
-        """
+        
         jeditaskid = task["jeditaskid"]
         """ Now select jobs to get timing information """
         uri = "http://panda-doma.cern.ch/jobs/?jeditaskid=" + \
@@ -211,10 +226,12 @@ class MakePandaPlots:
         return
 
     def get_task_data(self, tasks):
-        """
-        given list of jobs get statistics for each job type
-        :param tasks:
-        :return:
+        """Given list of jobs get statistics for each job type.
+        
+        Parameters
+        ----------
+        tasks : TODO
+            TODO
         """
         taskids = dict()
         """Let's sort tasks with jeditaskid """
@@ -230,10 +247,9 @@ class MakePandaPlots:
             self.get_task_info(task)
         return
 
+
     def get_tasks(self):
-        """
-        Select all workflow tasks
-        :return:
+        """Select all workflow tasks.
         """
         for key in self.workKeys:
             self.wfTasks[key] = list()
