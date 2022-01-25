@@ -31,6 +31,7 @@ from .. import GetPanDaStat
 from .. import ReportToJira
 from .. import MakePandaPlots
 
+__all__ = ['main']
 
 @click.group()
 def cli():
@@ -191,7 +192,7 @@ def update_stat(production_issue, drp_issue):
 @cli.command()
 @click.argument("pbs_submit_template", type=str)
 @click.argument("production_issue", type=str)
-@click.argument("drp_issue", type=str, defaulte="DRP0")
+@click.argument("drp_issue", type=str, default="DRP0")
 def init(bps_submit_template, production_issue, drp_issue):
     """Initialize a DRP issue.
 

@@ -24,6 +24,7 @@ from jira import JIRA
 import argparse
 import datetime
 
+__all__ = ['JiraUtils']
 
 class JiraUtils:
     def __init__(self):
@@ -223,7 +224,7 @@ class JiraUtils:
                 
             ``"author"``
                 auther name (`str`)
-            ``"created"''
+            ``"created"``
                 timestamp (`str`)
             ``"comment"``
                 comment string (`str`)

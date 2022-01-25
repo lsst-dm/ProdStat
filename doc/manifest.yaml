@@ -4,6 +4,13 @@
 # For each module there is a corresponding module doc subdirectory.
 modules:
   - "lsst.ProdStat"
+  - "lsst.ProdStat.DRPUtils"
+  - "lsst.ProdStat.GetButlerStat"
+  - "lsst.ProdStat.GetPanDaStat"
+  - "lsst.ProdStat.JiraUtils"
+  - "lsst.ProdStat.MakePandaPlots"
+  - "lsst.ProdStat.ReportToJira"
+  - "lsst.ProdStat.cli.prodstat"
 
 # Name of the static content directories (subdirectories of `_static`).
 # Static content directories are usually named after the package.

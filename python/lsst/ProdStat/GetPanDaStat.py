@@ -34,6 +34,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import table
 
+__all__ = ['GetPanDaStat']
 
 class GetPanDaStat:
     """Build production statistics tables using PanDa database queries.
