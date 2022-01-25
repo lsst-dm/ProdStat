@@ -38,23 +38,24 @@ from lsst.daf.base import PropertySet
 
 
 class GetButlerStat:
-    def __init__(self, **kwargs):
-        """Build production statistics table using Butler meta data.
+    """Build production statistics table using Butler meta data.
 
-        Parameters
-        ----------
-        Butler : `str`
-            TODO
-        Jira : `str`
-            TODO
-        CollType : `str`
-            token that with jira ticket will uniquely define the dataset (workflow)
-        workNames : `str`
-            Not used
-        maxtask : `str`
-            maximum number of task files to analyse
-        """
+    Parameters
+    ----------
+    Butler : `str`
+        TODO
+    Jira : `str`
+        TODO
+    CollType : `str`
+        token that with jira ticket will uniquely define the dataset (workflow)
+    workNames : `str`
+        Not used
+    maxtask : `str`
+        maximum number of task files to analyse
+    """
         
+    def __init__(self, **kwargs):
+
         if "Butler" in kwargs:
             self.Butler = kwargs["Butler"]
         else:

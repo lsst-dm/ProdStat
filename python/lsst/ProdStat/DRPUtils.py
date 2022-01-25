@@ -30,9 +30,9 @@ import subprocess
 
 
 class DRPUtils:
+        """Collection of DRP utilities."""
+        
     def __init__(self):
-        """Collection of DRP utilities.
-        """
         self.ju = JiraUtils()
         self.ajira, self.user_name = self.ju.get_login()
 

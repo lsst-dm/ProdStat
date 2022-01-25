@@ -36,22 +36,23 @@ from pandas.plotting import table
 
 
 class GetPanDaStat:
-    def __init__(self, **kwargs):
-        """Build production statistics tables using PanDa database queries.
+    """Build production statistics tables using PanDa database queries.
 
-        Parameters
-        ----------
-        Butler : `str`
-            TODO
-        Jira : `str`
-            TODO
-        CollType : `str`
-            token that with jira ticket will uniquely define the dataset (workflow)
-        workNames : `str`
-            Not used
-        maxtask : `str`
-            maximum number of task files to analyse
-        """
+    Parameters
+    ----------
+    Butler : `str`
+        TODO
+    Jira : `str`
+        TODO
+    CollType : `str`
+        token that with jira ticket will uniquely define the dataset (workflow)
+    workNames : `str`
+        Not used
+    maxtask : `str`
+        maximum number of task files to analyse
+    """
+
+    def __init__(self, **kwargs):
         
         self.Butler = kwargs["Butler"]
         self.collType = kwargs["collType"]

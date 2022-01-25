@@ -34,7 +34,6 @@ import click
 
 
 class MakePandaPlots:
-    def __init__(self, **kwargs):
         """Build production statistics tables using PanDa database queries.
         
         Parameters
@@ -50,7 +49,8 @@ class MakePandaPlots:
         stop_at : `float`
             time in hours at which to stop plot
         """
-        
+
+    def __init__(self, **kwargs):        
         self.collType = kwargs["collType"]
         self.Jira = kwargs["Jira"]
         " bin width in seconds "

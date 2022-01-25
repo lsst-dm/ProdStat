@@ -26,26 +26,30 @@ from .JiraUtils import *
 
 
 class ReportToJira:
-    """This program is used to report production statistics to a
-    Jira ticket
-    It uses parameters from the input yaml file that looks like following:
-project: 'Pre-Operations'
-Jira: PREOPS-911
-comments:
-- file: /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.txt
-  tokens:
-     - 'pandaWfStat'
-     - 'workflow'
-- file: /Users/kuropat/devel/reports/pandaStat-PREOPS-911.txt
-  tokens:
-     - 'pandaStat'
-     - 'campaign'
-- file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
-  tokens:
-    - 'butlerStat'
-    - 'Campaign'
-attachments:
-  - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.html
+    """Report production statistics to a Jira ticket
+
+    Parameters
+    ----------
+    inp_file : `str`
+        Path to a yaml file that looks like following::
+
+            project: 'Pre-Operations'
+            Jira: PREOPS-911
+            comments:
+            - file: /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.txt
+              tokens:
+                 - 'pandaWfStat'
+                 - 'workflow'
+            - file: /Users/kuropat/devel/reports/pandaStat-PREOPS-911.txt
+              tokens:
+                 - 'pandaStat'
+                 - 'campaign'
+            - file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
+              tokens:
+                - 'butlerStat'
+                - 'Campaign'
+            attachments:
+              - /Users/kuropat/devel/reports/pandaWfStat-PREOPS-911.html
     """
 
     def __init__(self, inp_file):
