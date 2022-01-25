@@ -36,6 +36,7 @@ from lsst.daf.butler import Butler
 from lsst.daf.butler import ButlerURI
 from lsst.daf.base import PropertySet
 
+__all__ = ['GetButlerStat']
 
 class GetButlerStat:
     """Build production statistics table using Butler meta data.
@@ -176,7 +177,7 @@ class GetButlerStat:
             TODO
         task_res : TODO
             TODO
-            
+        
         Returns
         -------
         summary : `dict`

@@ -40,6 +40,30 @@ You can find Jira issues for this module under the `ProdStat <https://jira.lsstc
 Python API reference
 ====================
 
-.. automodapi:: lsst.ProdStat
+.. automodapi:: lsst.ProdStat.DRPUtils
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.GetButlerStat
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.GetPanDaStat
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.JiraUtils
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.MakePandaPlots
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.ReportToJira
+   :no-main-docstr:
+   :no-inheritance-diagram:
+
+.. automodapi:: lsst.ProdStat.cli.prodstat
    :no-main-docstr:
    :no-inheritance-diagram:

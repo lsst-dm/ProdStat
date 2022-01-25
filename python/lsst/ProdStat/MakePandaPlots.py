@@ -32,23 +32,24 @@ import pandas as pd
 import numpy as np
 import click
 
+__all__ = ['MakePandaPlots']
 
 class MakePandaPlots:
-        """Build production statistics tables using PanDa database queries.
-        
-        Parameters
-        ----------
-        Jira : `str`
-            TODO
-        collType : `str`
-            token that with jira ticket will uniquely define the dataset (workflow)
-        bin_width : `str`
-            plot bin width in sec.
-        start_at : `float`
-            time in hours at which to start plot
-        stop_at : `float`
-            time in hours at which to stop plot
-        """
+    """Build production statistics tables using PanDa database queries.
+    
+    Parameters
+    ----------
+    Jira : `str`
+        TODO
+    collType : `str`
+        token that with jira ticket will uniquely define the dataset (workflow)
+    bin_width : `str`
+        plot bin width in sec.
+    start_at : `float`
+        time in hours at which to start plot
+    stop_at : `float`
+        time in hours at which to stop plot
+    """
 
     def __init__(self, **kwargs):        
         self.collType = kwargs["collType"]

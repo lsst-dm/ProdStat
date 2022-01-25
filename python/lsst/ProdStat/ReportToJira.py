@@ -24,6 +24,7 @@ import sys
 import getopt
 from .JiraUtils import *
 
+__all__ = ['ReportToJira']
 
 class ReportToJira:
     """Report production statistics to a Jira ticket

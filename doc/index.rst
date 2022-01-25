@@ -9,4 +9,4 @@ ProdStat documentation preview
 .. toctree::
    :maxdepth: 1
 
-   lsst.prod_stat/index
+   lsst.ProdStat/index
