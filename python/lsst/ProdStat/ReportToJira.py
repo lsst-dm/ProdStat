@@ -65,10 +65,7 @@ class ReportToJira:
         self.project = in_pars['project']
 
     def run(self):
-        """Update the jira ticket
-
-        :return:
-        """
+        """Update the jira ticket."""
         print("The summary for ticket:", self.ticket)
         issue_id = self.ju.get_issue_id(self.project, self.ticket)
         issue = self.ju.get_issue(self.ticket)

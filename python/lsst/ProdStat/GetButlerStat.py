@@ -326,10 +326,7 @@ class GetButlerStat:
         return newbody
 
     def run(self):
-        """Run the program
-
-        :return:
-        """
+        """Run the program."""
 
         collections = self.search_collections()
         """Recreate Butler and registry """
@@ -480,29 +477,30 @@ def cli():
 @cli.command()
 @click.argument("param_file", type=click.Path(exists=True))
 def get_stat(param_file):
-    """Build production statistics tables using Butler metadata
+    """Build production statistics tables using Butler metadata.
 
-        Parameters
-        ----------
-        param_file: `str`
-            name of the input yaml file.
-            The file should provide following parameters:
+    Parameters
+    ----------
+    param_file: `str`
+        name of the input yaml file.
+        The file should provide following parameters:
 
-            \b
-            Butler : `str`
+        \b
+        Butler : `str`
             URL of the Butler storage
-            Jira : `str`
+        Jira : `str`
             Jira ticket identifying production campaign used
             to select campaign workflows
-            CollType : `str`
+        CollType : `str`
             token that with jira ticket will uniquely define campaign workflows
-            startTime : `str`
+        startTime : `str`
             time to start selecting workflows from in Y-m-d format
-            stopTime : `str`
+        stopTime : `str`
             time to stop selecting workflows in Y-m-d format
-            maxtask : `int`
+        maxtask : `int`
             maximum number of task files to analyse
-        """
+    """
+
     click.echo("Start with GetButlerStat")
     with open(param_file) as p_file:
         in_pars = yaml.safe_load(p_file)

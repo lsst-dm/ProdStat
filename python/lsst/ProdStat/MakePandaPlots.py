@@ -261,11 +261,16 @@ class MakePandaPlots:
 
     @staticmethod
     def query_panda(urlst):
-        """Read url with panda information
+        """Read url with panda information.
 
-        :param urlst: `str`
+        Parameters
+        ----------
+        urlst : `str`
             URL string to read
-        :return: `dict`
+
+        Returns
+        -------
+        result : `dict`
             dictionary with panda data
         """
         success = False
@@ -287,16 +292,16 @@ class MakePandaPlots:
         return result
 
     def make_plot(self, data_list, max_time, job_name):
-        """Plot timing data in png file
+        """Plot timing data in png file.
+        
         Parameters
         ----------
-        :param data_list: `list`
+        data_list : `list`
             list of tuples (start_time, duration) for given job
-        :param max_time: `float`
+        max_time : `float`
             maximal time in the timing data list
-        :param job_name: `str`
+        job_name : `str`
             name of the job to be used in the name of plot file
-        :return:
         """
         first_bin = int(self.start_at / self.scale_factor)
         last_bin = first_bin + self.plot_n_bins
@@ -319,10 +324,8 @@ class MakePandaPlots:
         plt.savefig("timing_" + job_name + ".png")
 
     def prep_data(self):
-        """Create file with timing data
+        """Create file with timing data."""
 
-        :return:
-        """
         self.get_workflows()
         self.get_tasks()
         print(" all time data")
@@ -338,10 +341,8 @@ class MakePandaPlots:
             )
 
     def plot_data(self):
-        """Create plot of timing data in form of png file
+        """Create plot of timing data in form of png file."""
 
-        :return:
-        """
         for job_name in self.job_names:
             data_file = "/tmp/" + "panda_time_series_" + job_name + ".csv"
             if os.path.exists(data_file):
@@ -368,10 +369,12 @@ def cli():
 @click.argument("param_file", type=click.Path(exists=True))
 def prep_timing_data(param_file):
     """Create  timing data of the campaign jobs
+    
     Parameters
     ----------
     param_file : `str`
         A file from which to read  parameters
+
     Notes
     -----
     The yaml file should provide following parameters::
@@ -393,6 +396,7 @@ def prep_timing_data(param_file):
         stop_at: `float`
             end of the plot in hours from first quanta
     """
+
     click.echo("Start with MakePandaPlots")
     params = yaml.safe_load(param_file)
     panda_plot_maker = MakePandaPlots(**params)
@@ -403,7 +407,7 @@ def prep_timing_data(param_file):
 @cli.command()
 @click.argument("param_file", type=click.Path(exists=True))
 def plot_data(param_file):
-    """Create  timing data of the campaign jobs
+    """Create timing data of the campaign jobs.
 
     Parameters
     ----------

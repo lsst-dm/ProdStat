@@ -76,8 +76,7 @@ class GetPanDaStat:
         self.stop_stamp = datetime.datetime.strptime(self.stop_date, "%Y-%m-%d").timestamp()
 
     def get_workflows(self):
-        """First lets get all workflows with given keys.
-        """
+        """First lets get all workflows with given keys."""
 
         wfdata = self.querypanda(
             urlst="http://panda-doma.cern.ch/idds/wfprogress/?json"
@@ -350,8 +349,7 @@ class GetPanDaStat:
         return tasktypes
 
     def gettasks(self):
-        """Select finished and sub finished workflow tasks.
-        """
+        """Select finished and sub finished workflow tasks."""
 
         for key in self.workKeys:
             self.wfTasks[key] = list()
@@ -372,9 +370,14 @@ class GetPanDaStat:
     def querypanda(urlst):
         """Read given URL to get panda data
 
-        :param urlst: `str`
+        Parameters
+        ----------
+        urlst : `str`
             URL string to get data from
-        :return: `dict`
+
+        Returns
+        -------
+        result : `dict`
             dictionary of panda data from given URL
         """
         success = False
@@ -396,10 +399,8 @@ class GetPanDaStat:
         return result
 
     def getallstat(self):
-        """Calculate campaign statistics
+        """Calculate campaign statistics."""
 
-        :return:
-        """
         wfwall = 0
         wfdisk = 0
         wfcores = 0
@@ -484,11 +485,16 @@ class GetPanDaStat:
 
     @staticmethod
     def highlight_status(value):
-        """Create background color for HTML table
+        """Create background color for HTML table.
 
-        :param value:  `str`
+        Parameters
+        ----------
+        value : `str`
             status of the job
-        :return: `list`
+            
+        Returns
+        -------
+        backgroupd_colors : `list`
             background color
         """
         if str(value) == "failed":
@@ -502,9 +508,14 @@ class GetPanDaStat:
     def highlight_greaterthan_0(s):
         """Create background color for HTML table
 
-        :param s: `int`
+        Parameters
+        ----------
+        s : `int`
             task status flag
-        :return: `list`
+            
+        Returns
+        -------
+        background_colors : `list`
             background color
         """
         if s.task_failed > 0.0:
@@ -515,17 +526,18 @@ class GetPanDaStat:
             return ["background-color: white"] * 9
 
     def make_table_from_csv(self, buffer, out_file, index_name, comment):
-        """Create Jira table from csv file
-
-        :param buffer: `str`
+        """Create Jira table from csv file.
+        
+        Parameters
+        ----------
+        buffer : `str`
             comma separated data buffer
-        :param out_file: `str`
+        out_file : `str`
             output file name
-        :param index_name: `list`
+        index_name : `list`
             list of index names to name table rows
-        :param comment: `str`
+        comment : `str`
             additional string to be added at top of the table
-        :return:
         """
         newbody = comment + "\n"
         newbody += out_file + "\n"
@@ -554,11 +566,13 @@ class GetPanDaStat:
         return newbody
 
     def make_styled_table(self, dataframe, outfile):
-        """Create styled HTML table
+        """Create styled HTML table.
 
-        :param dataframe: `object`
+        Parameters
+        ----------
+        dataframe : `pandas.DataFrame`
             pandas data frame containing table data
-        :param outfile: `str`
+        outfile : `str`
             output file name
         :return:
         """
@@ -572,15 +586,16 @@ class GetPanDaStat:
     def make_table(self, data_frame, table_name, index_name, comment):
         """Create several types of tables from pandas data frame
 
-        :param data_frame: `object`
+        Parameters
+        ----------
+        data_frame : `pandas.DataFrame`
             pandas data frame
-        :param table_name: `str`
+        table_name : `str`
             name of the output table
-        :param index_name: `list`
+        index_name : `list`
             list of raw names
-        :param comment: `str`
+        comment : `str`
             additional text information to put at top of the table
-        :return:
         """
         fig, ax = plt.subplots(figsize=(20, 35))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
@@ -598,10 +613,7 @@ class GetPanDaStat:
         self.make_table_from_csv(csbuf, table_name, index_name, comment)
 
     def run(self):
-        """Run the program
-
-        :return:
-        """
+        """Run the program."""
         self.get_workflows()
         self.gettasks()
         self.getallstat()
@@ -661,28 +673,28 @@ def cli():
 @cli.command()
 @click.argument("param_file", type=click.Path(exists=True))
 def get_stat(param_file):
-    """Build production statistics tables using PanDa
-        database queries.
+    """Build production statistics tables using PanDa database queries.
 
-        Parameters
-        ----------
-        param_file: `str`
-            name of the input yaml file.
-            The file should provide following parameters:
+    Parameters
+    ----------
+    param_file: `str`
+        name of the input yaml file.
+        The file should provide following parameters:
 
-            \b
-            Jira : `str`
+        \b
+        Jira : `str`
             Jira ticket identifying production campaign used
             to select campaign workflows
-            CollType : `str`
+        CollType : `str`
             token that with jira ticket will uniquely define campaign workflows
-            startTime : `str`
+        startTime : `str`
             time to start selecting workflows from in Y-m-d format
-            stopTime : `str`
+        stopTime : `str`
             time to stop selecting workflows in Y-m-d format
-            maxtask : `int`
+        maxtask : `int`
             maximum number of task files to analyse
-        """
+    """
+
     click.echo("Start with GetPandaStat")
     with open(param_file) as p_file:
         in_pars = yaml.safe_load(p_file)
