@@ -170,7 +170,7 @@ class GetPanDaStat:
     def gettaskinfo(self, task):
         """Extract data we need from task dictionary.
         
-        Paramaters
+        Parameters
         ----------
         task : `dict`
             dictionary of task parameters

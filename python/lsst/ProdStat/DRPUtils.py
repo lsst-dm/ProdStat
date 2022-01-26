@@ -498,8 +498,9 @@ class DRPUtils:
         tocheck : TODO
             TODO
             
-        Note
-        ----
+        Notes
+        -----
+        
         If the DRP.yaml as put out by the Pipeline team changes
         -- this file should be updated.
         It is in  $OBS_LSST_DIR/pipelines/imsim/DRP.yaml
@@ -846,8 +847,8 @@ class DRPUtils:
     def dict_to_table(in_dict, sorton):
         """TODO
         
-        Paramateres
-        -----------
+        Parameters
+        ----------
         in_dict : `dict`
             TODO
         sorton : `str`
@@ -1106,7 +1107,7 @@ class DRPUtils:
     def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
         """TODO
 
-        Paramaters
+        Parameters
         ----------
         template : `str`
             TODO

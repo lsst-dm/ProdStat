@@ -317,8 +317,9 @@ class JiraUtils:
         att_file : `str`
             file /path/name
             
-        Note
-        ----
+        Notes
+        -----
+
         To replace attachment in an issue we first delete one containing
         selected filename and then add a new one
         """

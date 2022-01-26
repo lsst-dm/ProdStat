@@ -21,7 +21,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import yaml
 import click
-from JiraUtils import *
+from .JiraUtils import *
 
 __all__ = ['ReportToJira']
 
@@ -31,7 +31,7 @@ class ReportToJira:
     Parameters
     ----------
     inp_file : `str`
-        Path to a yaml file that looks like following:
+        Path to a yaml file that looks like following::
 
             project: 'Pre-Operations'
             Jira: PREOPS-911
