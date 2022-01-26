@@ -27,12 +27,12 @@ from urllib.request import urlopen
 import time
 from time import sleep, gmtime, strftime
 import datetime
-import getopt
 import math
 import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import table
+import click
 
 
 class GetPanDaStat:
@@ -40,25 +40,26 @@ class GetPanDaStat:
 
     Parameters
     ----------
-    Butler : `str`
-        TODO
     Jira : `str`
-        TODO
+        Jira ticket identifying production campaign used
+        to select campaign workflows
     CollType : `str`
-        token that with jira ticket will uniquely define the dataset (workflow)
-    workNames : `str`
-        Not used
-    maxtask : `str`
+        token that with jira ticket will uniquely define campaign workflows
+    startTime : `str`
+        time to start selecting workflows from in Y-m-d format
+    stopTime : `str`
+        time to stop selecting workflows in Y-m-d
+    maxtask : `int`
         maximum number of task files to analyse
     """
 
     def __init__(self, **kwargs):
-        
-        self.Butler = kwargs["Butler"]
+
         self.collType = kwargs["collType"]
-        self.workNames = kwargs["workNames"]
         self.Jira = kwargs["Jira"]
-        self.maxtask = int(kwargs["maxtask"])  # not used
+        self.start_date = kwargs["start_date"]
+        self.stop_date = kwargs["stop_date"]
+        self.maxtask = int(kwargs["maxtask"])
         self.workKeys = list()
         print(" Collecting information for Jira ticket ", self.Jira)
         self.workflows = dict()
@@ -70,11 +71,13 @@ class GetPanDaStat:
         self.taskStat = dict()
         self.allStat = dict()  # general statistics
         self.wfNames = dict()
+        self.start_stamp = datetime.datetime.strptime(self.start_date, "%Y-%m-%d").timestamp()
+        self.stop_stamp = datetime.datetime.strptime(self.stop_date, "%Y-%m-%d").timestamp()
 
     def get_workflows(self):
         """First lets get all workflows with given keys.
         """
-        
+
         wfdata = self.querypanda(
             urlst="http://panda-doma.cern.ch/idds/wfprogress/?json"
         )
@@ -85,8 +88,12 @@ class GetPanDaStat:
             r_name = wf["r_name"]
             if comp in r_name and comp1 in r_name:
                 key = str(r_name).split("_")[-1]
-                self.workKeys.append(str(key))
-                nwf += 1
+                date_str = key.split('t')[0]
+                date_stamp = datetime.datetime.strptime(date_str, "%Y%m%d").timestamp()
+                print('key=', key, ' date_str=', date_str, ' date_stamp=', date_stamp)
+                if self.start_stamp <= date_stamp <= self.stop_stamp:
+                    self.workKeys.append(str(key))
+                    nwf += 1
         print("number of workflows =", nwf)
         if nwf == 0:
             print("No workflows to work with -- exiting")
@@ -138,26 +145,25 @@ class GetPanDaStat:
                         "created": created,
                     }
 
-
     def getwftasks(self, workflow):
         """Select tasks for given workflow (jobs).
         
         Parameters
         ----------
-        workflow : TODO
-            TODO
+        workflow : `str`
+            workflow name
             
         Returns
         -------
-        tasks : TODO
-            TODO
+        tasks : `list`
+            list of tasks in given workflow
         """
-        
+
         urls = workflow["r_name"]
         tasks = self.querypanda(
             urlst="http://panda-doma.cern.ch/tasks/?taskname="
-            + urls
-            + "*&days=120&json"
+                  + urls
+                  + "*&days=120&json"
         )
         return tasks
 
@@ -166,24 +172,24 @@ class GetPanDaStat:
         
         Paramaters
         ----------
-        task : TODO
-            TODO
+        task : `dict`
+            dictionary of task parameters
             
         Returns
         -------
         data : `dict`
-            TODO
+            subset of the task data
         """
-        
+
         data = dict()
         jeditaskid = task["jeditaskid"]
         """ Now select a number of jobs to calculate average cpu time and max Rss """
         uri = (
-            "http://panda-doma.cern.ch/jobs/?jeditaskid="
-            + str(jeditaskid)
-            + "&limit="
-            + str(self.maxtask)
-            + "&jobstatus=finished&json"
+                "http://panda-doma.cern.ch/jobs/?jeditaskid="
+                + str(jeditaskid)
+                + "&limit="
+                + str(self.maxtask)
+                + "&jobstatus=finished&json"
         )
         jobsdata = self.querypanda(urlst=uri)
         """ list of jobs in the task """
@@ -240,11 +246,11 @@ class GetPanDaStat:
         data["jobstatus"] = jb["jobstatus"]
         tokens = jb["starttime"].split("T")
         data["jobstarttime"] = (
-            tokens[0] + " " + tokens[1]
+                tokens[0] + " " + tokens[1]
         )  # get rid of T in the date string
         tokens = jb["endtime"].split("T")
         data["jobendtime"] = (
-            tokens[0] + " " + tokens[1]
+                tokens[0] + " " + tokens[1]
         )  # get rid of T in the date string
         taskstart = datetime.datetime.strptime(
             data["starttime"], "%Y-%m-%d %H:%M:%S"
@@ -268,17 +274,17 @@ class GetPanDaStat:
 
         Parameters
         ----------
-        key : TODO
-            TODO
-        tasks : TODO
-            TODO
+        key : `str`
+            timestamp part of the workflow name
+        tasks : `list`
+            list of tasks data dictionaries
         
         Returns
         -------
         tasktypes : `dict`
-            TODO
+            dictionary of task types with list of tasks
         """
-        
+
         taskdata = list()
         tasknames = list()
         tasktypes = dict()
@@ -345,15 +351,15 @@ class GetPanDaStat:
     def gettasks(self):
         """Select finished and sub finished workflow tasks.
         """
-        
+
         for key in self.workKeys:
             self.wfTasks[key] = list()
             _workflows = self.workflows[key]
             for wf in _workflows:
                 if (
-                    str(wf["r_status"]) == "finished"
-                    or str(wf["r_status"]) == "subfinished"
-                    or str(wf["r_status"]) == "running"
+                        str(wf["r_status"]) == "finished"
+                        or str(wf["r_status"]) == "subfinished"
+                        or str(wf["r_status"]) == "running"
                 ):
                     """get tasks for this workflow"""
                     tasks = self.getwftasks(wf)
@@ -363,6 +369,13 @@ class GetPanDaStat:
 
     @staticmethod
     def querypanda(urlst):
+        """Read given URL to get panda data
+
+        :param urlst: `str`
+            URL string to get data from
+        :return: `dict`
+            dictionary of panda data from given URL
+        """
         success = False
         ntryes = 0
         result = dict()
@@ -382,6 +395,10 @@ class GetPanDaStat:
         return result
 
     def getallstat(self):
+        """Calculate campaign statistics
+
+        :return:
+        """
         wfwall = 0
         wfdisk = 0
         wfcores = 0
@@ -466,6 +483,13 @@ class GetPanDaStat:
 
     @staticmethod
     def highlight_status(value):
+        """Create background color for HTML table
+
+        :param value:  `str`
+            status of the job
+        :return: `list`
+            background color
+        """
         if str(value) == "failed":
             return ["background-color: read"] * 9
         elif str(value) == "subfinisher":
@@ -475,6 +499,13 @@ class GetPanDaStat:
 
     @staticmethod
     def highlight_greaterthan_0(s):
+        """Create background color for HTML table
+
+        :param s: `int`
+            task status flag
+        :return: `list`
+            background color
+        """
         if s.task_failed > 0.0:
             return ["background-color: red"] * 9
         elif s.task_subfinished > 0.0:
@@ -483,6 +514,18 @@ class GetPanDaStat:
             return ["background-color: white"] * 9
 
     def make_table_from_csv(self, buffer, out_file, index_name, comment):
+        """Create Jira table from csv file
+
+        :param buffer: `str`
+            comma separated data buffer
+        :param out_file: `str`
+            output file name
+        :param index_name: `list`
+            list of index names to name table rows
+        :param comment: `str`
+            additional string to be added at top of the table
+        :return:
+        """
         newbody = comment + "\n"
         newbody += out_file + "\n"
         lines = buffer.split("\n")
@@ -510,6 +553,14 @@ class GetPanDaStat:
         return newbody
 
     def make_styled_table(self, dataframe, outfile):
+        """Create styled HTML table
+
+        :param dataframe: `object`
+            pandas data frame containing table data
+        :param outfile: `str`
+            output file name
+        :return:
+        """
         df_styled = dataframe.style.apply(self.highlight_greaterthan_0, axis=1)
         df_styled.set_table_attributes('border="1"')
         df_html = df_styled.render()
@@ -518,6 +569,18 @@ class GetPanDaStat:
         htfile.close()
 
     def make_table(self, data_frame, table_name, index_name, comment):
+        """Create several types of tables from pandas data frame
+
+        :param data_frame: `object`
+            pandas data frame
+        :param table_name: `str`
+            name of the output table
+        :param index_name: `list`
+            list of raw names
+        :param comment: `str`
+            additional text information to put at top of the table
+        :return:
+        """
         fig, ax = plt.subplots(figsize=(20, 35))  # set size frame
         ax.xaxis.set_visible(False)  # hide the x axis
         ax.yaxis.set_visible(False)  # hide the y axis
@@ -534,6 +597,10 @@ class GetPanDaStat:
         self.make_table_from_csv(csbuf, table_name, index_name, comment)
 
     def run(self):
+        """Run the program
+
+        :return:
+        """
         self.get_workflows()
         self.gettasks()
         self.getallstat()
@@ -584,53 +651,46 @@ class GetPanDaStat:
         self.make_table(dfs, table_name, index_name, comment)
 
 
-#        self.make_styled_table(dfs, tableName)
+@click.group()
+def cli():
+    """Command line interface for GetPandaStat."""
+    pass
+
+
+@cli.command()
+@click.argument("param_file", type=click.Path(exists=True))
+def get_stat(param_file):
+    """Build production statistics tables using PanDa
+        database queries.
+
+        Parameters
+        ----------
+        param_file: `str`
+            name of the input yaml file.
+            The file should provide following parameters:
+
+            \b
+            Jira : `str`
+            Jira ticket identifying production campaign used
+            to select campaign workflows
+            CollType : `str`
+            token that with jira ticket will uniquely define campaign workflows
+            startTime : `str`
+            time to start selecting workflows from in Y-m-d format
+            stopTime : `str`
+            time to stop selecting workflows in Y-m-d format
+            maxtask : `int`
+            maximum number of task files to analyse
+        """
+    click.echo("Start with GetPandaStat")
+    with open(param_file) as p_file:
+        in_pars = yaml.safe_load(p_file)
+    get_panda_stat = GetPanDaStat(**in_pars)
+    get_panda_stat.run()
+    print("End with GetPanDaStat")
+
+
+cli.add_command(get_stat)
 
 if __name__ == "__main__":
-    print(sys.argv)
-    nbpar = len(sys.argv)
-    if nbpar < 1:
-        print("Usage: GetPanDaStat.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["inputYaml="])
-    except getopt.GetoptError:
-        print("Usage: GetPanDaStat.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(2)
-    f_flag = 0
-    inpF = ""
-    for opt, arg in opts:
-        print("%s %s" % (opt, arg))
-        if opt == "-h":
-            print("Usage: GetPanDaStat.py <required inputs>")
-            print("  Required inputs:")
-            print("  -f <inputYaml> - yaml file with input parameters")
-            print("The yaml file format as following:")
-            print(
-                "Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
-                "Jira: PREOPS-707\n",
-                "collType: 2.2i\n",
-                "workNames: Not used now\n",
-                "maxtask: 100\n",
-            )
-            sys.exit(2)
-        elif opt in ("-f", "--inputYaml"):
-            f_flag = 1
-            inpF = arg
-    inpsum = f_flag
-    if inpsum != 1:
-        print("Usage: GetPanDaStat.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
-    # Create new threads
-    with open(inpF) as pf:
-        inpars = yaml.safe_load(pf)
-    GPS = GetPanDaStat(**inpars)
-    GPS.run()
-    print("End with GetPanDaStat.py")
+    cli()

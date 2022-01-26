@@ -27,7 +27,7 @@ import datetime
 from time import gmtime, strftime
 from collections import defaultdict
 import yaml
-import getopt
+import click
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -43,17 +43,20 @@ class GetButlerStat:
     Parameters
     ----------
     Butler : `str`
-        TODO
+        URL of the Butler storage
     Jira : `str`
-        TODO
+        Jira ticket identifying production campaign used
+        to select campaign workflows
     CollType : `str`
-        token that with jira ticket will uniquely define the dataset (workflow)
-    workNames : `str`
-        Not used
-    maxtask : `str`
+        token that with jira ticket will uniquely define the campaign workflows
+    startTime : `str`
+        time to start selecting workflows from in Y-m-d format
+    stopTime : `str`
+        time to stop selecting workflows in Y-m-d format
+    maxtask : `int`
         maximum number of task files to analyse
     """
-        
+
     def __init__(self, **kwargs):
 
         if "Butler" in kwargs:
@@ -61,8 +64,9 @@ class GetButlerStat:
         else:
             self.Butler = ""
         self.collType = kwargs["collType"]
-        self.workNames = kwargs["workNames"]
         self.Jira = kwargs["Jira"]
+        self.start_date = kwargs["start_date"]
+        self.stop_date = kwargs["stop_date"]
         self.maxtask = int(kwargs["maxtask"])
         print(" Collecting information for Jira ticket ", self.Jira)
         self.REPO_ROOT = self.Butler
@@ -72,6 +76,8 @@ class GetButlerStat:
         self.CollKeys = dict()
         self.collSize = dict()
         self.collData = dict()
+        self.start_stamp = datetime.datetime.strptime(self.start_date, "%Y-%m-%d").timestamp()
+        self.stop_stamp = datetime.datetime.strptime(self.stop_date, "%Y-%m-%d").timestamp()
 
     @staticmethod
     def parse_metadata_yaml(yaml_file):
@@ -84,15 +90,15 @@ class GetButlerStat:
         
         Returns
         -------
-        results : TODO
-            TODO
+        results : `dict`
+            dictionary of unpacked results
         
-        Note
-        ----
+        Notes
+        -----
         The yaml file should be file created by the lsst.pipe.base.timeMethod decorator
         as applied to pipetask methods.
         """
-        
+
         time_types = "Cpu User System".split()
         min_fields = [f"Start{_}Time" for _ in time_types] + [
             f"start{_}Time" for _ in time_types
@@ -133,14 +139,14 @@ class GetButlerStat:
         return results
 
     def set_butler(self, butler_string):
-        """Set the butler.
+        """Set the butler URL if not set in input parameters.
         
         Parameters
         ----------
         butler_string : `str`
-            Defines how to access the butlery
+            Defines how to access the butler storage
         """
-        
+
         self.Butler = butler_string
 
     def search_collections(self):
@@ -151,18 +157,19 @@ class GetButlerStat:
         collections : `list`
             A list of collections.
         """
-        
+
         collections = []
-        preops = self.Jira
+        pre_ops = self.Jira
         for c in sorted(self.registry.queryCollections()):
-            if preops in str(c) and self.collType in str(c):
-                key = str(c).split(preops)[1]
-                if len(key) > 1:
-                    key = key.strip("/")
-                    collections.append(c)
-                    self.CollKeys[c] = key
-        """ Now we have all collections with PREOPS in the name and collectionType
-           like PREOPS-707 and 2.2i/runs/  in the collection name """
+            if pre_ops in str(c) and self.collType in str(c):
+                sub_str = str(c).split(pre_ops)[1]
+                if 'T' in sub_str and 'Z' in sub_str:
+                    key = sub_str.split('/')[-1]
+                    date_str = key.split('T')[0]
+                    date_stamp = datetime.datetime.strptime(date_str, "%Y%m%d").timestamp()
+                    if self.start_stamp <= date_stamp <= self.stop_stamp:
+                        collections.append(c)
+                        self.CollKeys[c] = key
         print("selected collections ")
         print(collections)
         return collections
@@ -172,10 +179,10 @@ class GetButlerStat:
         
         Parameters
         ----------
-        task_size : TODO
-            TODO
-        task_res : TODO
-            TODO
+        task_size : `int`
+            number of quanta in the task
+        task_res : `dict`
+            dictionary with task parameters
             
         Returns
         -------
@@ -185,15 +192,15 @@ class GetButlerStat:
             ``"nQuanta"``
                 Number of quanta (`int`)
             ``"startTime"``
-                TODO (TODO)
+                Time stamp of task start (`str`)
             ``"cpu sec/job"``
-                TODO (`float`)
+                CPU time per quanta (`float`)
             ``"cpu-hours"``
-                TODO (`float`)
+                Total wall time for all quantas (`float`)
             ``"MaxRSS GB"``
-                TODO (`float`)
+                Maximum resident size of the task (`float`)
         """
-        
+
         cputime = task_res["cpu_time"]
         max_rss = task_res["maxRSS"]
         time_start = task_res["startTime"]
@@ -224,10 +231,10 @@ class GetButlerStat:
         
         Parameters
         ----------
-        collections : TODO
-            TODO
+        collections : `list`
+            list of data collection
         """
-        
+
         datatype_pattern = ".*_metadata"
         pattern = re.compile(datatype_pattern)
         for collection in collections:
@@ -274,21 +281,21 @@ class GetButlerStat:
         
         Parameters
         ----------
-        buffer : TODO
-            TODO
-        out_file : TODO
-            TODO
-        index_name : TODO
-            TODO
-        comment : TODO
-            TODO
+        buffer : `str`
+            string buffer containing csv values
+        out_file : `str`
+            name of the table file
+        index_name : `list`
+            list of row names for the table
+        comment : `str`
+            additional string to be added to the top of table file
             
         Returns
         -------
         newbody : `str`
-            TODO
+            buffer containing created table
         """
-        
+
         newbody = comment + "\n"
         newbody += out_file + "\n"
         lines = buffer.split("\n")
@@ -318,9 +325,11 @@ class GetButlerStat:
         return newbody
 
     def run(self):
-        """TODO
+        """Run the program
+
+        :return:
         """
-        
+
         collections = self.search_collections()
         """Recreate Butler and registry """
         self.butler = Butler(self.REPO_ROOT, collections=collections)
@@ -461,52 +470,47 @@ class GetButlerStat:
         self.make_table_from_csv(cs_buf, table_name, index_name, comment)
 
 
+@click.group()
+def cli():
+    """Command line interface for GetPandaStat."""
+    pass
+
+
+@cli.command()
+@click.argument("param_file", type=click.Path(exists=True))
+def get_stat(param_file):
+    """Build production statistics tables using Butler metadata
+
+        Parameters
+        ----------
+        param_file: `str`
+            name of the input yaml file.
+            The file should provide following parameters:
+
+            \b
+            Butler : `str`
+            URL of the Butler storage
+            Jira : `str`
+            Jira ticket identifying production campaign used
+            to select campaign workflows
+            CollType : `str`
+            token that with jira ticket will uniquely define campaign workflows
+            startTime : `str`
+            time to start selecting workflows from in Y-m-d format
+            stopTime : `str`
+            time to stop selecting workflows in Y-m-d format
+            maxtask : `int`
+            maximum number of task files to analyse
+        """
+    click.echo("Start with GetButlerStat")
+    with open(param_file) as p_file:
+        in_pars = yaml.safe_load(p_file)
+    get_butler_stat = GetButlerStat(**in_pars)
+    get_butler_stat.run()
+    print("End with GetButlerStat")
+
+
+cli.add_command(get_stat)
+
 if __name__ == "__main__":
-    print(sys.argv)
-    nbpar = len(sys.argv)
-    if nbpar < 1:
-        print("Usage: GetButlerStat.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <yamlFile> - yaml file containing input parameters")
-        sys.exit(-2)
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["yamlFile="])
-    except getopt.GetoptError:
-        print("Usage: GetButlerStat.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <yamlFile> - yaml file containing input parameters ")
-        sys.exit(2)
-    yaml_flag = 0
-
-    for opt, arg in opts:
-        print("%s %s" % (opt, arg))
-        if opt == "-h":
-            print("Usage: GetButlerStat.py <required inputs>")
-            print("  Required inputs:")
-            print("  -f <yamlFile> - yaml file containing input parameters ")
-            print(" The yaml file format as following:")
-            print(
-                "Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml \n",
-                "Jira: PREOPS-707\n",
-                "collType: 2.2i\n",
-                "workNames: not used now\n",
-                "maxtask: 100",
-            )
-            sys.exit(2)
-        elif opt in ("-f", "--yamlFile"):
-            yaml_flag = 1
-            inpFile = arg
-    inpsum = yaml_flag
-    if inpsum != 1:
-        print("Usage: GetButlerStat.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <yamlFile> - yaml file containing input parameters ")
-        sys.exit(-2)
-    with open(inpFile) as pf:
-        inpars = yaml.safe_load(pf)
-    butler_uri = inpars["Butler"]
-    GBS = GetButlerStat(**inpars)
-    GBS.set_butler(butler_uri)
-    GBS.run()
-    print("End with GetButler Stat.py")
+    cli()
