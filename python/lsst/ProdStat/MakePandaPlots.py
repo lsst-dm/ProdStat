@@ -398,7 +398,8 @@ def prep_timing_data(param_file):
     """
 
     click.echo("Start with MakePandaPlots")
-    params = yaml.safe_load(param_file)
+    with open(param_file) as p_file:
+        params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots(**params)
     panda_plot_maker.prep_data()
     print("Finish with prep_timing_data")
@@ -436,7 +437,8 @@ def plot_data(param_file):
             end of the plot in hours from first quanta
     """
     click.echo("Start with plot_data")
-    params = yaml.safe_load(param_file)
+    with open(param_file) as p_file:
+        params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots(**params)
     panda_plot_maker.plot_data()
     print("Finish with plot_data")
