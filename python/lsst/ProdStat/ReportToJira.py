@@ -58,9 +58,15 @@ class ReportToJira:
         with open(inp_file) as pf:
             in_pars = yaml.safe_load(pf)
         self.ticket = in_pars['Jira']
-        self.comments = in_pars['comments']
+        if 'comments' in in_pars:
+            self.comments = in_pars['comments']
+        else:
+            self.comments = list()
         print(self.comments)
-        self.attachments = in_pars['attachments']
+        if 'attachments' in in_pars:
+            self.attachments = in_pars['attachments']
+        else:
+            self.attachments = list()
         print(self.attachments)
         self.project = in_pars['project']
 
