@@ -40,7 +40,8 @@ class MakePandaPlots:
     Parameters
     ----------
     Jira : `str`
-        TODO
+        Jira ticket identifying production campaign used
+        to select campaign workflows
     collType : `str`
         token that with jira ticket will uniquely define the dataset (workflow)
     bin_width : `str`
@@ -51,20 +52,18 @@ class MakePandaPlots:
         time in hours at which to stop plot
     """
 
-    def __init__(self, **kwargs):        
+    def __init__(self, **kwargs):
         self.collType = kwargs["collType"]
         self.Jira = kwargs["Jira"]
         " bin width in seconds "
         self.bin_width = kwargs["bin_width"]
         " bin width in hours "
-        self.scale_factor = self.bin_width / 3600.0
+        self.scale_factor = float(self.bin_width) / 3600.0
         self.stop_at = int(kwargs["stop_at"])
         self.start_at = float(kwargs["start_at"])
 
         self.plot_n_bins = int((self.stop_at - self.start_at) /
                                self.scale_factor)
-#        self.n_bins = int((self.stop_at - self.start_at) /
-#                          self.scale_factor)
         self.start_time = 0
         self.workKeys = list()
         print(" Collecting information for Jira ticket ", self.Jira)
@@ -80,7 +79,7 @@ class MakePandaPlots:
     def get_workflows(self):
         """First lets get all workflows with given keys.
         """
-        
+
         wfdata = self.query_panda(
             urlst="http://panda-doma.cern.ch/idds/wfprogress/?json"
         )
@@ -161,15 +160,15 @@ class MakePandaPlots:
         
         Parameters
         ----------
-        workflow: TODO
-            TODO
+        workflow: `str`
+            workflow for which tasks will be selected
 
         Returns
         -------
-        tasks
-            TODO
+        tasks: `list`
+            list of tasks in given workflow
         """
-        urls = workflow["r_name"]
+        urls = str(workflow["r_name"])
         tasks = self.query_panda(
             urlst="http://panda-doma.cern.ch/tasks/?taskname="
                   + urls
@@ -182,10 +181,10 @@ class MakePandaPlots:
         
         Parameters
         ----------
-        task : TODO
-            TODO
+        task : `dic`
+            dictionary with task information
         """
-        
+
         jeditaskid = task["jeditaskid"]
         """ Now select jobs to get timing information """
         uri = "http://panda-doma.cern.ch/jobs/?jeditaskid=" + \
@@ -231,8 +230,8 @@ class MakePandaPlots:
         
         Parameters
         ----------
-        tasks : TODO
-            TODO
+        tasks : `list`
+            list of tasks
         """
         taskids = dict()
         """Let's sort tasks with jeditaskid """
@@ -248,7 +247,6 @@ class MakePandaPlots:
             self.get_task_info(task)
         return
 
-
     def get_tasks(self):
         """Select all workflow tasks.
         """
@@ -263,6 +261,13 @@ class MakePandaPlots:
 
     @staticmethod
     def query_panda(urlst):
+        """Read url with panda information
+
+        :param urlst: `str`
+            URL string to read
+        :return: `dict`
+            dictionary with panda data
+        """
         success = False
         ntryes = 0
         result = dict()
@@ -282,6 +287,17 @@ class MakePandaPlots:
         return result
 
     def make_plot(self, data_list, max_time, job_name):
+        """Plot timing data in png file
+        Parameters
+        ----------
+        :param data_list: `list`
+            list of tuples (start_time, duration) for given job
+        :param max_time: `float`
+            maximal time in the timing data list
+        :param job_name: `str`
+            name of the job to be used in the name of plot file
+        :return:
+        """
         first_bin = int(self.start_at / self.scale_factor)
         last_bin = first_bin + self.plot_n_bins
         n_bins = int(max_time / self.bin_width)
@@ -303,6 +319,10 @@ class MakePandaPlots:
         plt.savefig("timing_" + job_name + ".png")
 
     def prep_data(self):
+        """Create file with timing data
+
+        :return:
+        """
         self.get_workflows()
         self.get_tasks()
         print(" all time data")
@@ -318,6 +338,10 @@ class MakePandaPlots:
             )
 
     def plot_data(self):
+        """Create plot of timing data in form of png file
+
+        :return:
+        """
         for job_name in self.job_names:
             data_file = "/tmp/" + "panda_time_series_" + job_name + ".csv"
             if os.path.exists(data_file):
@@ -336,30 +360,38 @@ class MakePandaPlots:
 
 @click.group()
 def cli():
-    """Command line interface for ProdStat."""
+    """Command line interface for MakePandaPlots"""
     pass
 
 
 @cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
+@click.argument("param_file", type=click.Path(exists=True))
 def prep_timing_data(param_file):
     """Create  timing data of the campaign jobs
     Parameters
     ----------
-    param_file : `typing.TextIO`
+    param_file : `str`
         A file from which to read  parameters
-    Note
-    ----
+    Notes
+    -----
     The yaml file should provide following parameters::
-        Jira: PREOPS-905, campaign jira ticket for which to select data
-        collType: 2.2i, token to help select data, like 2.2i or sttep2
-        job_names:, list of task names for which to collect data
+
+    \b
+        Jira: `str`
+            campaign jira ticket for which to select data
+        collType: `str`
+            token to help select data, like 2.2i or sttep2
+        job_names: `list`
+            list of task names for which to collect data
             - 'pipetaskInit'
             - 'mergeExecutionButler'
             - 'visit_step2'
-        bin_width: 30., bin width in seconds
-        start_at: 0.  , start of the plot in hours from first quanta
-        stop_at: 10.  , end of the plot in hours from first quanta
+        bin_width: `float`
+            bin width in seconds
+        start_at: `float`
+            start of the plot in hours from first quanta
+        stop_at: `float`
+            end of the plot in hours from first quanta
     """
     click.echo("Start with MakePandaPlots")
     params = yaml.safe_load(param_file)
@@ -369,25 +401,35 @@ def prep_timing_data(param_file):
 
 
 @cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
+@click.argument("param_file", type=click.Path(exists=True))
 def plot_data(param_file):
     """Create  timing data of the campaign jobs
+
     Parameters
     ----------
-    param_file : `typing.TextIO`
-        A file from which to read  parameters
-    Note
-    ----
-    The yaml file should provide following parameters::
-        Jira: PREOPS-905, campaign jira ticket for which to select data
-        collType: 2.2i, token to help select data, like 2.2i or sttep2
-        job_names:, list of task names for which to collect data
+    param_file : `str`
+        A yaml file from which to read  parameters
+
+    Notes
+    -----
+    The yaml file should provide following parameters:
+
+    \b
+        Jira: `str`
+            campaign jira ticket for which to select data
+        collType: `str`
+            token to help select data, like 2.2i or sttep2
+        job_names: `list`
+            list of task names for which to collect data
             - 'pipetaskInit'
             - 'mergeExecutionButler'
             - 'visit_step2'
-        bin_width: 30., bin width in seconds
-        start_at: 0.  , start of the plot in hours from first quanta
-        stop_at: 10.  , end of the plot in hours from first quanta
+        bin_width: `float`
+            bin width in seconds
+        start_at: `float`
+            start of the plot in hours from first quanta
+        stop_at: `float`
+            end of the plot in hours from first quanta
     """
     click.echo("Start with plot_data")
     params = yaml.safe_load(param_file)

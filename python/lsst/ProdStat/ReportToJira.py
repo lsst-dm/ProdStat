@@ -20,9 +20,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import yaml
-import sys
-import getopt
-from .JiraUtils import *
+import click
+from JiraUtils import *
 
 __all__ = ['ReportToJira']
 
@@ -32,7 +31,7 @@ class ReportToJira:
     Parameters
     ----------
     inp_file : `str`
-        Path to a yaml file that looks like following::
+        Path to a yaml file that looks like following:
 
             project: 'Pre-Operations'
             Jira: PREOPS-911
@@ -66,6 +65,10 @@ class ReportToJira:
         self.project = in_pars['project']
 
     def run(self):
+        """Update the jira ticket
+
+        :return:
+        """
         print("The summary for ticket:", self.ticket)
         issue_id = self.ju.get_issue_id(self.project, self.ticket)
         issue = self.ju.get_issue(self.ticket)
@@ -84,56 +87,44 @@ class ReportToJira:
             self.ju.update_attachment(self.a_jira, issue, att_file)
 
 
-if __name__ == "__main__":
-    print(sys.argv)
-    nbpar = len(sys.argv)
-    if nbpar < 1:
-        print("Usage: ReportToJira.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
+@click.group()
+def cli():
+    """Command line interface for ReportToJira program"""
+    pass
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hf:", ["help", "inputYaml"])
-    except getopt.GetoptError:
-        print("Usage: ReportToJira.py <required inputs>")
-        print("Required inputs:")
-        print("-f <inputYaml> - yaml file with input parameters")
-        sys.exit(2)
-    f_flag = 0
-    inpF = ''
-    for opt, arg in opts:
-        print("%s %s" % (opt, arg))
-        if opt in ("-h", "--help"):
-            print("Usage: ReportToJira.py <required inputs>")
-            print("  Required inputs:")
-            print("  -f <inputYaml> - yaml file with input parameters")
-            print("The yaml file format as following:")
-            print("project: 'Pre-Operations \n",
-                  "Jira: PREOPS-707 \n",
-                  "comments: \n",
-                  "- file: ./text_file1.txt \n",
-                  "  tokens: \n",
-                  "     - 'token1 \n",
-                  "     - 'token2 \n",
-                  "- file: ./text_file2.txt \n",
-                  "     - 'token3 \n",
-                  "     - 'token4 \n",
-                  "attachments:\n",
-                  "- file1.html\n",
-                  "- file2.png\n",
-                  "- file3.pgn\n")
-            sys.exit(2)
-        elif opt in ("-f", "--inputYaml"):
-            f_flag = 1
-            inpF = arg
-    inpsum = f_flag
-    if inpsum != 1:
-        print("Usage: ReportToJira.py <required inputs>")
-        print("  Required inputs:")
-        print("  -f <inputYaml> - yaml file with input parameters")
-        sys.exit(-2)
-    # Create new threads
-    RTJ = ReportToJira(inpF)
-    RTJ.run()
-    print("End with ReportToJira.py")
+
+@cli.command()
+@click.argument("param_file", type=click.Path(exists=True))
+def report(param_file):
+    """Report production statistics to a Jira ticket
+
+    Parameters
+    ----------
+    param param_file: `str`
+        name of the parameter yaml file with path
+
+    Notes
+    -----
+    The yaml file should provide following parameters:
+
+    \b
+    project: 'Pre-Operations'
+        project name
+    Jira: `str`
+        jira ticket like PREOPS-905
+    comments: `list`
+        list of comment files with path
+        each file entry contains list of tokens to identify comment
+        to be replaced
+    attachments: `list`
+        list of attachment files with path
+    :return:
+    """
+    click.echo("Start with ReportToJira")
+    report_to_jira = ReportToJira(param_file)
+    report_to_jira.run()
+    print("End with ReportToJira")
+
+
+if __name__ == "__main__":
+    cli()
