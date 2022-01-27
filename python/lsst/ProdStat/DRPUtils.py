@@ -23,7 +23,7 @@ import glob
 import os
 import re
 from yaml import load, FullLoader
-from datetime import datetime
+import datetime
 from pytz import timezone
 from .GetButlerStat import *
 from .GetPanDaStat import *
