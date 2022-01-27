@@ -657,6 +657,8 @@ class DRPUtils:
         in_pars["collType"] = ts.upper()
         in_pars["workNames"] = ""
         in_pars["maxtask"] = 100
+        in_pars["start_date"] = '1970-01-01'
+        in_pars["stop_date"] = datetime.datetime.now().isoformat()[:10]
         get_butler_stat = GetButlerStat(**in_pars)
         get_butler_stat.run()
         butfilename = "/tmp/butlerStat-" + str(pissue) + ".txt"
