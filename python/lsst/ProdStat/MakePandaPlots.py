@@ -51,6 +51,10 @@ class MakePandaPlots:
         time in hours at which to start plot
     stop_at : `float`
         time in hours at which to stop plot
+    startTime : `str`
+        time to start selecting workflows from in Y-m-d format
+    stopTime : `str`
+        time to stop selecting workflows in Y-m-d format
     """
 
     def __init__(self, **kwargs):
