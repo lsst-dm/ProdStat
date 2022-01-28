@@ -461,6 +461,10 @@ class GetButlerStat:
         plt.show()
         """ print the table """
         print(tabulate(data_frame, headers="keys", tablefmt="fancy_grid"))
+        html_buff = data_frame.to_html(index=True)
+        html_file = open("/tmp/butlerStat-" + self.Jira + ".html", "w")
+        html_file.write(html_buff)
+        html_file.close()
         cs_buf = data_frame.to_csv(index=True)
         table_name = "butlerStat"
         index_name = " Workflow Task "

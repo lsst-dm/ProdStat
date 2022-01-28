@@ -34,6 +34,7 @@ import click
 
 __all__ = ['MakePandaPlots']
 
+
 class MakePandaPlots:
     """Build production statistics tables using PanDa database queries.
     
@@ -61,7 +62,8 @@ class MakePandaPlots:
         self.scale_factor = float(self.bin_width) / 3600.0
         self.stop_at = int(kwargs["stop_at"])
         self.start_at = float(kwargs["start_at"])
-
+        self.start_date = kwargs["start_date"]
+        self.stop_date = kwargs["stop_date"]
         self.plot_n_bins = int((self.stop_at - self.start_at) /
                                self.scale_factor)
         self.start_time = 0
@@ -75,6 +77,8 @@ class MakePandaPlots:
         self.wfTasks = dict()  # tasks per workflow
         self.job_names = kwargs["job_names"]
         self.wfNames = dict()
+        self.start_stamp = datetime.datetime.strptime(self.start_date, "%Y-%m-%d").timestamp()
+        self.stop_stamp = datetime.datetime.strptime(self.stop_date, "%Y-%m-%d").timestamp()
 
     def get_workflows(self):
         """First lets get all workflows with given keys.
@@ -90,8 +94,11 @@ class MakePandaPlots:
             r_name = wf["r_name"]
             if comp in r_name and comp1 in r_name:
                 key = str(r_name).split("_")[-1]
-                self.workKeys.append(str(key))
-                nwf += 1
+                date_str = key.split('t')[0]
+                date_stamp = datetime.datetime.strptime(date_str, "%Y%m%d").timestamp()
+                if self.start_stamp <= date_stamp <= self.stop_stamp:
+                    self.workKeys.append(str(key))
+                    nwf += 1
         print("number of workflows =", nwf)
         if nwf == 0:
             print("No workflows to work with -- exiting")
@@ -316,7 +323,7 @@ class MakePandaPlots:
         max_y = 1.1 * (max(sub_task_count) + 1.0)
         sub_task_count.resize([self.plot_n_bins])
         x_bins = np.arange(self.plot_n_bins) * self.scale_factor + \
-            self.start_at
+                 self.start_at
         plt.plot(x_bins, sub_task_count, label=str(job_name))
         plt.axis([self.start_at, self.stop_at, 0, max_y])
         plt.xlabel("Hours since first quantum start")

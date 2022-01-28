@@ -36,6 +36,7 @@ import click
 
 __all__ = ['GetPanDaStat']
 
+
 class GetPanDaStat:
     """Build production statistics tables using PanDa database queries.
 
@@ -608,6 +609,10 @@ class GetPanDaStat:
         tabula.scale(1.2, 1.2)  # change size table
         plt.savefig("/tmp/" + table_name + "-" + self.Jira + ".png", transparent=True)
         plt.show()
+        html_buff = data_frame.to_html(index=True)
+        html_file = open("/tmp/" + table_name + "-" + self.Jira + ".html", "w")
+        html_file.write(html_buff)
+        html_file.close()
         data_frame.to_csv("/tmp/" + table_name + "-" + self.Jira + ".csv", index=True)
         csbuf = data_frame.to_csv(index=True)
         self.make_table_from_csv(csbuf, table_name, index_name, comment)
@@ -619,7 +624,6 @@ class GetPanDaStat:
         self.getallstat()
         print("workflow info")
         wfind = list()
-
         wflist = list()
         #        wfIndF = open('./wfInd.txt','w')
         """ Let sort datasets by creation time"""
