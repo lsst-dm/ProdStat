@@ -25,6 +25,8 @@ import re
 from yaml import load, FullLoader
 import datetime
 import json
+import numpy as np
+import pandas as pd
 from pytz import timezone
 from .GetButlerStat import *
 from .GetPanDaStat import *
@@ -1110,109 +1112,58 @@ class DRPUtils:
 
     @staticmethod
     def make_prod_groups(template, band, groupsize, skipgroups, ngroups, explist):
-        """TODO
+        """Split a list of exposures into groups defined in yaml files.
 
         Parameters
         ----------
         template : `str`
-            TODO
+            Template file with place holders for start/end dataset/visit/tracts
+            (optional .yaml suffix here will be added)
         band : `str`
-            TODO
-        groupsize : TODO
-            TODO
-        skipgroups : TODO
-            TODO
-        ngroups : TODO
-            TODO
-        explist : TODO
-            TODO
-            
-        Returns
-        -------
-        call_retrun : TODO
-            TODO
+            Which band to restrict to (or 'all' for no restriction, matches BAND
+            in template if not 'all')
+        groupsize : `int`
+            How many visits (later tracts) per group (i.e. 500)
+        skipgroups: `int`
+            skip <skipgroups> groups (if others generating similar campaigns)
+        ngroups : `int`
+            how many groups (maximum)
+        explists : `str`
+            text file listing <band1> <exposure1> for all visits to use
         """
-        f = open(explist, "r")
-        tempstr = os.path.basename(template)
-        patt = re.compile("(.*).yaml")
-        m = patt.match(tempstr)
-        if m:
-            outtemp = m.group(1)
-        else:
-            outtemp = tempstr
-
-        done = 0
-        lastgroup = skipgroups + ngroups
-
-        highexp = 0
-        lowexp = 0
-        groupcount = int(0)
-        totcount = int(0)
-        expnum = 0
-        for lm in f:
-            line = lm.strip()
-            if line == "":
-                break
-            a = line.split()
-            aband = str(a[0])
-            expnum = int(a[1])
-            if aband != band and band != "all" and band != "f":
-                continue
-            groupcount += 1
-            totcount += 1
-            curgroup = int(totcount / groupsize)
-            curcount = totcount % groupsize
-            if curcount == 1:
-                lowexp = expnum
-            if curcount == 0 and skipgroups < curgroup <= lastgroup:
-                highexp = expnum
-                com = (
-                    "sed -e s/BAND/"
-                    + str(band)
-                    + "/g -e s/GNUM/"
-                    + str(int(curgroup))
-                    + "/g -e s/LOWEXP/"
-                    + str(lowexp)
-                    + "/g -e s/HIGHEXP/"
-                    + str(highexp)
-                    + "/g "
-                    + str(template)
-                    + " >"
-                    + str(outtemp)
-                    + "_"
-                    + str(band)
-                    + "_"
-                    + str(int(curgroup))
-                    + ".yaml"
-                )
-                return_val = subprocess.call(com, shell=True)
-                print(com + " " + str(return_val))
-        # lastgroup
-        curgroup = int(totcount / groupsize) + 1
-        curcount = totcount % groupsize
-        if curcount != 0 and skipgroups < curgroup <= lastgroup:
-            highexp = expnum
-            com = (
-                "sed -e s/BAND/"
-                + str(band)
-                + "/g -e s/GNUM/"
-                + str(int(curgroup))
-                + "/g -e s/LOWEXP/"
-                + str(lowexp)
-                + "/g -e s/HIGHEXP/"
-                + str(highexp)
-                + "/g "
-                + str(template)
-                + " >"
-                + str(outtemp)
-                + "_"
-                + str(band)
-                + "_"
-                + str(int(curgroup))
-                + ".yaml"
+        template_base = os.path.basename(template)
+        template_fname, template_ext = os.path.splitext(template_base)
+        out_base = template_fname if template_ext == ".yaml" else template_base
+    
+        with open(template, "r") as template_file:
+            template_content = template_file.read()
+    
+        exposures = pd.read_csv(explist, names=["band", "exp_id"], delimiter=r"\s+")
+        exposures.sort_values("exp_id", inplace=True)
+        if band not in ("all", "f"):
+            exposures.query(f"band=='{band}'", inplace=True)
+    
+        # Add a new column to the DataFrame with group ids
+        num_exposures = len(exposures)
+        exposures["group_id"] = np.floor(np.arange(num_exposures) / groupsize).astype(int)
+    
+        for group_id in range(skipgroups, skipgroups + ngroups):
+            group_exposures = exposures.query(f"group_id == {group_id}")
+            min_exp_id = group_exposures.exp_id.min()
+            max_exp_id = group_exposures.exp_id.max()
+    
+            # Add 1 to the group id so it starts at 1, not 0
+            group_num = group_id + 1
+            out_content = (
+                template_content.replace("GNUM", str(group_num))
+                .replace("BAND", band)
+                .replace("LOWEXP", str(min_exp_id))
+                .replace("HIGHEXP", str(max_exp_id))
             )
-            return_val = subprocess.call(com, shell=True)
-            print(com + " " + str(return_val))
+    
+            out_fname = f"{out_base}_{band}_{group_num}.yaml"
+            with open(out_fname, "w") as out_file:
+                out_file.write(out_content)
 
     def drp_issue_update(self, bpsyamlfile, pissue, drpi, ts):
         """TODO
