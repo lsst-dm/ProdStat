@@ -74,32 +74,38 @@ def make_prod_groups(
 
 
 @cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
+@click.argument("param_file", type=click.Path(exists=True))
 def get_butler_stat(param_file):
-    """Get butler Statistics.
+    """Build production statistics tables using Butler metadata.
 
-    \b
     Parameters
     ----------
-    param_file : `typing.TextIO`
-        A file from which to read butler parameters
+    param_file: `str`
+        name of the input yaml file.
+        The file should provide following parameters:
 
-    \b
-    Note
-    ----
-    The yaml file follows this format::
-
-        Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
-        Jira: PREOPS-707
-        collType: 2.2i
-        workNames: not used now
-        maxtask: 100
+        \b
+        Butler : `str`
+            URL of the Butler storage
+        Jira : `str`
+            Jira ticket identifying production campaign used
+            to select campaign workflows
+        CollType : `str`
+            token that with jira ticket will uniquely define campaign workflows
+        startTime : `str`
+            time to start selecting workflows from in Y-m-d format
+        stopTime : `str`
+            time to stop selecting workflows in Y-m-d format
+        maxtask : `int`
+            maximum number of task files to analyse
     """
-    params = yaml.safe_load(param_file)
-    butler_uri = params["Butler"]
-    butler_stat_getter = GetButlerStat.GetButlerStat(**params)
-    butler_stat_getter.set_butler(butler_uri)
-    butler_stat_getter.run()
+
+    click.echo("Start with GetButlerStat")
+    with open(param_file) as p_file:
+        in_pars = yaml.safe_load(p_file)
+    butler_stat = GetButlerStat.GetButlerStat(**in_pars)
+    butler_stat.run()
+    print("End with GetButlerStat")
 
 
 @cli.command()
@@ -222,133 +228,152 @@ def init(bps_submit_template, production_issue, drp_issue):
     """
     drp = DRPUtils.DRPUtils()
     drp.drp_init(bps_submit_template, production_issue, drp_issue)
-
+    
 
 @cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
+@click.argument("param_file", type=click.Path(exists=True))
 def get_panda_stat(param_file):
-    """Get butler statistics.
-
-    \b
-    Paramaters
-    ----------
-    param_file : `typing.IO`
-        File with butler stat parameters, like::
-
-            Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
-            Jira: PREOPS-707
-            collType: 2.2i
-            workNames: not used now
-            maxtask: 100"
-
-    \b
-    Returns
-    -------
-    None.
-    """
-    params = yaml.safe_load(param_file)
-    panda_stat = GetPanDaStat.GetPanDaStat(**params)
-    panda_stat.run()
-
-
-@cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
-def prep_timing_data(param_file):
-    """Create  timing data of the campaign jobs.
+    """Build production statistics tables using PanDa database queries.
 
     Parameters
     ----------
-    param_file : `typing.TextIO`
+    param_file: `str`
+        name of the input yaml file.
+        The file should provide following parameters:
+
+        \b
+        Jira : `str`
+            Jira ticket identifying production campaign used
+            to select campaign workflows
+        CollType : `str`
+            token that with jira ticket will uniquely define campaign workflows
+        startTime : `str`
+            time to start selecting workflows from in Y-m-d format
+        stopTime : `str`
+            time to stop selecting workflows in Y-m-d format
+        maxtask : `int`
+            maximum number of task files to analyse
+    """
+
+    click.echo("Start with GetPandaStat")
+    with open(param_file, 'r') as p_file:
+        in_pars = yaml.safe_load(p_file)
+    panda_stat = GetPanDaStat.GetPanDaStat(**in_pars)
+    panda_stat.run()
+    print("End with GetPanDaStat")
+
+
+@cli.command()
+@click.argument("param_file", type=click.Path(exists=True))
+def report_to_jira(param_file):
+    """Report production statistics to a Jira ticket
+
+    Parameters
+    ----------
+    param param_file: `str`
+        name of the parameter yaml file with path
+
+    Notes
+    -----
+    The yaml file should provide following parameters:
+
+    \b
+    project: 'Pre-Operations'
+        project name
+    Jira: `str`
+        jira ticket like PREOPS-905
+    comments: `list`
+        list of comment files with path
+        each file entry contains list of tokens to identify comment
+        to be replaced
+    attachments: `list`
+        list of attachment files with path
+    :return:
+    """
+    click.echo("Start with ReportToJira")
+    report = ReportToJira.ReportToJira(param_file)
+    report.run()
+    print("End with ReportToJira")
+
+
+@cli.command()
+@click.argument("param_file", type=click.Path(exists=True))
+def prep_timing_data(param_file):
+    """Create  timing data of the campaign jobs
+    
+    Parameters
+    ----------
+    param_file : `str`
         A file from which to read  parameters
 
-    Note
-    ----
+    Notes
+    -----
     The yaml file should provide following parameters::
 
-        Jira: PREOPS-905, campaign jira ticket for which to select data
-        collType: 2.2i, token to help select data, like 2.2i or sttep2
-        job_names:, list of task names for which to collect data
+    \b
+        Jira: `str`
+            campaign jira ticket for which to select data
+        collType: `str`
+            token to help select data, like 2.2i or sttep2
+        job_names: `list`
+            list of task names for which to collect data
             - 'pipetaskInit'
             - 'mergeExecutionButler'
             - 'visit_step2'
-        bin_width: 30., bin width in seconds
-        start_at: 0.  , start of the plot in hours from first quanta
-        stop_at: 10.  , end of the plot in hours from first quanta
+        bin_width: `float`
+            bin width in seconds
+        start_at: `float`
+            start of the plot in hours from first quanta
+        stop_at: `float`
+            end of the plot in hours from first quanta
     """
+
     click.echo("Start with MakePandaPlots")
-    params = yaml.safe_load(param_file)
+    with open(param_file, 'r') as p_file:
+        params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
     panda_plot_maker.prep_data()
     print("Finish with prep_timing_data")
 
 
 @cli.command()
-@click.argument("param_file", type=click.File(mode="r"))
+@click.argument("param_file", type=click.Path(exists=True))
 def plot_data(param_file):
-    """Create  timing data of the campaign jobs.
+    """Create timing data of the campaign jobs.
 
-    \b
     Parameters
     ----------
-    param_file : `typing.TextIO`
-        A file from which to read  parameters
+    param_file : `str`
+        A yaml file from which to read  parameters
+
+    Notes
+    -----
+    The yaml file should provide following parameters:
 
     \b
-    Note
-    ----
-    The yaml file should provide following parameters::
-
-        Jira: PREOPS-905, campaign jira ticket for which to select data
-        collType: 2.2i, token to help select data, like 2.2i or sttep2
-        job_names:, list of task names for which to collect data
+        Jira: `str`
+            campaign jira ticket for which to select data
+        collType: `str`
+            token to help select data, like 2.2i or sttep2
+        job_names: `list`
+            list of task names for which to collect data
             - 'pipetaskInit'
             - 'mergeExecutionButler'
             - 'visit_step2'
-        bin_width: 30., bin width in seconds
-        start_at: 0.  , start of the plot in hours from first quanta
-        stop_at: 10.  , end of the plot in hours from first quanta
+        bin_width: `float`
+            bin width in seconds
+        start_at: `float`
+            start of the plot in hours from first quanta
+        stop_at: `float`
+            end of the plot in hours from first quanta
     """
     click.echo("Start with plot_data")
-    params = yaml.safe_load(param_file)
+    with open(param_file, 'r') as p_file:
+        params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
     panda_plot_maker.plot_data()
     print("Finish with plot_data")
 
-
-@cli.command()
-@click.argument("param_file", type=str)
-def report_to_jira(param_file):
-    """Report to jira.
-
-    \b
-    Parameters
-    ----------
-    param_file : `str`
-        Name of file from which to read  parameters
-
-    \b
-    Note
-    ----
-    The yaml file should provide following parameters::
-
-        project: 'Pre-Operations
-         Jira: PREOPS-707
-         comments:
-         - file: ./text_file1.txt
-           tokens:
-              - 'token1
-              - 'token2
-         - file: ./text_file2.txt
-              - 'token3
-              - 'token4
-         attachments:
-         - file1.html
-         - file2.png
-         - file3.pgn
-
-    """
-    report = ReportToJira.ReportToJira(param_file)
-    report.run()
 
 def main():
     """Run the command line interface."""
