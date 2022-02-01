@@ -21,50 +21,15 @@
 # coding: utf-8
 """Test update-issue."""
 
-import os
 import unittest
 from unittest import mock
-from tempfile import TemporaryDirectory
-import netrc
-import tarfile
 
 from lsst.ProdStat import DRPUtils
-
-TEST_DATA_FNAME = os.path.join(
-    os.environ["PRODSTAT_DIR"], "tests", "data", "testdrp.tgz"
-)
-
-# Mock netrc.netrc on the class, using a pre-made MOCK_NETRC object,
-# so that we only need to specify the return value for authenticators
-# once, and there's no need for a different mock of this for different tests.
-
-MOCK_NETRC = mock.Mock(netrc.netrc)
-MOCK_NETRC.return_value.authenticators.return_value = (
-    "test_username",
-    "test_account",
-    "test_password",
-)
+from ProdStatTestBase import ProdStatTestBase, MOCK_NETRC
 
 
 @mock.patch("netrc.netrc", MOCK_NETRC)
-class TestUpdateIssue(unittest.TestCase):
-    def setUp(self):
-        self.start_dir = os.getcwd()
-        self.temp_dir = TemporaryDirectory()
-        with tarfile.open(TEST_DATA_FNAME) as data_tar:
-            data_tar = tarfile.open(TEST_DATA_FNAME)
-            data_tar.extractall(self.temp_dir.name)
-
-        self.test_dir = os.path.join(self.temp_dir.name, "testdrp")
-        os.chdir(self.test_dir)
-
-    def tearDown(self):
-        os.chdir(self.start_dir)
-        self.temp_dir.cleanup()
-
-    # Mock JiraUtils.JIRA on the test method, se we get different instances
-    # of the mock in each test.
-
+class TestUpdateIssue(ProdStatTestBase, unittest.TestCase):
     @mock.patch("lsst.ProdStat.JiraUtils.JIRA", autospec=True)
     def test_new_issue(self, MockJira):
         drp_issue = "DRP0"
