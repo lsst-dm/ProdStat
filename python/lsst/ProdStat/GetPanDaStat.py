@@ -232,8 +232,12 @@ class GetPanDaStat:
         data["status"] = task["status"]
         data["attemptnr"] = int(attemptnr)
         data["actualcorecount"] = jb["actualcorecount"]
-        data["starttime"] = task["starttime"]
-        tokens = task["endtime"].split("T")
+        data["starttime"] = str(task["starttime"]).upper()
+        if task["endtime"] is None:
+            _now = datetime.datetime.now()
+            task["endtime"] = _now.strftime("%Y-%m-%dT%H:%M:%S")
+        _endtime = str(task["endtime"]).upper()
+        tokens = _endtime.split("T")
         data["endtime"] = tokens[0] + " " + tokens[1]  # get rid of T in the date string
         if task["starttime"] is None:
             task["starttime"] = tokens[0] + " " + tokens[1]
@@ -360,6 +364,7 @@ class GetPanDaStat:
                         str(wf["r_status"]) == "finished"
                         or str(wf["r_status"]) == "subfinished"
                         or str(wf["r_status"]) == "running"
+                        or str(wf["r_status"]) == "transforming"
                 ):
                     """get tasks for this workflow"""
                     tasks = self.getwftasks(wf)
@@ -452,7 +457,10 @@ class GetPanDaStat:
             corecount_pj = corecount / ntasks
             corecount = corecount_pj * nfiles
             cpueff_pj = cpuefficiency / ntasks
-            nparallel = int(math.ceil(walltime / taskduration))
+            if taskduration <= 0.:
+                nparallel = 1
+            else:
+                nparallel = int(math.ceil(walltime / taskduration))
             if nparallel < 1:
                 nparallel = 1
             wfduration += taskduration
