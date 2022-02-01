@@ -28,15 +28,15 @@ from tempfile import TemporaryDirectory
 import netrc
 import tarfile
 
-# import jira
-
-import lsst.ProdStat
-import lsst.ProdStat.JiraUtils
 from lsst.ProdStat import DRPUtils
 
 TEST_DATA_FNAME = os.path.join(
     os.environ["PRODSTAT_DIR"], "tests", "data", "testdrp.tgz"
 )
+
+# Mock netrc.netrc on the class, using a pre-made MOCK_NETRC object,
+# so that we only need to specify the return value for authenticators
+# once, and there's no need for a different mock of this for different tests.
 
 MOCK_NETRC = mock.Mock(netrc.netrc)
 MOCK_NETRC.return_value.authenticators.return_value = (
@@ -45,44 +45,69 @@ MOCK_NETRC.return_value.authenticators.return_value = (
     "test_password",
 )
 
-# MOCK_JIRO_PROPERTYHOLDER = mock.Mock(jira.resources.PropertyHolder)
-# MOCK_JIRO_PROPERTYHOLDER.return_value.description = "Test description str."
-
-# MOCK_ISSUE = mock.Mock(jira.resources.Issue)
-# MOCK_ISSUE.return_value.fields = MOCK_JIRO_PROPERTYHOLDER()
-
-MOCK_JIRA = mock.Mock(lsst.ProdStat.JiraUtils.JIRA)
-# MOCK_JIRA.return_value.create_issue.return_value = MOCK_ISSUE()
-
 
 @mock.patch("netrc.netrc", MOCK_NETRC)
-@mock.patch("lsst.ProdStat.JiraUtils.JIRA", MOCK_JIRA)
 class TestUpdateIssue(unittest.TestCase):
     def setUp(self):
-        pass
+        self.start_dir = os.getcwd()
+        self.temp_dir = TemporaryDirectory()
+        with tarfile.open(TEST_DATA_FNAME) as data_tar:
+            data_tar = tarfile.open(TEST_DATA_FNAME)
+            data_tar.extractall(self.temp_dir.name)
 
-    def test_new_issue(self):
+        self.test_dir = os.path.join(self.temp_dir.name, "testdrp")
+        os.chdir(self.test_dir)
+
+    def tearDown(self):
+        os.chdir(self.start_dir)
+        self.temp_dir.cleanup()
+
+    # Mock JiraUtils.JIRA on the test method, se we get different instances
+    # of the mock in each test.
+
+    @mock.patch("lsst.ProdStat.JiraUtils.JIRA", autospec=True)
+    def test_new_issue(self, MockJira):
         drp_issue = "DRP0"
         production_issue = "PREOPS-XXX"
         ts = "0"
+        bps_submit_fname = "clusttest_all_1.yaml"
 
         drp = DRPUtils.DRPUtils()
 
-        with TemporaryDirectory() as base_test_dir:
-            with tarfile.open(TEST_DATA_FNAME) as data_tar:
-                data_tar = tarfile.open(TEST_DATA_FNAME)
-                data_tar.extractall(base_test_dir)
+        drp.drp_issue_update(bps_submit_fname, production_issue, drp_issue, ts)
 
-            test_dir = os.path.join(base_test_dir, "testdrp")
-            start_dir = os.getcwd()
-            os.chdir(test_dir)
-
-            bps_submit_fname = "clusttest_all_1.yaml"
-
-            drp.drp_issue_update(bps_submit_fname, production_issue, drp_issue, ts)
-
-            os.chdir(start_dir)
-
-        mock_jira = MOCK_JIRA.return_value
+        mock_jira = MockJira.return_value
         mock_jira.create_issue.assert_called_once()
+        create_issue_args, create_issue_kwargs = mock_jira.create_issue.call_args
+        self.assertTupleEqual(create_issue_args, ())
+        self.assertEqual(
+            set(create_issue_kwargs),
+            set(["project", "issuetype", "summary", "description", "components"]),
+        )
 
+    @mock.patch("lsst.ProdStat.JiraUtils.JIRA", autospec=True)
+    def test_update_existing_issue(self, MockJira):
+        drp_issue = "DRP-148"
+        production_issue = "PREOPS-XXX"
+        ts = "0"
+        bps_submit_fname = "clusttest_all_1.yaml"
+
+        drp = DRPUtils.DRPUtils()
+
+        drp.drp_issue_update(bps_submit_fname, production_issue, drp_issue, ts)
+
+        mock_jira = MockJira.return_value
+
+        mock_jira.create_issue.assert_not_called()
+
+        issue_args, issue_kwargs = mock_jira.issue.call_args
+        self.assertEqual(issue_args, (drp_issue,))
+        self.assertEqual(issue_kwargs, {})
+
+        issue_update = mock_jira.issue.return_value.update
+        update_args, update_kwargs = issue_update.call_args
+        self.assertTupleEqual(update_args, ())
+        self.assertEqual(set(update_kwargs.keys()), set(["fields"]))
+        self.assertEqual(
+            set(update_kwargs["fields"].keys()), set(["summary", "description"])
+        )
