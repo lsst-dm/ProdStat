@@ -780,6 +780,8 @@ class DRPUtils:
         jlines = jdesc.splitlines()
         lm = iter(jlines)
         pattern1 = re.compile("(.*)tract in (.*)")
+        pattern1a = re.compile("(.*)tract *=( *[0-9]*)")
+        pattern1b = re.compile("(.*)tract >=([0-9]*) and tract <=( *[0-9]*)")
         pattern2 = re.compile("(.*)exposure >=([0-9]*) and exposure <=( *[0-9]*)")
         pattern2b = re.compile("(.*)visit >=([0-9]*) and visit <=( *[0-9]*)")
         pattern2a = re.compile(
@@ -798,6 +800,16 @@ class DRPUtils:
             if n1:
                 # print("Tract range:",n1.group(2),":end")
                 hilow = n1.group(2)
+                # print("hilow:",hilow)
+            n1a = pattern1a.match(ls)
+            if n1a:
+                # print("Tract range:",n1.group(2),":end")
+                hilow = "("+n1a.group(2)+")"
+                # print("hilow:",hilow)
+            n1b = pattern1b.match(ls)
+            if n1b:
+                print("tractlo:", n1b.group(2), " tracthigh:", n1b.group(3), ":end")
+                hilow = "(" + str(int(n1b.group(2))) + "," + str(int(n1b.group(3))) + ")"
                 # print("hilow:",hilow)
             n2 = pattern2.match(ls)
             if n2:
