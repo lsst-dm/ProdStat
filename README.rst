@@ -13,9 +13,6 @@ git clone https://github.com/lsst-dm/ProdStat.git
 
 cd ProdStat
 
-to update
----------
-git update
 
 Set up the package
 ==================
@@ -26,6 +23,13 @@ setup ProdStat -r .
 Running tests
 -------------
 scons
+
+After this the prodstat product should be in the PATH.
+Next time to setup the product is sufficient to run
+
+setup ProdStat -r .
+
+in ProdStat directory
 
 Using the package
 -----------------
@@ -58,13 +62,18 @@ prodstat COMMAND --help
 
 Organizing production
 =====================
-
   setup lsst_distrib
+
   mkdir mywork
+
   cd mywork
+
   git clone https://github.com/lsst-dm/ProdStat.git
+
   cd ProdStat
+
   setup ProdStat -r .
+
   cd ../
 
 it is also useful to have the dp02-processing package which has the
@@ -73,9 +82,7 @@ auxillary bps includes like memoryRequest.yaml and clustering.yaml::
 
   git clone https://github.com/lsst-dm/dp02-processing.git
 
-and to update::
 
-  cd dp02-processing; git update
 The explist, templates, and clustering yaml memoryRequest yaml are in: dp02-processing/full/rehearsal/PREOPS-938/
 
 On your data-int.lsst.cloud note, to enable running scripts, like update-issue, etc \
@@ -112,8 +119,9 @@ You can remove an unwanted entry from the DRP-55 table by doing this::
 
   prodstat add-job-to-summary PREOPS-XXX DRP-YYY remove
 
+
 Update Butler, Panda Stats when job is done
--------------------------------------------
+"""""""""""""""""""""""""""""""""""""""""""
 
 When job completes, you can update the stats table in the DRP-YYY ticket with this call::
 
@@ -136,6 +144,7 @@ init
 prodstat init [OPTIONS] PBS_SUBMIT_TEMPLATE PRODUCTION_ISSUE [DRP_ISSUE]
 
 Initialize a DRP issue.
+
 Parameters
 """"""""""
  bps_submit_template : `str`
@@ -158,8 +167,10 @@ issue-update
 
  prodstat update-issue [OPTIONS] BPS_SUBMIT_FNAME PRODUCTION_ISSUE [DRP_ISSUE]
    Update or create a DRP issue.
-   Parameters
-   """"""""""
+
+Parameters
+""""""""""
+
    bps_submit_fname : `str`
      The file name for the BPS submit file (yaml).
      Should be sitting in the same dir that bps submit was done,
@@ -172,10 +183,13 @@ issue-update
    ts : `str`
      time stamp
 
-Options:
-""""""""
-  --ts TEXT
-  --help     Show this message and exit.
+Options
+"""""""
+
+--ts TEXT  timestamp
+
+--help     Show this message and exit.
+
 Example:
 """"""""
   prodstat issue-update ../dp02-processing/full/rehearsal/PREOPS-938/clusttest.yaml PREOPS-938 DRP0 [20211225T122522Z]
@@ -199,16 +213,16 @@ Parameters
   template : `str`
     Template file with place holders for start/end dataset/visit/tracts
         (optional .yaml suffix here will be added)
-    band : `str`
+  band : `str`
         Which band to restrict to (or 'all' for no restriction, matches BAND
         in template if not 'all')
-    groupsize : `int`
+  groupsize : `int`
       How many visits (later tracts) per group (i.e. 500)
-    skipgroups: `int`
+  skipgroups: `int`
       skip <skipgroups> groups (if others generating similar campaigns)
-    ngroups : `int`
+  ngroups : `int`
       how many groups (maximum)
-    explists : `str`
+  explists : `str`
       text file listing <band1> <exposure1> for all visits to use
 
 
@@ -230,23 +244,19 @@ get-butler-stat
 
 Call::
 
-  GetButlerStat.p -f inpfile.yaml
+  prodstat get-butler-stat inpfile.yaml
 
+After the task is finished the information in butler metadata will be scanned and corresponding tables will
+be created in /tmp/ directory.
 The inpfile.yaml has following format::
 
-  Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml
-  Jira: PREOPS-707
-  collType:2.2i
-  workflows: 
-  maxtask: 30
-
+  Butler: s3://butler-us-central1-panda-dev/dc2/butler.yaml ; or butler-external.yaml on LSST science platform
+  Jira: PREOPS-905 ; jira ticket information for which will be selected
+  collType: 2.2i ; a token which help to uniquely recognize required data collection
+  maxtask: 30 ; maximum number of tasks to be analyzed to speed up the process
+  start_date: '2022-01-30' ; dates to select data, which will help to skip previous production steps
+  stop_date: '2022-02-02'
   
-Here,
-
- - `Jira` represents Jira ticket that is used to identify workflows (data collections ) ,\
- - `collType` is a second token used to uniquely identify workflow, it can be part of workflow time stamp or user name, etc.
- - `workflows` is not used now,
- - `maxtask` maximum number of tasks (yaml) files to process for average cpu/wall time estimation.
 
 
 This program will scan butler registry to select _metadata files for
@@ -259,17 +269,18 @@ resulting table will be created as /tmp/butlerStat-PREOPS-XXX.png
 file. The text version of the table used to put in Jira comment is
 also created as /tmp/butlerStat-PREOPS-XXX.txt
 
-GetPanDaStat.py
+get-panda-stat
 --------------
 
 Call::
 
-  GetPanDaStat.p -f inpfile.yaml
+  prodstat get-panda-stat  inpfile.yaml
   
-The input file format is exactly same as for GetButlerStat.py program
+The input file format is exactly same as for get-butler-stat command.
 
 The program will query PanDa web logs to select information about workflows,
-tasks and jobs. It will produce 2 sorts of tables.
+tasks and jobs whose status is either finished, subfinished, running or transforming.
+It will produce 2 sorts of tables.
 
 The first one gives the status of the campaign production showing each
 workflow status as /tmp/pandaWfStat-PREOPS-XXX.txt.  A styled html
@@ -284,41 +295,70 @@ pandaStat-PREOPS-XXX.txt.
 
 Hear PREOPS-XXX tokens represent Jira ticket the statistics is collected for.
 
-MakePandaPlots.py
+prep-timing-data
 -----------------
 
 Call::
 
-  MakePandaPlots.py prep-timing-data ./inp_file.yaml
+  prodstat prep-timing-data ./inp_file.yaml
   
-The input yaml file should contain following parameters:
+The input yaml file should contain following parameters::
 
- - `Jira: PREOPS-905` - jira ticket corresponding given campaign.
- - `collType: 2.2i` - a token to help identify campaign workflows.
- - `bin_width: 30.` - the width of the plot bin in sec.
- - `n_bins: 100000` - total number of bins in plots
- - `job_names` - a list of job names
-   - `'pipeTaskInit'`
-   - `'mergeExecutionButler'`
-   - `'visit_step2'`
- - `start_at: 0.` - plot starts at hours from first quanta
- - `stor_at: 10.` - plot stops at hours from first quanta
+  Jira: PREOPS-905 - jira ticket corresponding given campaign.
+  collType: 2.2i - a token to help identify campaign workflows.
+  bin_width: 30. - the width of the plot bin in sec.
+  job_names - a list of job names
+   - 'pipeTaskInit'
+   - 'mergeExecutionButler'
+   - 'visit_step2'
+  start_at: 0. - plot starts at hours from first quanta
+  stor_at: 10. - plot stops at hours from first quanta
+  start_date: '2022-01-30' ; dates to select data, which will help to skip previous production steps
+  stop_date: '2022-02-02'
 
 The program scan panda database to collect timing information for all job types in the list.
 It creates then timing information in /tmp directory with file names like::
 
   panda_time_series_<job_type>.csv
 
-Making Plots
-------------
+plot-data
+---------
 
 Call::
   
-  MakePandaPlots.py plot-data inp_file.yaml
+  prodstat plot-data inp_file.yaml
 
 The program reads timing data created by prep-timing-data command and
 build plots for each type of jobs in given time boundaries.
 each type of jobs in given time boundaries.
 
+report-to-jira
+--------------
 
+Call::
 
+   prodstat report-to-jira report.yaml
+
+The report.yaml file provide information about comments and attachments that need to be added or
+replaced in given jira ticket.
+The structure of the file looks like following::
+ project: 'Pre-Operations'
+ Jira: PREOPS-905
+ comments:
+  - file: /tmp/pandaStat-PREOPS-905.txt
+    tokens:        tokens to uniquely identify the comment to be replaced
+      - 'pandaStat'
+      - 'campaign'
+      - 'PREOPS-905'
+  - file: /tmp/butlerStat-PREOPS-905.txt
+    tokens:
+      - 'butlerStat'
+      - 'PREOPS-905'
+ attachments:
+  - /tmp/pandaWfStat-PREOPS-905.html
+  - /tmp/pandaStat-PREOPS-905.html
+  - /tmp/timing_detect_deblend.png
+  - /tmp/timing_makeWarp.png
+  - /tmp/timing_detect_deblend.png
+  - /tmp/timing_measure.png
+  - /tmp/timing_patch_coaddition.png
