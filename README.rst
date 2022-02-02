@@ -359,6 +359,5 @@ The structure of the file looks like following::
   - /tmp/pandaStat-PREOPS-905.html
   - /tmp/timing_detect_deblend.png
   - /tmp/timing_makeWarp.png
-  - /tmp/timing_detect_deblend.png
   - /tmp/timing_measure.png
   - /tmp/timing_patch_coaddition.png
