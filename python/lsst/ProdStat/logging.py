@@ -46,7 +46,11 @@ def stream_logger(name, reset=False, level=logging.DEBUG):
     logger : `logging.Logger`
         The configured logger
     """
-    log = logging.getLogger(name)
+    if isinstance(name, logging.Logger):
+        log = name
+        name = log.name
+    else:
+        log = logging.getLogger(name)
 
     if reset:
         for handler in log.handlers:
@@ -84,7 +88,11 @@ def file_logger(name, fname, reset=False):
     logger : `logging.Logger`
         The configured logger
     """
-    log = logging.getLogger(name)
+    if isinstance(name, logging.Logger):
+        log = name
+        name = log.name
+    else:
+        log = logging.getLogger(name)
 
     if reset:
         for handler in log.handlers:
