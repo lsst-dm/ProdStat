@@ -21,6 +21,7 @@
 # coding: utf-8
 """Create data files used for testing."""
 
+import os
 from urllib.request import urlopen
 import json
 import gzip
@@ -38,19 +39,17 @@ def cli():
 
 
 @cli.command()
-@click.option(
-    "--fname",
+@click.argument(
+    "fname",
     default="panda_query_results.json.gz",
     show_default=True,
     type=str,
-    help="Output file name.",
 )
-@click.option(
-    "--param_fname",
+@click.argument(
+    "param_fname",
     default="get_panda_stat_params.json",
     show_default=True,
     type=str,
-    help="File with GetPanDaStat keyword arguments",
 )
 def get_panda_query_results(fname, param_fname):
     """Get results of panda queries for GetPanDaStat testing.
