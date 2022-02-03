@@ -28,11 +28,9 @@ import time
 from time import sleep, gmtime, strftime
 import datetime
 import math
-import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import table
-import click
 
 __all__ = ['GetPanDaStat']
 
@@ -148,12 +146,12 @@ class GetPanDaStat:
 
     def getwftasks(self, workflow):
         """Select tasks for given workflow (jobs).
-        
+
         Parameters
         ----------
         workflow : `str`
             workflow name
-            
+
         Returns
         -------
         tasks : `list`
@@ -170,12 +168,12 @@ class GetPanDaStat:
 
     def gettaskinfo(self, task):
         """Extract data we need from task dictionary.
-        
+
         Parameters
         ----------
         task : `dict`
             dictionary of task parameters
-            
+
         Returns
         -------
         data : `dict`
@@ -184,13 +182,14 @@ class GetPanDaStat:
 
         data = dict()
         jeditaskid = task["jeditaskid"]
-        """ Now select a number of jobs to calculate average cpu time and max Rss """
+
+        # Now select a number of jobs to calculate average cpu time and max Rss
         uri = (
-                "http://panda-doma.cern.ch/jobs/?jeditaskid="
-                + str(jeditaskid)
-                + "&limit="
-                + str(self.maxtask)
-                + "&jobstatus=finished&json"
+            "http://panda-doma.cern.ch/jobs/?jeditaskid="
+            + str(jeditaskid)
+            + "&limit="
+            + str(self.maxtask)
+            + "&jobstatus=finished&json"
         )
         jobsdata = self.querypanda(urlst=uri)
         """ list of jobs in the task """
@@ -251,21 +250,20 @@ class GetPanDaStat:
         data["jobstatus"] = jb["jobstatus"]
         tokens = jb["starttime"].split("T")
         data["jobstarttime"] = (
-                tokens[0] + " " + tokens[1]
+            tokens[0] + " " + tokens[1]
         )  # get rid of T in the date string
         tokens = jb["endtime"].split("T")
         data["jobendtime"] = (
-                tokens[0] + " " + tokens[1]
+            tokens[0] + " " + tokens[1]
         )  # get rid of T in the date string
         taskstart = datetime.datetime.strptime(
             data["starttime"], "%Y-%m-%d %H:%M:%S"
         ).timestamp()
-        #        jobstart = datetime.datetime.strptime(data['jobstarttime'], "%Y-%m-%d %H:%M:%S").timestamp()
+
         jobstart = starttime
         taskend = datetime.datetime.strptime(
             data["endtime"], "%Y-%m-%d %H:%M:%S"
         ).timestamp()
-        taskduration = taskend - taskstart
         jobduration = taskend - jobstart
         data["ncpus"] = corecount
         data["taskduration"] = jobduration
@@ -283,7 +281,7 @@ class GetPanDaStat:
             timestamp part of the workflow name
         tasks : `list`
             list of tasks data dictionaries
-        
+
         Returns
         -------
         tasktypes : `dict`
@@ -310,8 +308,6 @@ class GetPanDaStat:
             for i in range(1, len(tokens) - 1):
                 name += tokens[i] + "_"
             taskname = name[:-1]
-            taskid = task["jeditaskid"]
-            uri = "http://panda-doma.cern.ch/job?pandaid=" + str(taskid) + "&json"
             data = self.gettaskinfo(task)
             if len(data) == 0:
                 print("No data for ", taskname)
@@ -414,14 +410,11 @@ class GetPanDaStat:
         wfduration = 0.0
         wfnfiles = 0
         wfparallel = 0
-        campstart = ""
-        campend = ""
         self.allStat = dict()
         for ttype in self.allTasks:
             self.allStat[ttype] = dict()
             tasks = self.allTasks[ttype]
             ntasks = len(tasks)
-            itasks = self.taskCounts[ttype]
             cpuconsumption = 0
             walltime = 0
             cpuefficiency = 0
@@ -432,7 +425,6 @@ class GetPanDaStat:
             nfiles = 0
             max_rss = 0
             attempts = 0.0
-            maxdiskunit = "MB"
             ntasks = len(tasks)
             for i in range(ntasks):
                 walltime += int(tasks[i]["walltime"])
@@ -442,7 +434,6 @@ class GetPanDaStat:
                 duration += float(tasks[i]["cpuconsumptiontime"])
                 attempts += tasks[i]["attemptnr"]
                 starttime = tasks[i]["starttime"]
-                endtime = tasks[i]["endtime"]
                 taskduration += tasks[i]["taskduration"]
                 corecount += int(tasks[i]["actualcorecount"])
                 nfiles = int(tasks[i]["nfiles"])
@@ -456,7 +447,6 @@ class GetPanDaStat:
             diskcount = maxdisk_pj * nfiles
             corecount_pj = corecount / ntasks
             corecount = corecount_pj * nfiles
-            cpueff_pj = cpuefficiency / ntasks
             if taskduration <= 0.:
                 nparallel = 1
             else:
@@ -500,7 +490,7 @@ class GetPanDaStat:
         ----------
         value : `str`
             status of the job
-            
+
         Returns
         -------
         backgroupd_colors : `list`
@@ -521,7 +511,7 @@ class GetPanDaStat:
         ----------
         s : `int`
             task status flag
-            
+
         Returns
         -------
         background_colors : `list`
@@ -536,7 +526,7 @@ class GetPanDaStat:
 
     def make_table_from_csv(self, buffer, out_file, index_name, comment):
         """Create Jira table from csv file.
-        
+
         Parameters
         ----------
         buffer : `str`
