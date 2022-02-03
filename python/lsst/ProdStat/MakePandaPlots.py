@@ -313,6 +313,7 @@ class MakePandaPlots:
             maximal time in the timing data list
         job_name : `str`
             name of the job to be used in the name of plot file
+        n_fig : 'int' figure number
         """
         first_bin = int(self.start_at / self.scale_factor)
         last_bin = first_bin + self.plot_n_bins
