@@ -20,10 +20,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import yaml
-import click
-from .JiraUtils import *
+from .JiraUtils import JiraUtils
 
 __all__ = ['ReportToJira']
+
 
 class ReportToJira:
     """Report production statistics to a Jira ticket
@@ -44,7 +44,7 @@ class ReportToJira:
               tokens:
                  - 'pandaStat'
                  - 'campaign'
-            - file: /Users/kuropat/devel/reports//butlerStat-PREOPS-911_step1.txt
+            - file: /home/kuropat/devel/reports/butlerStat-PREOPS-911_step1.txt
               tokens:
                 - 'butlerStat'
                 - 'Campaign'
