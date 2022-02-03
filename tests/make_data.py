@@ -53,12 +53,23 @@ def cli():
 def get_panda_query_results(fname, param_fname):
     """Get results of panda queries for GetPanDaStat testing.
 
+    \b
     Parameters
     ----------
     fname : `str`
         File in which to store query results.
     param_fname : `str`
         File with arguments for GetPanDaStat constructor.
+        
+    Note
+    ----
+    This function is sensative to the working directory in the same way that
+    GetPanDaStat and update-stat are, so you probably need to run it like this::
+        
+        \b
+        bash$ python $PRODSTAT_DIR/tests/make_data.py get-panda-query-results \
+        > panda_query_results.json.gz \
+        > $PRODSTAT_DIR/tests/data/get_panda_stat_params.json
     """
 
     with open(param_fname, "rt", encoding="UTF-8") as param_io:
@@ -91,6 +102,8 @@ def get_panda_query_results(fname, param_fname):
 
         return result
 
+    # Run GetPanDaStat, patched with our new querypanda that captures
+    # and saves the output.
     with patch.object(GetPanDaStat, "querypanda", new=capture_querypanda):
         get_panda_stat = GetPanDaStat(**get_panda_stat_kwargs)
         get_panda_stat.run()
