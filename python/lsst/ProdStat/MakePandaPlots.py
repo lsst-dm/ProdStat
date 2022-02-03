@@ -34,6 +34,7 @@ import click
 
 __all__ = ['MakePandaPlots']
 
+
 class MakePandaPlots:
     """Build production statistics tables using PanDa database queries.
     
@@ -50,6 +51,10 @@ class MakePandaPlots:
         time in hours at which to start plot
     stop_at : `float`
         time in hours at which to stop plot
+    startTime : `str`
+        time to start selecting workflows from in Y-m-d format
+    stopTime : `str`
+        time to stop selecting workflows in Y-m-d format
     """
 
     def __init__(self, **kwargs):
@@ -61,7 +66,8 @@ class MakePandaPlots:
         self.scale_factor = float(self.bin_width) / 3600.0
         self.stop_at = int(kwargs["stop_at"])
         self.start_at = float(kwargs["start_at"])
-
+        self.start_date = kwargs["start_date"]
+        self.stop_date = kwargs["stop_date"]
         self.plot_n_bins = int((self.stop_at - self.start_at) /
                                self.scale_factor)
         self.start_time = 0
@@ -75,6 +81,8 @@ class MakePandaPlots:
         self.wfTasks = dict()  # tasks per workflow
         self.job_names = kwargs["job_names"]
         self.wfNames = dict()
+        self.start_stamp = datetime.datetime.strptime(self.start_date, "%Y-%m-%d").timestamp()
+        self.stop_stamp = datetime.datetime.strptime(self.stop_date, "%Y-%m-%d").timestamp()
 
     def get_workflows(self):
         """First lets get all workflows with given keys.
@@ -90,8 +98,11 @@ class MakePandaPlots:
             r_name = wf["r_name"]
             if comp in r_name and comp1 in r_name:
                 key = str(r_name).split("_")[-1]
-                self.workKeys.append(str(key))
-                nwf += 1
+                date_str = key.split('t')[0]
+                date_stamp = datetime.datetime.strptime(date_str, "%Y%m%d").timestamp()
+                if self.start_stamp <= date_stamp <= self.stop_stamp:
+                    self.workKeys.append(str(key))
+                    nwf += 1
         print("number of workflows =", nwf)
         if nwf == 0:
             print("No workflows to work with -- exiting")
@@ -291,7 +302,7 @@ class MakePandaPlots:
         sys.stdout.flush()
         return result
 
-    def make_plot(self, data_list, max_time, job_name):
+    def make_plot(self, data_list, max_time, job_name, n_fig):
         """Plot timing data in png file.
         
         Parameters
@@ -302,6 +313,7 @@ class MakePandaPlots:
             maximal time in the timing data list
         job_name : `str`
             name of the job to be used in the name of plot file
+        n_fig : 'int' figure number
         """
         first_bin = int(self.start_at / self.scale_factor)
         last_bin = first_bin + self.plot_n_bins
@@ -313,10 +325,11 @@ class MakePandaPlots:
         if self.plot_n_bins > n_bins:
             last_bin = n_bins
         sub_task_count = np.copy(task_count[first_bin:last_bin])
-        max_y = 1.1 * (max(sub_task_count) + 1.0)
+        max_y = 1.2 * (max(sub_task_count) + 1.0)
         sub_task_count.resize([self.plot_n_bins])
         x_bins = np.arange(self.plot_n_bins) * self.scale_factor + \
-            self.start_at
+                 self.start_at
+        plt.figure(n_fig)
         plt.plot(x_bins, sub_task_count, label=str(job_name))
         plt.axis([self.start_at, self.stop_at, 0, max_y])
         plt.xlabel("Hours since first quantum start")
@@ -331,7 +344,7 @@ class MakePandaPlots:
         print(" all time data")
         for key in self.allJobs:
             self.allJobs[key].sort()
-            print(self.allJobs[key])
+            print(key, ' ', self.allJobs[key])
         for job_name in self.allJobs.keys():
             dataframe = pd.DataFrame(
                 self.allJobs[job_name], columns=["delta_time", "durationsec"]
@@ -342,7 +355,7 @@ class MakePandaPlots:
 
     def plot_data(self):
         """Create plot of timing data in form of png file."""
-
+        n_fig = 0
         for job_name in self.job_names:
             data_file = "/tmp/" + "panda_time_series_" + job_name + ".csv"
             if os.path.exists(data_file):
@@ -356,6 +369,7 @@ class MakePandaPlots:
                         max_time = row[0]
                     data_list.append((row[0], row[1]))
                 print(" job name ", job_name)
-                self.make_plot(data_list, max_time, job_name)
+                self.make_plot(data_list, max_time, job_name, n_fig)
+                n_fig += 1
 
 
