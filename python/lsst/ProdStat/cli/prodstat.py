@@ -31,7 +31,8 @@ from .. import GetPanDaStat
 from .. import ReportToJira
 from .. import MakePandaPlots
 
-__all__ = ['main']
+__all__ = ["main"]
+
 
 @click.group()
 def cli():
@@ -228,7 +229,7 @@ def init(bps_submit_template, production_issue, drp_issue):
     """
     drp = DRPUtils.DRPUtils()
     drp.drp_init(bps_submit_template, production_issue, drp_issue)
-    
+
 
 @cli.command()
 @click.argument("param_file", type=click.Path(exists=True))
@@ -256,7 +257,7 @@ def get_panda_stat(param_file):
     """
 
     click.echo("Start with GetPandaStat")
-    with open(param_file, 'r') as p_file:
+    with open(param_file, "r") as p_file:
         in_pars = yaml.safe_load(p_file)
     panda_stat = GetPanDaStat.GetPanDaStat(**in_pars)
     panda_stat.run()
@@ -300,7 +301,7 @@ def report_to_jira(param_file):
 @click.argument("param_file", type=click.Path(exists=True))
 def prep_timing_data(param_file):
     """Create  timing data of the campaign jobs
-    
+
     Parameters
     ----------
     param_file : `str`
@@ -329,7 +330,7 @@ def prep_timing_data(param_file):
     """
 
     click.echo("Start with MakePandaPlots")
-    with open(param_file, 'r') as p_file:
+    with open(param_file, "r") as p_file:
         params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
     panda_plot_maker.prep_data()
@@ -368,7 +369,7 @@ def plot_data(param_file):
             end of the plot in hours from first quanta
     """
     click.echo("Start with plot_data")
-    with open(param_file, 'r') as p_file:
+    with open(param_file, "r") as p_file:
         params = yaml.safe_load(p_file)
     panda_plot_maker = MakePandaPlots.MakePandaPlots(**params)
     panda_plot_maker.plot_data()
