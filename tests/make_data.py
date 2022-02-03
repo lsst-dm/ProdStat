@@ -64,7 +64,7 @@ def get_panda_query_results(fname, param_fname):
     """
 
     with open(param_fname, "rt", encoding="UTF-8") as param_io:
-        get_panda_stat_kwargs = json.read(param_io)
+        get_panda_stat_kwargs = json.load(param_io)
 
     try:
         os.remove(CAPTURED_PANDA_QUERY_FNAME)
