@@ -64,7 +64,7 @@ def get_panda_query_results(fname, param_fname):
         get_panda_stat_kwargs = json.load(param_io)
 
     try:
-        os.remove(CAPTURED_PANDA_QUERY_FNAME)
+        os.remove(fname)
     except FileNotFoundError:
         pass
 
