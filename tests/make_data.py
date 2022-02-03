@@ -66,10 +66,7 @@ def get_panda_query_results(fname, param_fname):
     This function is sensative to the working directory in the same way that
     GetPanDaStat and update-stat are, so you probably need to run it like this::
         
-        \b
-        bash$ python $PRODSTAT_DIR/tests/make_data.py get-panda-query-results \
-        > panda_query_results.json.gz \
-        > $PRODSTAT_DIR/tests/data/get_panda_stat_params.json
+        bash$ python $PRODSTAT_DIR/tests/make_data.py get-panda-query-results panda_query_results.json.gz $PRODSTAT_DIR/tests/data/get_panda_stat_params.json
     """
 
     with open(param_fname, "rt", encoding="UTF-8") as param_io:
