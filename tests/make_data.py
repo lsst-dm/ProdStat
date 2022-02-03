@@ -25,6 +25,7 @@ import os
 from urllib.request import urlopen
 import json
 import gzip
+from unittest.mock import patch
 
 import click
 
