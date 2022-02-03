@@ -42,13 +42,11 @@ def cli():
 @click.argument(
     "fname",
     default="panda_query_results.json.gz",
-    show_default=True,
     type=str,
 )
 @click.argument(
     "param_fname",
     default="get_panda_stat_params.json",
-    show_default=True,
     type=str,
 )
 def get_panda_query_results(fname, param_fname):
