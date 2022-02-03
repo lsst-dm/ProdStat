@@ -27,7 +27,7 @@ import gzip
 
 import click
 
-from .GetPanDaStat import GetPanDaStat
+from lsst.ProdStat.GetPanDaStat import GetPanDaStat
 
 __all__ = ["main"]
 
