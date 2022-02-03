@@ -302,7 +302,7 @@ class MakePandaPlots:
         sys.stdout.flush()
         return result
 
-    def make_plot(self, data_list, max_time, job_name):
+    def make_plot(self, data_list, max_time, job_name, n_fig):
         """Plot timing data in png file.
         
         Parameters
@@ -324,10 +324,11 @@ class MakePandaPlots:
         if self.plot_n_bins > n_bins:
             last_bin = n_bins
         sub_task_count = np.copy(task_count[first_bin:last_bin])
-        max_y = 1.1 * (max(sub_task_count) + 1.0)
+        max_y = 1.2 * (max(sub_task_count) + 1.0)
         sub_task_count.resize([self.plot_n_bins])
         x_bins = np.arange(self.plot_n_bins) * self.scale_factor + \
                  self.start_at
+        plt.figure(n_fig)
         plt.plot(x_bins, sub_task_count, label=str(job_name))
         plt.axis([self.start_at, self.stop_at, 0, max_y])
         plt.xlabel("Hours since first quantum start")
@@ -342,7 +343,7 @@ class MakePandaPlots:
         print(" all time data")
         for key in self.allJobs:
             self.allJobs[key].sort()
-            print(self.allJobs[key])
+            print(key, ' ', self.allJobs[key])
         for job_name in self.allJobs.keys():
             dataframe = pd.DataFrame(
                 self.allJobs[job_name], columns=["delta_time", "durationsec"]
@@ -353,7 +354,7 @@ class MakePandaPlots:
 
     def plot_data(self):
         """Create plot of timing data in form of png file."""
-
+        n_fig = 0
         for job_name in self.job_names:
             data_file = "/tmp/" + "panda_time_series_" + job_name + ".csv"
             if os.path.exists(data_file):
@@ -367,6 +368,7 @@ class MakePandaPlots:
                         max_time = row[0]
                     data_list.append((row[0], row[1]))
                 print(" job name ", job_name)
-                self.make_plot(data_list, max_time, job_name)
+                self.make_plot(data_list, max_time, job_name, n_fig)
+                n_fig += 1
 
 
