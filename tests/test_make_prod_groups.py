@@ -69,83 +69,83 @@ class TestMakeProdGroups(unittest.TestCase):
 
         os.chdir(self.in_dir.name)
 
-        self.template = path.join(self.in_dir.name, 'clusttest1.yaml')
-        with open(self.template, 'w') as template_fp:
+        self.template = path.join(self.in_dir.name, "clusttest1.yaml")
+        with open(self.template, "w") as template_fp:
             template_fp.write(TEMPLATE1)
 
         # Create the file with the list of exporuses to group
-        self.explist = path.join(self.in_dir.name, 'explist')
+        self.explist = path.join(self.in_dir.name, "explist")
         self.exp_ids = self.random_generator.choice(
-            np.arange(2*NUM_EXPOSURES),
+            np.arange(2 * NUM_EXPOSURES),
             NUM_EXPOSURES,
             replace=False,
         )
         self.exp_ids.sort()
         self.bands = self.random_generator.choice(
-            np.array(tuple('ugrizy')),
+            np.array(tuple("ugrizy")),
             NUM_EXPOSURES,
         )
-        np.savetxt(self.explist,
-                   np.rec.fromarrays((self.bands, self.exp_ids)), fmt='%s %i')
+        np.savetxt(
+            self.explist, np.rec.fromarrays((self.bands, self.exp_ids)), fmt="%s %i"
+        )
 
     def test_make_prod_groups(self):
         """Run the test of make-prod-groups."""
-        band = 'g'
+        band = "g"
         groupsize = 10
         skipgroups = 2
         ngroups = 2
         DRPUtils.make_prod_groups(
-            self.template, band, groupsize, skipgroups, ngroups, self.explist)
+            self.template, band, groupsize, skipgroups, ngroups, self.explist
+        )
 
-        with open(self.template, 'r') as in_file:
+        with open(self.template, "r") as in_file:
             in_params = yaml.safe_load(in_file)
 
-        for group in np.arange(skipgroups+1, skipgroups+ngroups+1):
+        for group in np.arange(skipgroups + 1, skipgroups + ngroups + 1):
             out_fname = f"{path.splitext(self.template)[0]}_{band}_{group}.yaml"
-            with open(out_fname, 'r') as out_file:
+            with open(out_fname, "r") as out_file:
                 out_params = yaml.safe_load(out_file)
 
             # Spot check that things that should be unchaged are
             self.assertListEqual(
-                in_params["includeConfigs"],
-                out_params["includeConfigs"])
+                in_params["includeConfigs"], out_params["includeConfigs"]
+            )
 
             for keyword in ("project", "campaign", "pipelineYaml"):
-                self.assertEqual(
-                    in_params[keyword],
-                    out_params[keyword]
-                )
+                self.assertEqual(in_params[keyword], out_params[keyword])
 
-            in_payload = in_params['payload']
-            out_payload = out_params['payload']
-            for keyword in ('output', 'butlerConfig', 'inCollection', 'sw_image'):
-                self.assertEqual(
-                    in_payload[keyword],
-                    out_payload[keyword])
+            in_payload = in_params["payload"]
+            out_payload = out_params["payload"]
+            for keyword in ("output", "butlerConfig", "inCollection", "sw_image"):
+                self.assertEqual(in_payload[keyword], out_payload[keyword])
 
             # Check that the group number got appropriately replaced
             self.assertEqual(
-                in_payload['payloadName'].replace('GNUM', f"{group:d}"),
-                out_payload['payloadName']
+                in_payload["payloadName"].replace("GNUM", f"{group:d}"),
+                out_payload["payloadName"],
             )
 
             # Make sure the exposure limits match what we requested
             exp_re = re.compile(
-                r' *exposure *>= *(?P<lowexp>\d+) +and +exposure *<= *(?P<highexp>\d+)')
-            matched_query = exp_re.search(out_payload['dataQuery'])
-            low_exp = int(matched_query.group('lowexp'))
-            high_exp = int(matched_query.group('highexp'))
+                r" *exposure *>= *(?P<lowexp>\d+) +and +exposure *<= *(?P<highexp>\d+)"
+            )
+            matched_query = exp_re.search(out_payload["dataQuery"])
+            low_exp = int(matched_query.group("lowexp"))
+            high_exp = int(matched_query.group("highexp"))
 
             # Check that the group starts at the right exposure
             exp_below = np.count_nonzero(
-                (self.exp_ids < low_exp) & (self.bands == band))
-            self.assertEqual((group-1)*groupsize, exp_below)
+                (self.exp_ids < low_exp) & (self.bands == band)
+            )
+            self.assertEqual((group - 1) * groupsize, exp_below)
 
             # Check that we have the right number of exposures in the group
             query_exps = np.count_nonzero(
                 (self.exp_ids >= low_exp)
                 & (self.exp_ids <= high_exp)
-                & (self.bands == band))
+                & (self.bands == band)
+            )
             self.assertEqual(groupsize, query_exps)
 
     def tearDown(self):

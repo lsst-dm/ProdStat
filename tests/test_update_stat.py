@@ -32,7 +32,6 @@ TEST_ISSUE_SUMMARY = "step1#v23_0_0_rc5/PREOPS-973/20220127T205042Z"
 
 @mock.patch("netrc.netrc", MOCK_NETRC)
 class TestUpdateStat(ProdStatTestBase, unittest.TestCase):
-
     @mock.patch("lsst.ProdStat.DRPUtils.GetButlerStat", autospec=True)
     @mock.patch("lsst.ProdStat.DRPUtils.GetPanDaStat", autospec=True)
     @mock.patch("lsst.ProdStat.JiraUtils.JIRA", autospec=True)

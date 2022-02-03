@@ -44,7 +44,7 @@ MOCK_NETRC.return_value.authenticators.return_value = (
 
 
 @mock.patch("netrc.netrc", MOCK_NETRC)
-class ProdStatTestBase():
+class ProdStatTestBase:
     def setUp(self):
         self.start_dir = os.getcwd()
         self.temp_dir = TemporaryDirectory()

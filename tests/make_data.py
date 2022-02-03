@@ -27,31 +27,81 @@ import gzip
 
 import click
 
-__all__ = ['main']
+from .GetPanDaStat import GetPanDaStat
+
+__all__ = ["main"]
+
 
 @click.group()
 def cli():
     """Command line interface creating ProdStat test data files."""
 
-@cli.command()
-@click.option("--fname", default="wfprogress.json.gz", show_default=True, type=str,
-              help="Output file name.")
-@click.option("--url", default='http://panda-doma.cern.ch/idds/wfprogress/?json',
-              show_default=True, type=str,
-              help="Input URL.")
-def get_wfprogress(fname, url='http://panda-doma.cern.ch/idds/wfprogress/?json'):
-    with urlopen(url) as url_response:
-        content = json.load(url_response)
 
-    this_open = gzip.open if fname.endswith('.gz') else open
-    with this_open(fname, 'wt', encoding='UTF-8') as out_io:
-        json.dump(content, out_io, indent=4)
-        
+@cli.command()
+@click.option(
+    "--fname",
+    default="panda_query_results.json.gz",
+    show_default=True,
+    type=str,
+    help="Output file name.",
+)
+@click.option(
+    "--param_fname",
+    default="get_panda_stat_params.json",
+    show_default=True,
+    type=str,
+    help="File with GetPanDaStat keyword arguments",
+)
+def get_panda_query_results(fname, param_fname):
+    """Get results of panda queries for GetPanDaStat testing.
+
+    Parameters
+    ----------
+    fname : `str`
+        File in which to store query results.
+    param_fname : `str`
+        File with arguments for GetPanDaStat constructor.
+    """
+
+    with open(param_fname, "rt", encoding="UTF-8") as param_io:
+        get_panda_stat_kwargs = json.read(param_io)
+
+    try:
+        os.remove(CAPTURED_PANDA_QUERY_FNAME)
+    except FileNotFoundError:
+        pass
+
+    # Store a reference to the original querypanda so we can run it
+    # after it gets patched.
+    orig_querypanda = GetPanDaStat.querypanda
+
+    # Create a replacement for querypanda that runs the old querypanda,
+    # then stores the result in the results file.
+    def capture_querypanda(self, urlst):
+        result = orig_querypanda(urlst)
+        this_open = gzip.open if fname.endswith(".gz") else open
+        try:
+            with this_open(fname, "rt", encoding="UTF-8") as in_io:
+                captured = json.load(in_io)
+        except FileNotFoundError:
+            captured = {}
+
+        captured[urlst] = result
+
+        with this_open(fname, "wt", encoding="UTF-8") as out_io:
+            json.dump(captured, out_io, indent=4)
+
+        return result
+
+    with patch.object(GetPanDaStat, "querypanda", new=capture_querypanda):
+        get_panda_stat = GetPanDaStat(**get_panda_stat_kwargs)
+        get_panda_stat.run()
+
 
 def main():
     """Run the command line interface."""
     return cli()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()
-    

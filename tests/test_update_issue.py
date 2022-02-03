@@ -30,7 +30,6 @@ from ProdStatTestBase import ProdStatTestBase, MOCK_NETRC
 
 @mock.patch("netrc.netrc", MOCK_NETRC)
 class TestUpdateIssue(ProdStatTestBase, unittest.TestCase):
-
     @mock.patch("lsst.ProdStat.JiraUtils.JIRA", autospec=True)
     def test_new_issue(self, MockJira):
         drp_issue = "DRP0"
