@@ -27,16 +27,15 @@ import datetime
 from time import gmtime, strftime
 from collections import defaultdict
 import yaml
-import click
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import table
 from lsst.daf.butler import Butler
 from lsst.daf.butler import ButlerURI
-from lsst.daf.base import PropertySet
 
 __all__ = ['GetButlerStat']
+
 
 class GetButlerStat:
     """Build production statistics table using Butler meta data.
@@ -83,21 +82,21 @@ class GetButlerStat:
     @staticmethod
     def parse_metadata_yaml(yaml_file):
         """Parse the runtime and RSS data in the metadata yaml.
-        
+
         Parameters
         ----------
         yaml_file : `str`
             File name for the runtime yaml metadata file.
-        
+
         Returns
         -------
         results : `dict`
             dictionary of unpacked results
-        
+
         Notes
         -----
-        The yaml file should be file created by the lsst.pipe.base.timeMethod decorator
-        as applied to pipetask methods.
+        The yaml file should be file created by the lsst.pipe.base.timeMethod
+        decorator as applied to pipetask methods.
         """
 
         time_types = "Cpu User System".split()
@@ -105,9 +104,9 @@ class GetButlerStat:
             f"start{_}Time" for _ in time_types
         ]
         max_fields = (
-                [f"End{_}Time" for _ in time_types]
-                + [f"end{_}Time" for _ in time_types]
-                + ["MaxResidentSetSize"]
+            [f"End{_}Time" for _ in time_types]
+            + [f"end{_}Time" for _ in time_types]
+            + ["MaxResidentSetSize"]
         )
         time_stamp = ["startUtc", "prepUtc"]
         results = dict()
@@ -121,7 +120,7 @@ class GetButlerStat:
                     if "T" in value:
                         tokens = starts.split("T")
                         startst = (
-                                tokens[0] + " " + tokens[1]
+                            tokens[0] + " " + tokens[1]
                         )  # get rid of T in the date string
                     if "timestamp" not in results:
                         results["timestamp"] = startst
@@ -141,7 +140,7 @@ class GetButlerStat:
 
     def set_butler(self, butler_string):
         """Set the butler URL if not set in input parameters.
-        
+
         Parameters
         ----------
         butler_string : `str`
@@ -152,7 +151,7 @@ class GetButlerStat:
 
     def search_collections(self):
         """Select collections.
-        
+
         Returns
         -------
         collections : `list`
@@ -177,19 +176,19 @@ class GetButlerStat:
 
     def make_sum(self, task_size, task_res):
         """Calculate max RSS.
-        
+
         Parameters
         ----------
         task_size : `int`
             number of quanta in the task
         task_res : `dict`
             dictionary with task parameters
-            
+
         Returns
         -------
         summary : `dict`
             summary dictionary including:
-            
+
             ``"nQuanta"``
                 Number of quanta (`int`)
             ``"startTime"``
@@ -228,8 +227,8 @@ class GetButlerStat:
         }
 
     def gettaskdata(self, collections):
-        """Collect datasets & IDs for each collection in subsets of IDs by process type.
-        
+        """Collect datasets & IDs for collections in subsets of IDs by type.
+
         Parameters
         ----------
         collections : `list`
@@ -279,7 +278,7 @@ class GetButlerStat:
 
     def make_table_from_csv(self, buffer, out_file, index_name, comment):
         """Create table from csv file
-        
+
         Parameters
         ----------
         buffer : `str`
@@ -290,7 +289,7 @@ class GetButlerStat:
             list of row names for the table
         comment : `str`
             additional string to be added to the top of table file
-            
+
         Returns
         -------
         newbody : `str`
