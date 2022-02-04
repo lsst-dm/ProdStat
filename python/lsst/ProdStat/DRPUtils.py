@@ -28,17 +28,16 @@ import json
 import numpy as np
 import pandas as pd
 from pytz import timezone
-from .GetButlerStat import *
-from .GetPanDaStat import *
-from .JiraUtils import *
-import subprocess
+from .GetButlerStat import GetButlerStat
+from .GetPanDaStat import GetPanDaStat
+from .JiraUtils import JiraUtils
 
 __all__ = ['DRPUtils']
 
 
 class DRPUtils:
     """Collection of DRP utilities."""
-        
+
     def __init__(self):
         self.ju = JiraUtils()
         self.ajira, self.user_name = self.ju.get_login()
@@ -46,12 +45,12 @@ class DRPUtils:
     @staticmethod
     def parse_template(bps_yaml_file):
         """TODO.
-        
+
         Parameters
         ----------
         bps_yaml_file : `str`
             File name for yaml file with BPS connection data.
-            
+
         Returns
         -------
         bpsstr: `str`
@@ -285,21 +284,23 @@ class DRPUtils:
 
     def drp_init(self, template, issue_name, drpi):
         """Create or update a DRP issue.
-        
+
         Parameters
         ----------
         template : `str`
             Template file with place holders for start/end dataset/visit/tracts
             (will be attached to Production Issue).
         issue_name : `str`
-            Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update with link
-            to ProdStat tracking issue(s) -- should match issue in template keyword.
+            Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update
+            with link to ProdStat tracking issue(s) -- should match the issue
+            in template keyword.
         drpi : `str`
-            If present in form DRP-XXX, redo by overwriting an existing DRP-issue.
-            If not present, create a new DRP-issue.
-            All ProdStat plots and links for group of bps submits will be tracked
-            off this DRP-issue. The Production Issue will be updated with a link to this
-            issue, by updating description (or later by using subtask link if all are DRP
+            If present in form DRP-XXX, redo by overwriting an existing
+            DRP-issue. If not present, create a new DRP-issue.
+            All ProdStat plots and links for group of bps submits will
+            be tracked off this DRP-issue. The Production Issue will be
+            updated with a link to this issue, by updating description
+            (or later by using subtask link if all are DRP
             type).
         """
         bpsstr, kwd = self.parse_template(template)
@@ -359,7 +360,7 @@ class DRPUtils:
     @staticmethod
     def parse_panda_table(intab):
         """TODO
-        
+
         Parameters
         ----------
         intab : `str`
@@ -396,11 +397,11 @@ class DRPUtils:
             # b=a.split("|")
             # b=a.split("│")
             b = a.split("│")
-            l = len(b)
-            print("len:" + str(l) + " a is:" + a)
-            if l > 1:
+            lenb = len(b)
+            print("len:" + str(lenb) + " a is:" + a)
+            if lenb > 1:
                 print("b1 " + b[1])
-            if l > 1 and b[1].strip()[0:2] == "20":
+            if lenb > 1 and b[1].strip()[0:2] == "20":
                 print("b1 " + b[1])
                 upn = b[1].strip()
                 pstat = b[2]
@@ -425,7 +426,7 @@ class DRPUtils:
                 )
                 continue
             taskname = ""
-            if l > 5:
+            if lenb > 5:
                 staskname = b[1].lstrip(" ").rstrip(" ")
                 print("len tn:" + str(len(staskname)))
                 print("staskname:" + str(staskname))
@@ -495,17 +496,17 @@ class DRPUtils:
     @staticmethod
     def parse_drp(steppath, tocheck):
         """TODO.
-        
+
         Parameters
         ----------
         steppath : `str`
             TODO
         tocheck : TODO
             TODO
-            
+
         Notes
         -----
-        
+
         If the DRP.yaml as put out by the Pipeline team changes
         -- this file should be updated.
         It is in  $OBS_LSST_DIR/pipelines/imsim/DRP.yaml
@@ -558,7 +559,7 @@ class DRPUtils:
     @staticmethod
     def parse_butler_table(intab):
         """TODO
-        
+
         Parameters
         ----------
         intab : `str`
@@ -679,7 +680,7 @@ class DRPUtils:
             statstr = fpstat.read()
             fpstat.close()
             fstat = open("/tmp/pandaWfStat-" + str(pissue) + ".csv", "r")
-            line1 = fstat.readline()
+            fstat.readline()
             line2 = fstat.readline()
             a = line2.split(",")
             fstat.close()
@@ -735,10 +736,7 @@ class DRPUtils:
         )
         print("link:", link)
         linkline = "PanDA link:" + link + "\n"
-        # print(butstat+statstr+curstat)
-        nowut = (
-            datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
-        )
+
         issue_dict = {"description": newdesc + butstat + linkline + statstr + curstat}
         drp_issue.update(fields=issue_dict)
         print("issue:" + str(drp_issue) + " Stats updated")
@@ -746,14 +744,14 @@ class DRPUtils:
     @staticmethod
     def parse_issue_desc(jdesc, jsummary):
         """Extracts some information from jira issue.
-        
+
         Parameters
         ----------
         jdesc : `str`
             TODO
         jsummary : `str`
             TODO
-            
+
         Returns
         -------
         ts : TODO
@@ -843,15 +841,11 @@ class DRPUtils:
                 )
             n3 = pattern3.match(ls)
             if n3:
-                # print("match is",n3.group(1),n3.group(2))
-                # print("(.*)Status: finished nTasks:(.*)nFiles:(.*)nRemain:(.*)nProc: nFinish:(.*) nFail:(.*) nSubFinish:(.*)")
-                # sys.exit(1)
                 statNtasks = int(n3.group(2))
                 statNfiles = int(n3.group(3))
                 statNFinish = int(n3.group(4))
                 statNFail = int(n3.group(5))
                 statNSubFin = int(n3.group(6))
-                # print("Job status tasks,files,finish,fail,subfin:",statNtasks,statNfiles,statNFinish,statNFail,statNSubFin)
                 status = [statNtasks, statNfiles, statNFinish, statNFail, statNSubFin]
             m = pattern4.match(ls)
             if m:
@@ -865,14 +859,14 @@ class DRPUtils:
     @staticmethod
     def dict_to_table(in_dict, sorton):
         """TODO
-        
+
         Parameters
         ----------
         in_dict : `dict`
             TODO
         sorton : `str`
             TODO
-            
+
         Returns
         -------
         table_out : `str`
@@ -887,7 +881,6 @@ class DRPUtils:
 
         # sortbydescrip=sorted(in_dict[3])
         for i in sorted(in_dict.keys(), reverse=True):
-            pis = i.split("#")[0]
             ts = i.split("#")[1]
             status = in_dict[i][2]
             nT = status[0]
@@ -955,14 +948,14 @@ class DRPUtils:
     @staticmethod
     def dict_to_table1(in_dict, sorton):
         """TODO
-        
+
         Parameters
         ----------
         in_dict : `dict`
             TODO
         sorton : `str`
             TODO
-            
+
         Returns
         -------
         table_out : `str`
@@ -976,8 +969,6 @@ class DRPUtils:
         table_out += "\n"
 
         for i in sorted(in_dict.keys(), reverse=True):
-            pis = i.split("#")[0]
-            # print("pis is:",pis)
             stepstring = in_dict[i][4]
             stepstart = stepstring[0:5]
             # print("stepstart is:",stepstart)
@@ -1048,7 +1039,7 @@ class DRPUtils:
         self, first, ts, pissue, jissue, status, frontend, frontend1, backend
     ):
         """TODO
-        
+
         Parameters
         ----------
         first : TODO
@@ -1132,8 +1123,8 @@ class DRPUtils:
             Template file with place holders for start/end dataset/visit/tracts
             (optional .yaml suffix here will be added)
         band : `str`
-            Which band to restrict to (or 'all' for no restriction, matches BAND
-            in template if not 'all')
+            Which band to restrict to (or 'all' for no restriction, matches
+            BAND in template if not 'all')
         groupsize : `int`
             How many visits (later tracts) per group (i.e. 500)
         skipgroups: `int`
@@ -1146,24 +1137,24 @@ class DRPUtils:
         template_base = os.path.basename(template)
         template_fname, template_ext = os.path.splitext(template_base)
         out_base = template_fname if template_ext == ".yaml" else template_base
-    
+
         with open(template, "r") as template_file:
             template_content = template_file.read()
-    
+
         exposures = pd.read_csv(explist, names=["band", "exp_id"], delimiter=r"\s+")
         exposures.sort_values("exp_id", inplace=True)
         if band not in ("all", "f"):
             exposures.query(f"band=='{band}'", inplace=True)
-    
+
         # Add a new column to the DataFrame with group ids
         num_exposures = len(exposures)
         exposures["group_id"] = np.floor(np.arange(num_exposures) / groupsize).astype(int)
-    
+
         for group_id in range(skipgroups, skipgroups + ngroups):
             group_exposures = exposures.query(f"group_id == {group_id}")
             min_exp_id = group_exposures.exp_id.min()
             max_exp_id = group_exposures.exp_id.max()
-    
+
             # Add 1 to the group id so it starts at 1, not 0
             group_num = group_id + 1
             out_content = (
@@ -1172,14 +1163,14 @@ class DRPUtils:
                 .replace("LOWEXP", str(min_exp_id))
                 .replace("HIGHEXP", str(max_exp_id))
             )
-    
+
             out_fname = f"{out_base}_{band}_{group_num}.yaml"
             with open(out_fname, "w") as out_file:
                 out_file.write(out_content)
 
     def drp_issue_update(self, bpsyamlfile, pissue, drpi, ts):
         """TODO
-        
+
         Parameters
         ----------
         bpsyamlfile : TODO
@@ -1349,8 +1340,6 @@ class DRPUtils:
                         + str("{:.0f}".format(pmaxmem[s[1]]))
                         + "| \n"
                     )
-
-        # (ptotmaxmem,ptotsumsec,pnquanta,psecperstep,wallhr,sumtime,maxmem,pupn,pstat,pntasks,pnfiles,pnremain,pnproc,pnfin,pnfail,psubfin)=parsepandatable(panstepfile)
 
         if dopan == 1:
             tasktable += (
