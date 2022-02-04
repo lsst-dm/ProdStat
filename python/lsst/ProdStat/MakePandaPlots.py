@@ -26,18 +26,17 @@ import urllib.error as url_error
 from urllib.request import urlopen
 from time import sleep
 import datetime
-import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import click
+
 
 __all__ = ['MakePandaPlots']
 
 
 class MakePandaPlots:
     """Build production statistics tables using PanDa database queries.
-    
+
     Parameters
     ----------
     Jira : `str`
@@ -68,8 +67,8 @@ class MakePandaPlots:
         self.start_at = float(kwargs["start_at"])
         self.start_date = kwargs["start_date"]
         self.stop_date = kwargs["stop_date"]
-        self.plot_n_bins = int((self.stop_at - self.start_at) /
-                               self.scale_factor)
+        self.plot_n_bins = int((self.stop_at - self.start_at)
+                               / self.scale_factor)
         self.start_time = 0
         self.workKeys = list()
         print(" Collecting information for Jira ticket ", self.Jira)
@@ -168,7 +167,7 @@ class MakePandaPlots:
 
     def get_wf_tasks(self, workflow):
         """Select tasks for given workflow (jobs).
-        
+
         Parameters
         ----------
         workflow: `str`
@@ -189,7 +188,7 @@ class MakePandaPlots:
 
     def get_task_info(self, task):
         """Extract data we need from task dictionary.
-        
+
         Parameters
         ----------
         task : `dic`
@@ -214,7 +213,7 @@ class MakePandaPlots:
                 if isinstance(jb["starttime"], str):
                     tokens = jb["starttime"].split("T")
                     startst = (
-                            tokens[0] + " " + tokens[1]
+                        tokens[0] + " " + tokens[1]
                     )  # get rid of T in the date string
                     taskstart = datetime.datetime.strptime(
                         startst, "%Y-%m-%d %H:%M:%S"
@@ -238,7 +237,7 @@ class MakePandaPlots:
 
     def get_task_data(self, tasks):
         """Given list of jobs get statistics for each job type.
-        
+
         Parameters
         ----------
         tasks : `list`
@@ -304,7 +303,7 @@ class MakePandaPlots:
 
     def make_plot(self, data_list, max_time, job_name, n_fig):
         """Plot timing data in png file.
-        
+
         Parameters
         ----------
         data_list : `list`
@@ -327,8 +326,7 @@ class MakePandaPlots:
         sub_task_count = np.copy(task_count[first_bin:last_bin])
         max_y = 1.2 * (max(sub_task_count) + 1.0)
         sub_task_count.resize([self.plot_n_bins])
-        x_bins = np.arange(self.plot_n_bins) * self.scale_factor + \
-                 self.start_at
+        x_bins = np.arange(self.plot_n_bins) * self.scale_factor + self.start_at
         plt.figure(n_fig)
         plt.plot(x_bins, sub_task_count, label=str(job_name))
         plt.axis([self.start_at, self.stop_at, 0, max_y])
@@ -371,5 +369,3 @@ class MakePandaPlots:
                 print(" job name ", job_name)
                 self.make_plot(data_list, max_time, job_name, n_fig)
                 n_fig += 1
-
-
