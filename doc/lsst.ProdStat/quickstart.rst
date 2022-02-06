@@ -1,5 +1,7 @@
 .. _ProdStat-preqs:
 
+NOTE THIS IS OUTOFDATE Please refer to the README.rst file for latest doc
+
 Prerequisites
 -------------
 
