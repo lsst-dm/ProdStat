@@ -33,6 +33,7 @@ import pandas as pd
 from pandas.plotting import table
 from lsst.daf.butler import Butler
 from lsst.daf.butler import ButlerURI
+from lsst.daf.base import PropertySet
 
 __all__ = ['GetButlerStat']
 
