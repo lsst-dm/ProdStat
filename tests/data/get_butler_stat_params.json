@@ -1,1 +1,1 @@
-{    "Butler" : "s3://butler-us-central1-panda-dev/dc2/butler-external.yaml",    "Jira": "PREOPS-973",    "collType": "20220127t205042z",    "workNames": "",    "maxtask": 100,    "start_date": "2022-01-26",    "stop_date": "2022-01-30"}
+{    "Butler": "s3://butler-us-central1-panda-dev/dc2/butler-external.yaml",    "Jira": "PREOPS-973",    "collType": "20220127T205042Z",    "workNames": "",    "maxtask": 100,    "start_date": "1970-01-01",    "stop_date": "2022-02-07"}
