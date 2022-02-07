@@ -779,7 +779,7 @@ class DRPUtils:
         lm = iter(jlines)
         pattern1 = re.compile("(.*)tract in (.*)")
         pattern1a = re.compile("(.*)tract *=( *[0-9]*)")
-        pattern1b = re.compile("(.*)tract >=([0-9]*) and tract <=( *[0-9]*)")
+        pattern1b = re.compile("(.*)tract *>=([0-9]*) and tract *<=( *[0-9]*)")
         pattern2 = re.compile("(.*)exposure >=([0-9]*) and exposure <=( *[0-9]*)")
         pattern2b = re.compile("(.*)visit >=([0-9]*) and visit <=( *[0-9]*)")
         pattern2a = re.compile(
@@ -908,6 +908,8 @@ class DRPUtils:
             if nT == nFin:
                 scolor = "green"
             if int(nFail) == 0 and int(nFile) == 0:
+                scolor = "blue"
+            if int(nT) > int(nFin)+int(nFail)+int(nSubF):
                 scolor = "blue"
 
             longdatetime = ts
