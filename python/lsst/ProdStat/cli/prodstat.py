@@ -169,11 +169,9 @@ def add_job_to_summary(production_issue, drp_issue, reset, remove):
     frontend = "DRP-53"
     frontend1 = "DRP-55"
     backend = "DRP-54"
-    ts = "-1"
-    status = "-1"
     drp = DRPUtils.DRPUtils()
     drp.drp_add_job_to_summary(
-        first, ts, production_issue, drp_issue, status, frontend, frontend1, backend
+        first, production_issue, drp_issue, frontend, frontend1, backend
     )
 
 

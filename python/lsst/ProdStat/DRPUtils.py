@@ -44,14 +44,29 @@ class DRPUtils:
 
     @staticmethod
     def parse_yaml(bps_yaml_file, ts):
-        """TODO.
+        """Extract elements of the BPS yaml file needed for other functions.
 
         Parameters
         ----------
         bps_yaml_file : `str`
             File name for yaml file with BPS connection data.
-        ts: TODO
+        ts: `str`
+            Timestamp in %Y%m%dT%H%M%SZ format, or "0" to use first
+            available time.
+            
+        Returns
+        -------
+        bpsstr : `str`
+            Description of the BPS connection data.
+        kwd : `dict` [`str`, `str`]
+            Some values extracted from the yaml file.
             TODO
+        akwd : `dict`
+            Additional data, mostly extracted from other files
+            pointed to by the provided yaml file.
+            TODO
+        ts : `str`
+            Timestamp in %Y%m%dT%H%M%SZ format
         """
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
@@ -235,151 +250,21 @@ class DRPUtils:
         return bpsstr, kwd, akwd, ts
 
     @staticmethod
-    def parse_panda_table(intab):
-        """TODO
-
-        Parameters
-        ----------
-        intab : `str`
-            input txt table created by GetPanDaStat
-        """
-        print("infile is " + intab)
-        f = open(intab, "r")
-        done = 0
-        nquanta = dict()
-        startdate = dict()
-        secperstep = dict()
-        sumtime = dict()
-        wallhr = dict()
-        maxmem = dict()
-        totsumsec = 0
-        totmaxmem = 0
-        preqid = 0
-        upn = ""
-        pstat = ""
-        pntasks = ""
-        pnfiles = ""
-        pnremain = ""
-        pnproc = ""
-        pnfin = ""
-        pnfail = ""
-        psubfin = ""
-        while done == 0:
-            lin = f.readline()
-            if len(lin) == 0:
-                done = 1
-                continue
-            a = lin.strip()
-            print("a is" + str(a))
-            # b=a.split("|")
-            # b=a.split("│")
-            b = a.split("│")
-            lenb = len(b)
-            print("len:" + str(lenb) + " a is:" + a)
-            if lenb > 1:
-                print("b1 " + b[1])
-            if lenb > 1 and b[1].strip()[0:2] == "20":
-                print("b1 " + b[1])
-                upn = b[1].strip()
-                pstat = b[2]
-                pntasks = b[3]
-                pnfiles = b[4]
-                pnremain = b[5]
-                pnproc = b[6]
-                pnfin = b[7]
-                pnfail = b[8]
-                psubfin = b[9]
-                print(
-                    "statline:",
-                    upn,
-                    pstat,
-                    pntasks,
-                    pnfiles,
-                    pnremain,
-                    pnproc,
-                    pnfin,
-                    pnfail,
-                    psubfin,
-                )
-                continue
-            taskname = ""
-            if lenb > 5:
-                staskname = b[1].lstrip(" ").rstrip(" ")
-                print("len tn:" + str(len(staskname)))
-                print("staskname:" + str(staskname))
-                splittask = staskname.split("_")
-                if len(splittask) > 1:
-                    taskname = splittask[0]
-                    preqid = splittask[1]
-                else:
-                    taskname = ""
-            print("taskname:" + str(taskname))
-            print("preqid:" + str(preqid))
-            if taskname != "" and taskname != "Campaign":
-                nquanta[taskname] = int(b[2])
-                startdate[taskname] = b[3]
-                secperstep[taskname] = float(b[5])
-                wallclock = b[4]
-                hms = wallclock.split(":")
-                daysplit = hms[0].split("day")
-                print("day:", daysplit, len(daysplit))
-                if len(daysplit) > 1:
-                    daysplit2 = hms[0].split("days,")
-                    if len(daysplit2) > 1:
-                        wallhr[taskname] = (
-                            int(daysplit2[0]) * 24
-                            + int(daysplit2[1])
-                            + float(hms[1]) / 60.0
-                            + float(hms[2]) / 3600.0
-                        )
-                    else:
-                        daysplit = hms[0].split("day,")
-                        wallhr[taskname] = (
-                            int(daysplit[0]) * 24
-                            + int(daysplit[1])
-                            + float(hms[1]) / 60.0
-                            + float(hms[2]) / 3600.0
-                        )
-                else:
-                    wallhr[taskname] = (
-                        int(hms[0]) + float(hms[1]) / 60.0 + float(hms[2]) / 3600.0
-                    )
-                sumtime[taskname] = nquanta[taskname] * secperstep[taskname] / 3600.0
-                maxmem[taskname] = float(b[7])
-                totsumsec = totsumsec + sumtime[taskname]
-                totmaxmem = totmaxmem + wallhr[taskname]
-        result = (
-            totmaxmem,
-            totsumsec,
-            nquanta,
-            startdate,
-            secperstep,
-            wallhr,
-            sumtime,
-            maxmem,
-            upn,
-            preqid,
-            pstat,
-            pntasks,
-            pnfiles,
-            pnremain,
-            pnproc,
-            pnfin,
-            pnfail,
-            psubfin,
-        )
-        return result
-
-    @staticmethod
     def parse_drp(steppath, tocheck):
-        """TODO.
+        """Build a list of step/task combinations for one or more steps.
 
         Parameters
         ----------
         steppath : `str`
-            TODO
-        tocheck : TODO
-            TODO
+            Path to the yaml file defining the steps and tasks.
+        tocheck : `str`
+            The comma delimited list of steps to check.
+
+        Returns
+        -------
+        retdict : `list` [ `list` [`str`, `str`] ]
+            A list of two-element lists. The elemements of the inner list
+            are the step and task names.
 
         Notes
         -----
@@ -433,80 +318,17 @@ class DRPUtils:
                 retdict.append([taskdict[i], i])
         return retdict
 
-    @staticmethod
-    def parse_butler_table(intab):
-        """TODO
-
-        Parameters
-        ----------
-        intab : `str`
-            TODO
-        """
-        print("infile is " + intab)
-        f = open(intab, "r")
-        done = 0
-        nquanta = dict()
-        startdate = dict()
-        secperstep = dict()
-        sumtime = dict()
-        maxmem = dict()
-        totsumsec = 0
-        totmaxmem = 0
-        upn = ""
-        while done == 0:
-            lin = f.readline()
-            if len(lin) == 0:
-                done = 1
-                continue
-            a = lin.strip()
-            b = a.split()
-            print("b:" + str(b))
-            if len(b) > 0 and b[0] == "with":
-                upn = b[2][2:-2]
-                print("uid:" + upn)
-                continue
-            print("a is" + str(a))
-            # b=a.split("|")
-            b = a.split("│")
-            lm = len(b)
-            print("len:" + str(lm))
-            if lm > 5:
-                taskname = b[1].lstrip(" ").rstrip(" ")
-                print("len tn:" + str(len(taskname)))
-                print("taskname:" + str(taskname))
-                if taskname != "":
-                    nquanta[taskname] = int(b[2])
-                    startdate[taskname] = b[3]
-                    secperstep[taskname] = float(b[4])
-                    sumtime[taskname] = (
-                        nquanta[taskname] * secperstep[taskname] / 3600.0
-                    )
-                    maxmem[taskname] = float(b[6])
-                    totsumsec = totsumsec + sumtime[taskname]
-                    if maxmem[taskname] > totmaxmem and taskname != "Campaign":
-                        totmaxmem = maxmem[taskname]
-                        print("bumping maxmem to " + str(totmaxmem))
-        result = (
-            totmaxmem,
-            totsumsec,
-            nquanta,
-            startdate,
-            secperstep,
-            sumtime,
-            maxmem,
-            upn,
-        )
-        return result
 
     def drp_stat_update(self, pissue, drpi):
-        """TODO.
+        """Update the statistics in a jira issue.
 
         Parameters
         ----------
         pissue : `str`
-            TODO
+            campaign defining ticket name, also in the butler output name
+            (e.g. "PREOPS-973").
         drpi : `str`
-            TODO
+            The data release processing issue name (e.g. "DRP-153").
         """
         #        ts = "0"
         # get summary from DRP ticket
@@ -620,27 +442,27 @@ class DRPUtils:
 
     @staticmethod
     def parse_issue_desc(jdesc, jsummary):
-        """Extracts some information from jira issue.
+        """Extracts some information from DRP jira issue.
 
         Parameters
         ----------
         jdesc : `str`
-            TODO
+            The content of the description field of a JIRA DRP issue.
         jsummary : `str`
-            TODO
+            The content of the summary field of a JIRA DRP issue
 
         Returns
         -------
-        ts : TODO
+        ts : `str`
+            Timestamp in %Y%m%dT%H%M%SZ format
+        status : `list` [ `int` ]
             TODO
-        status : TODO
-            TODO
-        hilow : TODO
-            TODO
-        pandalink: TODO
-            TODO
-        what : TODO
-            TODO
+        hilow : `str`
+            TODO 
+        pandalink: `str`
+            URL for the pandas task page
+        what : `str`
+            Which step the issue decribes.
         """
         pattern0 = "(.*)#(.*)(20[0-9][0-9][0-9][0-9][0-9][0-9][Tt][0-9][0-9][0-9][0-9][0-9][0-9][Zz])"
         mts = re.match(pattern0, jsummary)
@@ -734,21 +556,7 @@ class DRPUtils:
         return ts, status, hilow, pandalink, what
 
     @staticmethod
-    def dict_to_table(in_dict, sorton):
-        """TODO
-
-        Parameters
-        ----------
-        in_dict : `dict`
-            TODO
-        sorton : `str`
-            TODO
-
-        Returns
-        -------
-        table_out : `str`
-            TODO
-        """
+    def _dict_to_table(in_dict, sorton):
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
@@ -825,21 +633,7 @@ class DRPUtils:
         return table_out
 
     @staticmethod
-    def dict_to_table1(in_dict, sorton):
-        """TODO
-
-        Parameters
-        ----------
-        in_dict : `dict`
-            TODO
-        sorton : `str`
-            TODO
-
-        Returns
-        -------
-        table_out : `str`
-            TODO
-        """
+    def _dict_to_table1(in_dict, sorton):
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
@@ -915,28 +709,33 @@ class DRPUtils:
         return table_out
 
     def drp_add_job_to_summary(
-        self, first, ts, pissue, jissue, status, frontend, frontend1, backend
+        self, first, pissue, jissue, frontend, frontend1, backend
     ):
-        """TODO
+        """Add a summary to a job summary tables in jira.````
 
         Parameters
         ----------
-        first : TODO
-            TODO
-        ts : TODO
-            TODO
-        pissue : TODO
-            TODO
-        jissue : TODO
-            TODO
-        status : TODO
-            TODO
-        frontend : TODO
-            TODO
-        frontend1 : TODO
-            TODO
-        backend : TODO
-            TODO
+        first : `int`
+            One of:
+
+                ``0``
+                    Add the new issue to existing content of the jira tickets
+                ``1``
+                    Erase the whole existing table, and replace it with just the
+                    new job summary. Do not do this lightly!
+                ``2``
+                    Remove any existing content concerning this production (PREOPS)
+                    and DRP issue with the new content.
+        pissue : `str`
+            The campaign defining ticket name (e.g. ``"PREOPS-973"``).
+        jissue : `str`
+            The data release processing issue name (e.g. ``"PREOPS-154"``).
+        frontend : `str`
+            Name of issue with table of all jobs (e.g. ``"DRP-53"``)
+        frontend1 : `str`
+            Name of issue with table of step 1 jobs (e.g. ``"DRP-55"``)
+        backend : `str`
+            Name of issue with serialization of jobs data (e.g. ``"DRP-54"``)
         """
         #        ju = JiraUtils()
         #        ajira, username = self.ju.get_login()
@@ -982,10 +781,10 @@ class DRPUtils:
                 what + str(hilow),
             ]
 
-        newdesc = self.dict_to_table(a_dict, -1)
+        newdesc = self._dict_to_table(a_dict, -1)
         frontendissue.update(fields={"description": newdesc})
 
-        newdesc1 = self.dict_to_table1(a_dict, -1)
+        newdesc1 = self._dict_to_table1(a_dict, -1)
         frontendissue1.update(fields={"description": newdesc1})
 
         newdict = json.dumps(a_dict)
@@ -1048,18 +847,18 @@ class DRPUtils:
                 out_file.write(out_content)
 
     def drp_issue_update(self, bpsyamlfile, pissue, drpi, ts):
-        """TODO
+        """Update or create a DRP issue.
 
         Parameters
         ----------
-        bpsyamlfile : TODO
-            TODO
+        bpsyamlfile : `str`
+            File name for yaml file with BPS connection data.
         pissue : `str`
-            TODO
+            The campaign defining ticket name (e.g. ``"PREOPS-973"``).
         drpi : `str`
-            TODO
-        ts : TODO
-            TODO
+            The data release processing issue name (e.g. "DRP-153").
+        ts : `str`
+            Timestamp in %Y%m%dT%H%M%SZ format
         """
         bpsstr, kwd, akwd, pupn = self.parse_yaml(bpsyamlfile, ts)
         print("pupn:", pupn)
