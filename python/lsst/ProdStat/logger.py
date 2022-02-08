@@ -169,7 +169,7 @@ class DebugLogger:
                 f"TYPE {varname}: {type(kwargs[varname])}")
 
             try:
-                value_lines = yaml.dump(kwargs[varname], indent=4).split()
+                value_lines = yaml.dump(kwargs[varname], indent=4).split("\n")
             except:
                 value_lines = str(kwargs[varname])
             
