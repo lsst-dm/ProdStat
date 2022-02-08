@@ -23,6 +23,7 @@
 import logging
 import traceback
 import datetime
+import yaml
 
 
 def stream_logger(name, reset=False, level=logging.DEBUG):
@@ -119,6 +120,9 @@ class DebugLogger:
     stream = `bool`
         Add a stream handler to the logger?
     """
+    max_lines = 20
+    max_line_len = 80
+
 
     def __init__(
         self, logger="debug", log_level=logging.DEBUG, fname_base=None, stream=False
@@ -152,3 +156,36 @@ class DebugLogger:
                 self.log_level, f"STACK LOCATION {level:d}: {stack_lines[0]}"
             )
             self.logger.log(self.log_level, f"STACK CODE {level:d}: {stack_lines[1]}")
+            
+    def logvars(self, **kwargs):
+        """Log about a set of variables."""
+        self.line()
+        for varname in kwargs:
+            self.logger.log(
+                self.log_level,
+                f"TYPE {varname}: {type(kwargs[varname])}")
+
+            try:
+                value_lines = yaml.dump(kwargs[varname], indent=4).split()
+            except:
+                value_lines = str(kwargs[varname])
+            
+            if isinstance(value_lines, str):
+                value_lines = [value_lines]
+
+            truncated_value = len(value_lines) > self.max_lines
+            if truncated_value:
+                value_lines = value_lines[:self.max_lines]
+
+            for value_line_idx, value_line in enumerate(value_lines):
+                truncated_line = len(value_line) > self.max_line_len
+                if truncated_line:
+                    value_line = value_line[:self.max_line_len-3] + "..."
+                self.logger.log(
+                     self.log_level,
+                     f"VALUE {varname} {value_line_idx:03d}: {value_line}")
+                 
+            if truncated_value:
+                self.logger.log(
+                    self.log_level,
+                    f"VALUE {varname} TRUNCATED")
