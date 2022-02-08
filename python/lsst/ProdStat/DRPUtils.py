@@ -34,6 +34,7 @@ from .JiraUtils import JiraUtils
 
 __all__ = ['DRPUtils']
 
+DL = DebugLogger(fname_base="call_args_returns")
 
 class DRPUtils:
     """Collection of DRP utilities."""
@@ -58,6 +59,7 @@ class DRPUtils:
         kwd: `dict`
             TODO
         """
+        DL.logvars(bps_yaml_file=pbs_yaml_file)
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
             "payload": [
@@ -88,6 +90,7 @@ class DRPUtils:
         for kw in kwd:
             v = kwd[kw]
             bpsstr = bpsstr.replace("{" + str(kw) + "}", v)
+        DL.logvars(bpsstr=bpsstr, kwd=kwd)
         return bpsstr, kwd
 
     @staticmethod
@@ -101,6 +104,7 @@ class DRPUtils:
         ts: TODO
             TODO
         """
+        DL.logvars(bps_yaml_file=pbs_yaml_file, ts=ts)
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
             "payload": [
@@ -280,6 +284,7 @@ class DRPUtils:
             )
             print(bpsstr)
         # sys.exit(1)
+        DL.logvars(bpsstr=bpsstr, kwd=kwd, akwd=akwd, ts=ts)
         return bpsstr, kwd, akwd, ts
 
     def drp_init(self, template, issue_name, drpi):
@@ -366,6 +371,7 @@ class DRPUtils:
         intab : `str`
             input txt table created by GetPanDaStat
         """
+        DL.logvars(intab=intab)
         print("infile is " + intab)
         f = open(intab, "r")
         done = 0
@@ -491,6 +497,7 @@ class DRPUtils:
             pnfail,
             psubfin,
         )
+        DL.logvars(result=result)
         return result
 
     @staticmethod
@@ -511,6 +518,7 @@ class DRPUtils:
         -- this file should be updated.
         It is in  $OBS_LSST_DIR/pipelines/imsim/DRP.yaml
         """
+        DL.logvars(steppath=steppath, tocheck=tocheck)
         stepenvironsplit = steppath.split("}")
         if len(stepenvironsplit) > 1:
             envvar = stepenvironsplit[0][2:]
@@ -554,6 +562,7 @@ class DRPUtils:
                     retdict.append([i, j])
             elif i in taskdict:
                 retdict.append([taskdict[i], i])
+        DL.logvars(retdict=retdict)
         return retdict
 
     @staticmethod
@@ -565,6 +574,7 @@ class DRPUtils:
         intab : `str`
             TODO
         """
+        DL.logvars(intab=intab)
         print("infile is " + intab)
         f = open(intab, "r")
         done = 0
@@ -619,6 +629,7 @@ class DRPUtils:
             maxmem,
             upn,
         )
+        DL.logvars(result=result)
         return result
 
     def drp_stat_update(self, pissue, drpi):
@@ -631,6 +642,7 @@ class DRPUtils:
         drpi : `str`
             TODO
         """
+        DL.logvars(pissue=pissue, drpi=drpi)
         #        ts = "0"
         # get summary from DRP ticket
         in_pars = dict()
@@ -853,7 +865,7 @@ class DRPUtils:
                 # print("pandalink:",pandaline)
 
         # sys.exit(1)
-
+        DL.logvars(ts=ts, status=status, hilow=hilow, pandalink=pandalink, what=what)
         return ts, status, hilow, pandalink, what
 
     @staticmethod
@@ -872,6 +884,7 @@ class DRPUtils:
         table_out : `str`
             TODO
         """
+        DL.logvars(in_dict=in_dict, sorton=sorton)
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
@@ -945,6 +958,7 @@ class DRPUtils:
                 + str(what)
                 + "|\n"
             )
+        DL.logvars(table_out=table_out)
         return table_out
 
     @staticmethod
@@ -963,6 +977,7 @@ class DRPUtils:
         table_out : `str`
             TODO
         """
+        DL.logvars(in_dict=in_dict, sorton=sorton)
         dictheader = ["Date", "PREOPS", "STATS", "(T,Q,D,Fa,Sf)", "PANDA", "DESCRIP"]
 
         table_out = "||"
@@ -1035,6 +1050,7 @@ class DRPUtils:
                     + str(what)
                     + "|\n"
                 )
+        DL.logvars(table_out=table_out)
         return table_out
 
     def drp_add_job_to_summary(
@@ -1061,6 +1077,8 @@ class DRPUtils:
         backend : TODO
             TODO
         """
+        DL.logvars(first=first, ts=ts, pissue=pissue, jissue=jissue,
+                   status=status, frontend=frontend, frontend1=frontend, backend=backend)
         #        ju = JiraUtils()
         #        ajira, username = self.ju.get_login()
         backendissue = self.ajira.issue(backend)
@@ -1184,6 +1202,7 @@ class DRPUtils:
         ts : TODO
             TODO
         """
+        DL.logvars(bpsyamlfile=bpsyamlfile, pissue=pissue, drpi=drpi, ts=ts)
         bpsstr, kwd, akwd, pupn = self.parse_yaml(bpsyamlfile, ts)
         print("pupn:", pupn)
         year = str(pupn[0:4])
