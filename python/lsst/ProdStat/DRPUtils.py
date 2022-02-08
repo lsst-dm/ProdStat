@@ -35,7 +35,7 @@ from .logger import DebugLogger
 
 __all__ = ['DRPUtils']
 
-DL = DebugLogger(fname_base="call_args_returns")
+DL = DebugLogger(logger="DRPUtils", fname_base="drp_call_args_returns")
 
 class DRPUtils:
     """Collection of DRP utilities."""
@@ -60,7 +60,7 @@ class DRPUtils:
         kwd: `dict`
             TODO
         """
-        DL.logvars(bps_yaml_file=pbs_yaml_file)
+        DL.logvars(bps_yaml_file=bps_yaml_file)
         kwlist = ["campaign", "project", "payload", "pipelineYaml"]
         kw = {
             "payload": [
