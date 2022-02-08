@@ -31,6 +31,7 @@ from pytz import timezone
 from .GetButlerStat import GetButlerStat
 from .GetPanDaStat import GetPanDaStat
 from .JiraUtils import JiraUtils
+from .logger import DebugLogger
 
 __all__ = ['DRPUtils']
 

@@ -23,9 +23,11 @@ import netrc
 from jira import JIRA
 import argparse
 import datetime
+from .logger import DebugLogger
 
 __all__ = ["JiraUtils"]
 
+DL = DebugLogger(fname_base="call_args_returns")
 
 class JiraUtils:
     def __init__(self):
@@ -48,6 +50,7 @@ class JiraUtils:
         username, account, password = secrets.authenticators("lsstjira")
         self.user_name = username
         self.ajira = JIRA(options={"server": account}, basic_auth=(username, password))
+        DL.logvars(ajira=self.ajira, user_name=self.user_name)
         return self.ajira, self.user_name
 
     def get_issue(self, ticket):
@@ -63,6 +66,7 @@ class JiraUtils:
         issue_object
             TODO
         """
+        DL.logvars(ticket=ticket)
         issue_object = self.ajira.issue(ticket)
         return issue_object
 
@@ -81,11 +85,13 @@ class JiraUtils:
         issueId : `str`
             the issue ID
         """
+        DL.logvars(project=project, key=key)
         jql_str = "project=%s AND issue=%s " % (project, key)
         query = self.ajira.search_issues(jql_str=jql_str)
         print("query=", query)
         issue_id = int(query[0].id)
         print("Issue id=", issue_id)
+        DL.logvars(issue_id=issue_id)
         return issue_id
 
     @staticmethod
@@ -99,9 +105,10 @@ class JiraUtils:
 
         Returns
         -------
-        all_comments
-            commentID:comment['body'] (`dict`)
+        all_comments : `dict`
+            commentID: comment['body']
         """
+        DL.logvars(issue=issue)
         all_comments = dict()
         for field_name in issue.raw["fields"]:
             if "comment" in field_name:
@@ -123,10 +130,10 @@ class JiraUtils:
 
         Returns
         -------
-        all_attachments
-            issueId:issue.filename (`dict`)
+        all_attachments : `dict`
+            issueId : issue.filename
         """
-
+        DL.logvars(issue=issue)
         all_attachments = dict()
         for field_name in issue.raw["fields"]:
             if "attachment" in field_name:
@@ -150,10 +157,11 @@ class JiraUtils:
         summary :
             TODO
         """
-
+        DL.logvars(issue=issue)
         summary = issue.fields.summary
         for field_name in issue.raw["fields"]:
             print("Field:", field_name, "Value:", issue.raw["fields"][field_name])
+        DL.logvars(summary=summary)
         return summary
 
     @staticmethod
@@ -166,7 +174,10 @@ class JiraUtils:
             jira instance
         issue : TODO
             issue instance
+        att_file : TODO
+            TODO
         """
+        DL.logvars(jira=jira, issue=issue, att_file=att_file)
         jira.add_attachment(issue=issue, attachment=att_file)
 
     """ creat issue with parameters in the issue dictionary
@@ -204,7 +215,9 @@ class JiraUtils:
         new_issue
             issue instance
         """
+        DL.logvars(jira=jira, issue_dict=issue_dict)
         new_issue = jira.create_issue(fields=issue_dict)
+        DL.logvars(new_issue=new_issue)
         return new_issue
 
     @staticmethod
@@ -218,6 +231,7 @@ class JiraUtils:
         issue_dict : TODO
             dictionary with issue fields
         """
+        DL.logvars(issue=issue, issue_dict=issue_dict)
         issue.update(fields=issue_dict)
 
     @staticmethod
@@ -238,6 +252,7 @@ class JiraUtils:
             ``"comment"``
                 comment string (`str`)
         """
+        DL.logvars(issue=issue, work_log=work_log)
         issue.update(comment=work_log["comment"])
 
     def update_comment(self, jira, key, issue_id, tokens, comment_s):
@@ -256,7 +271,8 @@ class JiraUtils:
         issue_id : TODO
             TODO
         """
-
+        DL.logvars(jira=jira, key=key, issue_id=issue_id, 
+                   tokens=tokens, comment_s=comment_s)
         issue = self.get_issue(key)
         all_comments = self.get_comments(issue)
         if len(all_comments) > 0:
@@ -310,7 +326,7 @@ class JiraUtils:
         com_str
             TODO (`str`)
         """
-
+        DL.logvars(jira=jira, issue_id=issue_id, comment_id=comment_id)
         com_str = jira.comment(int(issue_id), int(comment_id)).body
         return com_str
 
@@ -332,6 +348,7 @@ class JiraUtils:
         To replace attachment in an issue we first delete one containing
         selected filename and then add a new one
         """
+        DL.logvars(jira=jira, issue=issue, att_file=att_file)
         attachments = issue.raw["fields"]["attachment"]
         if len(attachments) != 0:
             found = False
@@ -359,10 +376,12 @@ class JiraUtils:
 
         Returns
         -------
-        description
+        description : `str`
             the description (`str`)
         """
+        DL.logvars(issue=issue)
         description = issue.raw["fields"]["description"]
+        DL.logvars(description=discription)
         return description
 
 
