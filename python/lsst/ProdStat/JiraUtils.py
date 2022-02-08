@@ -27,7 +27,7 @@ from .logger import DebugLogger
 
 __all__ = ["JiraUtils"]
 
-DL = DebugLogger(logger="JiraUtils', fname_base="jira_utils_call_args_returns")
+DL = DebugLogger(logger="JiraUtils", fname_base="jira_utils_call_args_returns")
 
 class JiraUtils:
     def __init__(self):
