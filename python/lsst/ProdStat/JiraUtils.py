@@ -39,10 +39,10 @@ class JiraUtils:
 
         Returns
         -------
-        ajira : TODO
-            TODO
-        user_name : TODO
-            TODO
+        ajira : `jira.client.JIRA`
+            Interface to JIRA.
+        user_name : `str`
+            The jira account being used.
         """
         secrets = netrc.netrc()
         username, account, password = secrets.authenticators("lsstjira")
@@ -56,12 +56,12 @@ class JiraUtils:
         Parameters
         ----------
         ticket : `str`
-            TODO
+            The name of the issue to get.
 
         Returns
         -------
-        issue_object
-            TODO
+        issue_object : `jira.resouce.Issue`
+            The object representing the content of the issue.
         """
         issue_object = self.ajira.issue(ticket)
         return issue_object
@@ -94,7 +94,7 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
 
         Returns
@@ -118,13 +118,13 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
 
         Returns
         -------
-        all_attachments
-            issueId:issue.filename (`dict`)
+        all_attachments : `dict`
+            issueId: issue.filename
         """
 
         all_attachments = dict()
@@ -142,13 +142,13 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
-            TODO
+        issue : `jira.resource.Issue`
+            the issue from which to get the summary
 
         Returns
         -------
-        summary :
-            TODO
+        summary : `str`
+            The summary.
         """
 
         summary = issue.fields.summary
@@ -162,9 +162,9 @@ class JiraUtils:
 
         Parameters
         ----------
-        jira : TODO
+        jira : `jira.client.JIRA`
             jira instance
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
         """
         jira.add_attachment(issue=issue, attachment=att_file)
@@ -185,23 +185,23 @@ class JiraUtils:
 
         Parameters
         ----------
-        jira : TODO
+        jira : `jira.client.JIRA`
             jira instance
-        issue_dict : TODO
+        issue_dict : `dict`
             dictionary with issue fields:
 
             ``"summary"``
-                TODO (`str`)
+                issue summary (`str`)
             ``"description"``
-                TODO (`str`)
+                issue description (`str`)
             ``"project"``
-                TODO (TODO)
+                issue project (`str`)
             ``"issuetype"``
-                TODO (TODO)
+                issue type (`str`)
 
         Returns
         -------
-        new_issue
+        new_issue : `jira.resource.Issue`
             issue instance
         """
         new_issue = jira.create_issue(fields=issue_dict)
@@ -213,9 +213,9 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
-            issue insntance
-        issue_dict : TODO
+        issue : `jira.resource.Issue`
+            issue instance
+        issue_dict : `dict`
             dictionary with issue fields
         """
         issue.update(fields=issue_dict)
@@ -226,7 +226,7 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
         work_log : `dict`
             A work log dictionary with:
@@ -245,7 +245,7 @@ class JiraUtils:
 
         Parameters
         ----------
-        jira : TODO
+        jira : `jira.client.JIRA`
             api instance
         key : `str`
             issue key
@@ -253,8 +253,8 @@ class JiraUtils:
             issue token
         comment_s : `str`
             comment body
-        issue_id : TODO
-            TODO
+        issue_id : `str`
+            issue id
         """
 
         issue = self.get_issue(key)
@@ -298,7 +298,7 @@ class JiraUtils:
 
         Parameters
         ----------
-        jira : TODO
+        jira : `jira.client.JIRA`
             jira API instance
         issue_id : `str`
             issue id
@@ -307,8 +307,8 @@ class JiraUtils:
 
         Returns
         -------
-        com_str
-            TODO (`str`)
+        com_str : `str`
+            The contents of the comment.
         """
 
         com_str = jira.comment(int(issue_id), int(comment_id)).body
@@ -319,9 +319,9 @@ class JiraUtils:
 
         Parameters
         ----------
-        jira : TODO
+        jira : `jira.client.JIRA`
             jira API instance
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
         att_file : `str`
             file /path/name
@@ -354,7 +354,7 @@ class JiraUtils:
 
         Parameters
         ----------
-        issue : TODO
+        issue : `jira.resource.Issue`
             issue instance
 
         Returns
