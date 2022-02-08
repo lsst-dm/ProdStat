@@ -197,41 +197,6 @@ def update_stat(production_issue, drp_issue):
 
 
 @cli.command()
-@click.argument("pbs_submit_template", type=str)
-@click.argument("production_issue", type=str)
-@click.argument("drp_issue", type=str, default="DRP0")
-def init(bps_submit_template, production_issue, drp_issue):
-    """Initialize a DRP issue.
-
-    \b
-    Parameters
-    ----------
-    bps_submit_template : `str`
-        Template file with place holders for start/end
-        dataset/visit/tracts (will be attached to Production Issue
-    production_issue : `str`
-        Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update
-        with link to ProdStat tracking issue(s) -- should match issue
-        in template keyword.
-    drp_issue : `str`
-        If present in form DRP-XXX, redo by overwriting an
-        existing DRP-issue. If not present, create a new DRP-issue.
-        All ProdStat plots and links for group of bps submits will be
-        tracked off this DRP-issue.  Production Issue will be updated with
-        a link to this issue, by updating description (or later by using
-        subtask link if all are DRP type).
-
-    \b
-    Returns
-    -------
-    None.
-
-    """
-    drp = DRPUtils.DRPUtils()
-    drp.drp_init(bps_submit_template, production_issue, drp_issue)
-
-
-@cli.command()
 @click.argument("param_file", type=click.Path(exists=True))
 def get_panda_stat(param_file):
     """Build production statistics tables using PanDa database queries.

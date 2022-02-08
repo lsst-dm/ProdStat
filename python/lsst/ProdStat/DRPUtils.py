@@ -43,54 +43,6 @@ class DRPUtils:
         self.ajira, self.user_name = self.ju.get_login()
 
     @staticmethod
-    def parse_template(bps_yaml_file):
-        """TODO.
-
-        Parameters
-        ----------
-        bps_yaml_file : `str`
-            File name for yaml file with BPS connection data.
-
-        Returns
-        -------
-        bpsstr: `str`
-            TODO
-        kwd: `dict`
-            TODO
-        """
-        kwlist = ["campaign", "project", "payload", "pipelineYaml"]
-        kw = {
-            "payload": [
-                "payloadName",
-                "butlerConfig",
-                "dataQuery",
-                "inCollection",
-                "sw_image",
-                "output",
-            ]
-        }
-        f = open(bps_yaml_file)
-        d = load(f, Loader=FullLoader)
-        f.close()
-
-        kwd = dict()
-        bpsstr = "BPS Submit Keywords:\n{code}\n"
-        for k, v in d.items():
-            if k in kwlist:
-                if k in kw:
-                    for k1 in kw[k]:
-                        kwd[k1] = v[k1]
-                        bpsstr += str(k1) + ":" + str(v[k1]) + "\n"
-                else:
-                    kwd[k] = v
-                    bpsstr += str(k) + ": " + str(v) + "\n"
-
-        for kw in kwd:
-            v = kwd[kw]
-            bpsstr = bpsstr.replace("{" + str(kw) + "}", v)
-        return bpsstr, kwd
-
-    @staticmethod
     def parse_yaml(bps_yaml_file, ts):
         """TODO.
 
@@ -281,81 +233,6 @@ class DRPUtils:
             print(bpsstr)
         # sys.exit(1)
         return bpsstr, kwd, akwd, ts
-
-    def drp_init(self, template, issue_name, drpi):
-        """Create or update a DRP issue.
-
-        Parameters
-        ----------
-        template : `str`
-            Template file with place holders for start/end dataset/visit/tracts
-            (will be attached to Production Issue).
-        issue_name : `str`
-            Pre-existing issue of form PREOPS-XXX (later DRP-XXX) to update
-            with link to ProdStat tracking issue(s) -- should match the issue
-            in template keyword.
-        drpi : `str`
-            If present in form DRP-XXX, redo by overwriting an existing
-            DRP-issue. If not present, create a new DRP-issue.
-            All ProdStat plots and links for group of bps submits will
-            be tracked off this DRP-issue. The Production Issue will be
-            updated with a link to this issue, by updating description
-            (or later by using subtask link if all are DRP
-            type).
-        """
-        bpsstr, kwd = self.parse_template(template)
-        stepname = kwd["pipelineYaml"]
-        p = re.compile("(.*)#(.*)")
-        m = p.match(stepname)
-        print("stepname " + stepname)
-        if m:
-            steppath = m.group(1)
-            stepcut = m.group(2)
-        else:
-            steppath = ""
-            stepcut = ""
-
-        print("steplist " + stepcut)
-        print("steppath " + steppath)
-        bpsstr += "pipelineYamlSteps: " + stepcut + "\n{code}\n"
-
-        uniqid = kwd["output"]
-        for k in kwd:
-            v = kwd[k]
-            uniqid = uniqid.replace("{" + str(k) + "}", v)
-        uniqid = uniqid.replace("/", "_")
-        #
-        if drpi == "DRP0":
-            drp_issue = self.ajira.create_issue(
-                project="DRP",
-                issuetype="Task",
-                summary="a new issue",
-                description=bpsstr,
-                components=[{"name": "Test"}],
-            )
-        else:
-            drp_issue = self.ajira.issue(drpi)
-        issue_dict = {"summary": stepcut + "#" + uniqid, "description": bpsstr}
-        self.ju.update_issue(drp_issue, issue_dict)
-
-        jirapissue = self.ajira.issue(issue_name)
-
-        olddesc = jirapissue.fields.description
-
-        p = re.compile("(.*)(Production Statistics:DRP-[0-9]*)", re.DOTALL)
-        match = p.match(olddesc)
-        if match:
-            olddesc.replace(m.group(2), "Production Statistics:" + str(drp_issue), 1)
-            desc = olddesc
-        else:
-            desc = olddesc + "\n Production Statistics:" + str(drp_issue) + " here\n"
-        jirapissue.update(fields={"description": desc})
-        print(
-            "Production Issue: "
-            + str(jirapissue)
-            + " description updated with DRP issue link"
-        )
-        print("DRP issue for ProdStats : " + str(drp_issue))
 
     @staticmethod
     def parse_panda_table(intab):
