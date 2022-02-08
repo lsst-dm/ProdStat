@@ -159,7 +159,10 @@ class DebugLogger:
             
     def logvars(self, **kwargs):
         """Log about a set of variables."""
-        self.line()
+        stack = traceback.extract_stack()[-2]
+        message = "LOGVARS AT %s:%d (%s)" % tuple(stack)[:3]
+        self.logger.log(self.log_level, message)
+
         for varname in kwargs:
             self.logger.log(
                 self.log_level,
