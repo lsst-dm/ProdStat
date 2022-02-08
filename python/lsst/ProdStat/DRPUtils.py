@@ -60,11 +60,9 @@ class DRPUtils:
             Description of the BPS connection data.
         kwd : `dict` [`str`, `str`]
             Some values extracted from the yaml file.
-            TODO
         akwd : `dict`
             Additional data, mostly extracted from other files
             pointed to by the provided yaml file.
-            TODO
         ts : `str`
             Timestamp in %Y%m%dT%H%M%SZ format
         """
@@ -456,9 +454,22 @@ class DRPUtils:
         ts : `str`
             Timestamp in %Y%m%dT%H%M%SZ format
         status : `list` [ `int` ]
-            TODO
+            (T,Q,D,Fa,Sf), where:
+
+                T
+                    number of tasks
+                Q
+                    number of (high level) quanta
+                D
+                    Done (all 3 tasks finished completely)
+                Fa
+                    Failed
+                Sf
+                    Some Finished (task finished, but not everything
+                                   with the task finished successfully,
+                                   but moved on anyway)
         hilow : `str`
-            TODO 
+            Start and end tracts
         pandalink: `str`
             URL for the pandas task page
         what : `str`
