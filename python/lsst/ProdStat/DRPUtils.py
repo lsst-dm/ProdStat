@@ -53,7 +53,7 @@ class DRPUtils:
         ts: `str`
             Timestamp in %Y%m%dT%H%M%SZ format, or "0" to use first
             available time.
-            
+
         Returns
         -------
         bpsstr : `str`
@@ -315,7 +315,6 @@ class DRPUtils:
             elif i in taskdict:
                 retdict.append([taskdict[i], i])
         return retdict
-
 
     def drp_stat_update(self, pissue, drpi):
         """Update the statistics in a jira issue.
@@ -732,11 +731,11 @@ class DRPUtils:
                 ``0``
                     Add the new issue to existing content of the jira tickets
                 ``1``
-                    Erase the whole existing table, and replace it with just the
-                    new job summary. Do not do this lightly!
+                    Erase the whole existing table, and replace it with
+                    just the new job summary. Do not do this lightly!
                 ``2``
-                    Remove any existing content concerning this production (PREOPS)
-                    and DRP issue with the new content.
+                    Remove any existing content concerning this production
+                    (PREOPS) and DRP issue with the new content.
         pissue : `str`
             The campaign defining ticket name (e.g. ``"PREOPS-973"``).
         jissue : `str`

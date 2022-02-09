@@ -33,7 +33,9 @@ import pandas as pd
 from pandas.plotting import table
 from lsst.daf.butler import Butler
 from lsst.daf.butler import ButlerURI
-from lsst.daf.base import PropertySet
+
+# PropertySet needs to be imported to load the butler yaml.
+from lsst.daf.base import PropertySet  # noqa: F401
 
 __all__ = ['GetButlerStat']
 
