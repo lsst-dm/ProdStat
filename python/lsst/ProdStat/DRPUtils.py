@@ -66,7 +66,7 @@ class DRPUtils:
         ts : `str`
             Timestamp in %Y%m%dT%H%M%SZ format
         """
-        kwlist = ["campaign", "project", "payload", "pipelineYaml","extraQgraphOptions"]
+        kwlist = ["campaign", "project", "payload", "pipelineYaml", "extraQgraphOptions"]
         kw = {
             "payload": [
                 "payloadName",
@@ -893,9 +893,9 @@ class DRPUtils:
 
         print("link:", a_link)
 
-        nowut = (
-            datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
-        )
+        #nowut = (
+            #datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
+        #)
         print(bpsstr, kwd, akwd)
 
         upn = kwd["campaign"] + "/" + pupn
@@ -928,24 +928,12 @@ class DRPUtils:
 
         tasktable += "PanDA PREOPS: " + str(pissue) + " link:" + a_link + "\n"
         for s in sl:
-          tasktable += (
-	    "|"
-            + s[0]
-            + "|"
-            + s[1]
-            + "|"
-            + " "
-            + "|"
-            + " "
-            + "|"
-            + " "
-            + "|"
-            + " "
-            + "|"
-            + " "
-            + "|"
-            + "\n"
-         )
+            tasktable += (
+                "|" + s[0] + "|" + s[1]
+                + "|" + " " + "|" + " "
+                + "|" + " " + "|" + " "
+                + "|" + " " + "|" + "\n"
+            )
 
         tasktable += "\n"
         print(tasktable)
@@ -957,7 +945,7 @@ class DRPUtils:
                 issuetype="Task",
                 summary="a new issue",
                 description=bpsstr + tasktable,
-                components=[{"name": "Test"}],
+                components=[{"name": "Test"}]
             )
         else:
             issue = self.ajira.issue(drpi)

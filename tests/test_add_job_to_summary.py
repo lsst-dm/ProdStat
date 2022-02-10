@@ -39,16 +39,14 @@ class TestAddJobToSummary(ProdStatTestBase, unittest.TestCase):
         frontend = "DRP-53"
         frontend1 = "DRP-55"
         backend = "DRP-54"
-        ts = "-1"
-        status = "-1"
-        first = 1
+        first = 0
 
         test_issue_fields = MockJira.return_value.issue.return_value.fields
         test_issue_fields.summary = TEST_ISSUE_SUMMARY
 
         drp = DRPUtils.DRPUtils()
         drp.drp_add_job_to_summary(
-            first, ts, production_issue, drp_issue, status, frontend, frontend1, backend
+            first, production_issue, drp_issue, frontend, frontend1, backend
         )
 
         mock_jira = MockJira.return_value
