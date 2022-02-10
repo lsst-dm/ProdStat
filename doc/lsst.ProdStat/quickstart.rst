@@ -334,22 +334,25 @@ Call::
   
 The input yaml file should contain following parameters::
 
-  Jira: PREOPS-905 - jira ticket corresponding given campaign.
-  collType: 2.2i - a token to help identify campaign workflows.
-  bin_width: 30. - the width of the plot bin in sec.
+  Jira: "PREOPS-905" - jira ticket corresponding given campaign.
+  collType: "2.2i" - a token to help identify campaign workflows.
+  bin_width: 3600. - the width of the plot bin in sec.
   job_names - a list of job names
-   - 'pipeTaskInit'
+   - 'measure'
+   - 'forcedPhotCoad'
    - 'mergeExecutionButler'
-   - 'visit_step2'
   start_at: 0. - plot starts at hours from first quanta
-  stop_at: 10. - plot stops at hours from first quanta
-  start_date: '2022-01-30' ; dates to select data, which will help to skip previous production steps
-  stop_date: '2022-02-02'
+  stop_at: 72. - plot stops at hours from first quanta
+  start_date: '2022-02-04' ; dates to select data, which will help to skip previous production steps
+  stop_date: '2022-02-07'
 
-The program scan panda database to collect timing information for all job types in the list.
+The program scan panda idds database to collect timing information for all job names in the list.
+Please note the list format for job_names, and the quotes are required around start_date, stop_date.
+This can take a long time if there are lots of quanta involved.
+Note that the querying of the panDA IDDS can be optimized further in the future.
 It creates then timing information in /tmp directory with file names like::
 
-  panda_time_series_<job_type>.csv
+  panda_time_series_<job_name>.csv
 
 plot-data
 ---------
@@ -361,6 +364,8 @@ Call::
 The program reads timing data created by prep-timing-data command and
 build plots for each type of jobs in given time boundaries.
 each type of jobs in given time boundaries.
+One may change the start_at/stop_at limits to make a zoom in
+plot without rerunning prep-timing-data.
 
 report-to-jira
 --------------
