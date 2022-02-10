@@ -27,7 +27,6 @@ import datetime
 import json
 import numpy as np
 import pandas as pd
-from pytz import timezone
 from .GetButlerStat import GetButlerStat
 from .GetPanDaStat import GetPanDaStat
 from .JiraUtils import JiraUtils
@@ -893,9 +892,6 @@ class DRPUtils:
 
         print("link:", a_link)
 
-        #nowut = (
-            #datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
-        #)
         print(bpsstr, kwd, akwd)
 
         upn = kwd["campaign"] + "/" + pupn
