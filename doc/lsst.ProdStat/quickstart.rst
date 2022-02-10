@@ -13,6 +13,7 @@ Obtaining the package -- initial setup
    setup lsst_distrib
    git clone https://github.com/lsst-dm/ProdStat.git
    cd ProdStat
+   setup ProdStat -r .
    scons  
 
 Notes on Compiling the package the first time and Running tests
@@ -32,6 +33,7 @@ After this initial 'scons', for subsequent runs of prodstat commands,
 it is sufficient to run::
 
   setup lsst_distrib
+  cd ProdStat
   setup ProdStat -r .
 
 in ProdStat directory
@@ -138,7 +140,7 @@ panDa workflow status page.
 
 prodstat add-job-to-summary PREOPS-XXX DRP-YYY
 then look at DRP-53 for the current table of tracked completed and running and submitted issues.
-DRP-53 is currently a 'magic' issue.
+DRP-53 is currently a 'magic' issue containing a listing of campaign production runs.
 
 You can remove an unwanted entry from the DRP-53 table by doing this::
 
@@ -173,7 +175,7 @@ issue-update
 
 Update or create a DRP issue::
    
-   prodstat update-issue BPS_SUBMIT_FNAME PRODUCTION_ISSUE [DRP_ISSUE] --ts TIMESTAMP
+   prodstat update-issue BPS_SUBMIT_FNAME PRODUCTION_ISSUE [DRP_ISSUE] [--ts TIMESTAMP]
 
 
 Parameters
@@ -263,8 +265,6 @@ DRP-XX is the issue created to track ProdStat for this bps submit.
 If you run the command twice with the same entries, it is ok.
 
 If you specify --remove True, it will instead remove one entry from the table with the DRP/PREOPS number.
-
-If you specify --reset True (with any DRP-XX,PREOPS-YYY) is will erase the whole table in DRP-53 (don't do this lightly).
 
 To see the output summary: View special DRP tickets DRP-53 (all bps submits entered) and https://jira.lsstcorp.org/browse/DRP-55 (step1 submits only)
 
