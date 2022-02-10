@@ -278,8 +278,10 @@ class DRPUtils:
             envvar = ""
             restofpath = steppath
         print(envvar, restofpath)
-        drpfile = open(os.environ.get(envvar) + restofpath)
-        drpyaml = load(drpfile, Loader=FullLoader)
+
+        with open(os.environ.get(envvar) + restofpath) as drpfile:
+            drpyaml = load(drpfile, Loader=FullLoader)
+
         # eventually need to load the includes for more details
         taskdict = dict()
         stepdict = dict()

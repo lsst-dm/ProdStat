@@ -560,8 +560,8 @@ class GetPanDaStat:
             newbody += line
             i += 1
         new_body = newbody[:-2]
-        tb_file = open("/tmp/" + out_file + "-" + self.Jira + ".txt", "w")
-        print(new_body, file=tb_file)
+        with open("/tmp/" + out_file + "-" + self.Jira + ".txt", "w") as tb_file:
+            print(new_body, file=tb_file)
         return newbody
 
     def make_styled_table(self, dataframe, outfile):
