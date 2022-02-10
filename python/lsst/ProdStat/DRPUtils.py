@@ -66,7 +66,7 @@ class DRPUtils:
         ts : `str`
             Timestamp in %Y%m%dT%H%M%SZ format
         """
-        kwlist = ["campaign", "project", "payload", "pipelineYaml"]
+        kwlist = ["campaign", "project", "payload", "pipelineYaml","extraQgraphOptions"]
         kw = {
             "payload": [
                 "payloadName",
@@ -892,10 +892,6 @@ class DRPUtils:
         )
 
         print("link:", a_link)
-        dobut = 0
-        dopan = 0
-        print(dobut, dopan)
-        # print(totmaxmem,nquanta,pnquanta)
 
         nowut = (
             datetime.datetime.now(timezone("GMT")).strftime("%Y-%m-%d %H:%M:%S") + "Z"
@@ -926,135 +922,31 @@ class DRPUtils:
             + "|| Step || Task || Start || nQ || sec/Q || sum(hr) || maxGB ||"
             + "\n"
         )
-        for s in sl:
-            if dobut == 0 or s[1] not in nquanta.keys():
-                print("skipping:", s[0])
-                tasktable += (
-                    "|"
-                    + s[0]
-                    + "|"
-                    + s[1]
-                    + "|"
-                    + " "
-                    + "|"
-                    + " "
-                    + "|"
-                    + " "
-                    + "|"
-                    + " "
-                    + "|"
-                    + " "
-                    + "|"
-                    + "\n"
-                )
-            else:
-                tasktable += (
-                    "|"
-                    + s[0]
-                    + "|"
-                    + s[1]
-                    + "|"
-                    + str(startdate[s[1]])
-                    + "|"
-                    + str(nquanta[s[1]])
-                    + "|"
-                    + str("{:.1f}".format(secperstep[s[1]]))
-                    + "|"
-                    + str("{:.1f}".format(sumtime[s[1]]))
-                    + "|"
-                    + str("{:.2f}".format(maxmem[s[1]]))
-                    + "| \n"
-                )
 
-        if dobut == 1:
-            tasktable += (
-                "Total core-hours: "
-                + str("{:.1f}".format(totsumsec))
-                + " Peak Memory (GB): "
-                + str("{:.1f}".format(totmaxmem))
-                + "\n"
-            )
         tasktable += "\n"
         print(tasktable)
 
         tasktable += "PanDA PREOPS: " + str(pissue) + " link:" + a_link + "\n"
-        if dopan == 1:
-            tasktable += (
-                "Panda Statistics as of: "
-                + nowut
-                + "\n"
-                + "|| Step || Task || Start || PanQ || Psec/Q || wall(hr) || Psum(hr) ||parall cores||"
-                + "\n"
-            )
-            for s in sl:
-                if dopan == 0 or s[1] not in pnquanta.keys():
-                    tasktable += (
-                        "|"
-                        + s[0]
-                        + "|"
-                        + s[1]
-                        + "|"
-                        + " "
-                        + "|"
-                        + " "
-                        + "|"
-                        + " "
-                        + "|"
-                        + " "
-                        + "|"
-                        + " "
-                        + "|"
-                        + " "
-                        + "|"
-                        + "\n"
-                    )
-                else:
-                    tasktable += (
-                        "|"
-                        + s[0]
-                        + "|"
-                        + s[1]
-                        + "|"
-                        + str(pstartdate[s[1]])
-                        + "|"
-                        + str(pnquanta[s[1]])
-                        + "|"
-                        + str("{:.1f}".format(psecperstep[s[1]]))
-                        + "|"
-                        + str("{:.1f}".format(pwallhr[s[1]]))
-                        + "|"
-                        + str("{:.2f}".format(psumtime[s[1]]))
-                        + "|"
-                        + str("{:.0f}".format(pmaxmem[s[1]]))
-                        + "| \n"
-                    )
+        for s in sl:
+          tasktable += (
+	    "|"
+            + s[0]
+            + "|"
+            + s[1]
+            + "|"
+            + " "
+            + "|"
+            + " "
+            + "|"
+            + " "
+            + "|"
+            + " "
+            + "|"
+            + " "
+            + "|"
+            + "\n"
+         )
 
-        if dopan == 1:
-            tasktable += (
-                "Total wall-hours: "
-                + str("{:.1f}".format(ptotmaxmem))
-                + " Total core-hours: "
-                + str("{:.1f}".format(ptotsumsec))
-                + "\n"
-            )
-            tasktable += (
-                "Status:"
-                + str(pstat)
-                + " nTasks:"
-                + str(pntasks)
-                + " nFiles:"
-                + str(pnfiles)
-                + " nRemain:"
-                + str(pnproc)
-                + " nProc:"
-                + " nFinish:"
-                + str(pnfin)
-                + " nFail:"
-                + str(pnfail)
-                + " nSubFinish:"
-                + str(psubfin)
-                + "\n"
-            )
         tasktable += "\n"
         print(tasktable)
         # (totmaxmem,totsumsec,nquanta,secperstep,sumtime,maxmem)=parsebutlertable(butstepfile)
